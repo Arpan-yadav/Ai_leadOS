@@ -1,0 +1,6 @@
+{
+  "name": "AI Lead OS",
+  "description": "Enterprise-grade AI-powered sales operating system for lead management, outreach automation, and pipeline tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
