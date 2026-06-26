@@ -6,3 +6,6 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# AI Studio internal files (not project code)
+metadata.json
