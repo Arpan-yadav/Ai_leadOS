@@ -6,3 +6,19 @@ coverage/
 *.log
 .env*
 !.env.example
+!backend/.env.example
+!frontend/.env.local.example
+
+# AI Studio internal files (not project code)
+metadata.json
+
+# Next.js build artifacts
+frontend/.next/
+frontend/out/
+
+# Backend build
+backend/dist/
+
+# Prisma generated
+backend/node_modules/
+frontend/node_modules/
