@@ -1,8 +1,10 @@
 # 🚀 Sprint 1 PR — GitHub Pull Request
 
-## PR Title (copy this exactly)
+## Follow‑up: Copilot Fixes
+
+## PR Title (update as needed)
 ```
-feat: Sprint 1 Foundation — Full-stack scaffold, AI service layer & automation schemas
+fix: Sprint 1 Foundation — address review comments (security, role guard, Docker env)
 ```
 
 ---
