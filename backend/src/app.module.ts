@@ -14,6 +14,8 @@ import { EventsModule } from './events/events.module';
 import { AiModule } from './ai/ai.module';
 import { AutomationModule } from './automation/automation.module';
 import { LeadsModule } from './leads/leads.module';
+import { DealsModule } from './deals/deals.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -33,6 +35,8 @@ import { LeadsModule } from './leads/leads.module';
     AiModule,          // Gemini AI service
     AutomationModule,  // Event listeners and workflow engine
     LeadsModule,       // Lead CRUD + AI auto-scoring
+    DealsModule,       // Deal pipeline
+    DashboardModule,   // Aggregated stats
   ],
 })
 export class AppModule {}
