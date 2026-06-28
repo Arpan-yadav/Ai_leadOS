@@ -38,7 +38,6 @@ export interface OutreachPlan {
 export interface WorkflowSuggestion {
 }
 
-// ─── Service ──────────────────────────────────────────────────────────────────
 
 @Injectable()
 export class AiService {
