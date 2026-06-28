@@ -2,6 +2,7 @@
  * @file app.module.ts
  * @description Root Application Module
  * Sprint 1 — Backend Team Deliverable
+ * Sprint 2 — AI + Automation modules added (Arpan)
  */
 
 import { Module } from '@nestjs/common';
@@ -9,6 +10,10 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { EventsModule } from './events/events.module';
+import { AiModule } from './ai/ai.module';
+import { AutomationModule } from './automation/automation.module';
+import { LeadsModule } from './leads/leads.module';
 
 @Module({
   imports: [
@@ -22,6 +27,12 @@ import { PrismaModule } from './prisma/prisma.module';
     PrismaModule,
     UsersModule,
     AuthModule,
+
+    // ─── Sprint 2: Events + AI + Automation + CRM ─────────────────
+    EventsModule,      // Global event bus (available everywhere)
+    AiModule,          // Gemini AI service
+    AutomationModule,  // Event listeners and workflow engine
+    LeadsModule,       // Lead CRUD + AI auto-scoring
   ],
 })
 export class AppModule {}
