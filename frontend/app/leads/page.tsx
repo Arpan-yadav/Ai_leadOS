@@ -1,4 +1,6 @@
 import React from 'react'
+import StatusBadge from '../../components/ui/StatusBadge'
+
 const LeadsPage = () => {
 
   const mockLeads = [
@@ -7,7 +9,7 @@ const LeadsPage = () => {
       name: "John Smith",
       company: "Tech Corp",
       email: "john@techcorp.com",
-      status: "NEW",
+      status: "NEW" as const,
       score: 85,
       source: "LINKEDIN",
     },
@@ -16,7 +18,7 @@ const LeadsPage = () => {
       name: "Sarah Johnson",
       company: "Design Studio",
       email: "sarah@design.com",
-      status: "CONTACTED",
+      status: "CONTACTED" as const,
       score: 62,
       source: "EMAIL",
     },
@@ -25,7 +27,7 @@ const LeadsPage = () => {
       name: "Rahul Sharma",
       company: "Digital Agency",
       email: "rahul@digital.com",
-      status: "QUALIFIED",
+      status: "QUALIFIED" as const,
       score: 91,
       source: "WHATSAPP",
     }
@@ -33,13 +35,13 @@ const LeadsPage = () => {
 
   return (
     <div style={{ padding: "24px" }}>
-      
+
       <h1 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "16px" }}>
         Leads
       </h1>
 
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        
+
         <thead>
           <tr style={{ backgroundColor: "#f3f4f6" }}>
             <th style={{ padding: "12px", textAlign: "left" }}>Name</th>
@@ -57,7 +59,9 @@ const LeadsPage = () => {
               <td style={{ padding: "12px" }}>{lead.name}</td>
               <td style={{ padding: "12px" }}>{lead.company}</td>
               <td style={{ padding: "12px" }}>{lead.email}</td>
-              <td style={{ padding: "12px" }}>{lead.status}</td>
+              <td style={{ padding: "12px" }}>
+                <StatusBadge status={lead.status} />
+              </td>
               <td style={{ padding: "12px" }}>{lead.score}</td>
               <td style={{ padding: "12px" }}>{lead.source}</td>
             </tr>
