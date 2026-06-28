@@ -1,5 +1,7 @@
 import React from 'react'
 import StatusBadge from '../../components/ui/StatusBadge'
+import ScoreBadge from '../../components/ui/ScoreBadge'
+
 
 const LeadsPage = () => {
 
@@ -62,7 +64,9 @@ const LeadsPage = () => {
               <td style={{ padding: "12px" }}>
                 <StatusBadge status={lead.status} />
               </td>
-              <td style={{ padding: "12px" }}>{lead.score}</td>
+              <td style={{ padding: "12px" }}>
+  <ScoreBadge score={lead.score} />
+</td>
               <td style={{ padding: "12px" }}>{lead.source}</td>
             </tr>
           ))}
