@@ -4,10 +4,12 @@ import StatusBadge from '../../components/ui/StatusBadge'
 import ScoreBadge from '../../components/ui/ScoreBadge'
 import SearchBar from '../../components/ui/SearchBar'
 import AddLeadModal from '../../components/leads/AddLeadModal'
+import LeadDetailPanel from '../../components/leads/LeadDetailPanel'
 
 const LeadsPage = () => {
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
+  const [selectedLead, setSelectedLead] = useState<any>(null)
   const [leads, setLeads] = useState([
     { id: 1, name: "John Smith", company: "Tech Corp", email: "john@techcorp.com", status: "NEW" as const, score: 85, source: "LINKEDIN" },
     { id: 2, name: "Sarah Johnson", company: "Design Studio", email: "sarah@design.com", status: "CONTACTED" as const, score: 62, source: "EMAIL" },
@@ -60,7 +62,14 @@ const LeadsPage = () => {
         </thead>
         <tbody>
           {filteredLeads.map((lead) => (
-            <tr key={lead.id} style={{ borderBottom: "1px solid #e5e7eb" }}>
+            <tr
+              key={lead.id}
+              onClick={() => setSelectedLead(lead)}
+              style={{
+                borderBottom: "1px solid #e5e7eb",
+                cursor: "pointer"
+              }}
+            >
               <td style={{ padding: "12px" }}>{lead.name}</td>
               <td style={{ padding: "12px" }}>{lead.company}</td>
               <td style={{ padding: "12px" }}>{lead.email}</td>
@@ -76,6 +85,13 @@ const LeadsPage = () => {
         <AddLeadModal
           onClose={() => setShowModal(false)}
           onAdd={handleAddLead}
+        />
+      )}
+
+      {selectedLead && (
+        <LeadDetailPanel
+          lead={selectedLead}
+          onClose={() => setSelectedLead(null)}
         />
       )}
 
