@@ -1,20 +1,18 @@
 # 🚀 AI LeadOS — Full Project Roadmap & Team Guide
 ### ProyoTech Internship 2026
 
-> **For the team:** This document is your single source of truth for how we are building AI LeadOS as a team of 10. It covers every sprint, who owns what, how to work with Git, and what "done" means for each deliverable.
+> **For the team:** This document is your single source of truth for how we are building AI LeadOS. It covers every sprint, who is active when, how to work with Git, and what "done" means for each deliverable.
 
 ---
 
 ## 📌 Project Overview
-
-**AI LeadOS** is a full-stack AI-powered CRM and lead management platform.
 
 | Property | Value |
 |----------|-------|
 | **Total Sprints** | 8 |
 | **Completed** | Sprint 1 ✅ |
 | **Remaining** | Sprints 2 – 8 |
-| **Team Size** | 10 members |
+| **Team Size** | 8 members |
 | **Stack** | NestJS · Next.js 14 · PostgreSQL · Prisma · Google Gemini AI |
 | **Repo** | `github.com/proyotech/AI_LeadOS` |
 | **Base Branch** | `main` (always production-ready) |
@@ -23,20 +21,34 @@
 
 ## 👥 Team Structure & Roles
 
-Every member has a **primary role** and a **secondary responsibility**. This ensures no single point of failure.
+| Name | Team | Role |
+|------|------|------|
+| **Arpan** | AI + Automation | Tech Lead · AI Engineer · Automation Engineer |
+| **Soumya** | AI + Automation | AI Engineer · Automation Engineer |
+| **Dushyant** | Backend | Backend Developer |
+| **Saransh** | Backend | Backend Developer |
+| **Ujjwal** | Backend | Backend Developer |
+| **Arav** | Frontend | Frontend Developer |
+| **Harshwardhan** | Frontend | Frontend Developer |
 
-| # | Role | Primary Focus | Secondary |
-|---|------|--------------|-----------|
-| **Member 1** | **Tech Lead / Scrum Master** | Sprint planning, PR reviews, architecture decisions | Backend |
-| **Member 2** | **Backend Dev 1** | NestJS APIs, business logic, Prisma migrations | DevOps |
-| **Member 3** | **Backend Dev 2** | NestJS modules, guards, services, unit tests | Backend |
-| **Member 4** | **Frontend Dev 1** | Next.js pages, routing, state management | UI Integration |
-| **Member 5** | **Frontend Dev 2** | Components, forms, API integration, auth flows | Testing |
-| **Member 6** | **UI/UX Designer** | Figma designs, Tailwind tokens, component specs | Frontend |
-| **Member 7** | **AI Engineer 1** | Gemini prompts, AI service layer, response parsing | Backend |
-| **Member 8** | **AI Engineer 2** | Lead scoring logic, AI insights, testing AI outputs | AI |
-| **Member 9** | **Automation Engineer** | Workflow engine, event bus, sequence execution | Backend |
-| **Member 10** | **QA / Full-Stack** | Testing, bug fixes, documentation, cross-team support | Any |
+---
+
+## 🔄 Sprint Rotation Strategy
+
+To keep the codebase conflict-free, **only one member per team is active in each sprint**. The inactive member reviews PRs, studies the codebase, and prepares for their upcoming sprint.
+
+| Sprint | Backend (rotates: D → S → U → D…) | Frontend (rotates: Arav → Harsh → …) | AI + Automation (rotates: Arpan → Soumya → …) |
+|--------|------------------------------------|---------------------------------------|------------------------------------------------|
+| Sprint 1 ✅ | — *(Arpan solo bootstrap)* | — | **Arpan** |
+| Sprint 2 🔵 | **Dushyant** | **Arav** | **Arpan** |
+| Sprint 3 🟡 | **Saransh** | **Harshwardhan** | **Soumya** |
+| Sprint 4 🟠 | **Ujjwal** | **Arav** | **Arpan** |
+| Sprint 5 🔴 | **Dushyant** | **Harshwardhan** | **Soumya** |
+| Sprint 6 🟣 | **Saransh** | **Arav** | **Arpan** |
+| Sprint 7 🟢 | **Ujjwal** | **Harshwardhan** | **Soumya** |
+| Sprint 8 🏁 | **Dushyant** | **Arav** | **Arpan** |
+
+> **Inactive members:** Review the active member's PR, read the new code, and use the sprint to prepare questions, set up your local dev environment, and study the relevant docs.
 
 ---
 
@@ -49,10 +61,11 @@ main                          ← protected, never push directly
 
 ### Branch Naming
 ```
-sprint-2/leads-crud           ← feature branches
-sprint-2/dashboard-ui
-fix/lead-score-bug            ← bug fixes
-docs/update-architecture      ← documentation only
+sprint-2/leads-backend        ← backend feature
+sprint-2/leads-ui             ← frontend feature
+sprint-2/ai-auto-score        ← AI feature
+fix/lead-score-bug            ← bug fix
+docs/update-roadmap           ← documentation only
 ```
 
 ### Commit Convention
@@ -67,10 +80,10 @@ refactor: extract lead validation to guard
 ### Pull Request Rules
 1. **Branch from `main`**, never from another feature branch
 2. **PR title** must follow commit convention (`feat:`, `fix:`, etc.)
-3. **At least 1 reviewer** must approve before merging
-4. **Copilot review** is automatic — address all High/Medium comments before merging
-5. **Delete your branch** after merge (GitHub does this automatically)
-6. **PR description** must include: what was built, how to test it, checklist
+3. **At least 1 reviewer must approve** before merging (the inactive team member reviews)
+4. **Copilot review is automatic** — address all High/Medium comments before merging
+5. **Delete your branch** after merge
+6. **PR description must include:** what was built, how to test it, checklist
 
 ---
 
@@ -79,138 +92,167 @@ refactor: extract lead validation to guard
 ---
 
 ### ✅ Sprint 1 — Foundation & Setup
-**Status:** Merged to `main` | **Branch:** `sprint-1/foundation`
+**Status:** Merged to `main`  
+**Active:** Arpan (solo bootstrap)
 
-| Deliverable | Owner | Status |
-|-------------|-------|--------|
-| NestJS backend scaffold | Member 1 | ✅ Done |
-| PostgreSQL + Docker Compose | Member 1 | ✅ Done |
-| Prisma schema (11 models) | Member 1 | ✅ Done |
-| Auth Module (register/login/me + JWT) | Member 1 | ✅ Done |
-| RolesGuard + RBAC | Member 1 | ✅ Done |
-| Next.js 14 frontend scaffold | Member 1 | ✅ Done |
-| Login / Register pages | Member 1 | ✅ Done |
-| Dashboard shell (sidebar + topbar) | Member 1 | ✅ Done |
-| AI Service Layer (Gemini wrapper) | Member 1 | ✅ Done |
-| Prompt Library (4 prompts) | Member 1 | ✅ Done |
-| Workflow + Sequence + Event schemas | Member 1 | ✅ Done |
-| Automation Engine stub | Member 1 | ✅ Done |
-
-> Sprint 1 was bootstrapped solo to give everyone a working foundation. From Sprint 2 onwards, all 10 members contribute.
+| Deliverable | Status |
+|-------------|--------|
+| NestJS backend scaffold + PostgreSQL Docker | ✅ Done |
+| Prisma schema — 11 models | ✅ Done |
+| Auth Module (register / login / me + JWT) | ✅ Done |
+| RolesGuard + RBAC | ✅ Done |
+| Next.js 14 frontend scaffold | ✅ Done |
+| Login / Register pages | ✅ Done |
+| Dashboard shell (sidebar + topbar) | ✅ Done |
+| AI Service Layer (Gemini wrapper + 4 prompts) | ✅ Done |
+| Workflow + Sequence + Event schemas | ✅ Done |
+| Automation Engine stub | ✅ Done |
 
 ---
 
 ### 🔵 Sprint 2 — Core CRM: Leads, Deals & Dashboard Data
-**Status:** 🟡 Planning  
-**Goal:** Build the real CRM data layer — leads and deals CRUD, live dashboard stats, and the leads list UI.
+**Status:** 🟡 Active  
+**Goal:** Real CRM data layer — leads & deals CRUD, live dashboard stats, AI auto-scoring.
 
-#### Backend (Members 2 & 3)
-| Task | Owner | Branch |
-|------|-------|--------|
-| `LeadsModule` — CRUD endpoints (`GET /leads`, `POST /leads`, `PATCH /leads/:id`, `DELETE /leads/:id`) | Member 2 | `sprint-2/leads-backend` |
-| `DealsModule` — CRUD endpoints for deals with stage transitions | Member 3 | `sprint-2/deals-backend` |
-| Pagination, filtering & search on `GET /leads` | Member 2 | `sprint-2/leads-backend` |
-| Dashboard stats endpoint (`GET /dashboard/stats`) | Member 3 | `sprint-2/deals-backend` |
-| Input validation DTOs for all endpoints | Member 2 | `sprint-2/leads-backend` |
-| Swagger docs for all new endpoints | Both | Respective branches |
+| Team | Active Member | Branch |
+|------|--------------|--------|
+| Backend | **Dushyant** | `sprint-2/backend` |
+| Frontend | **Arav** | `sprint-2/frontend` |
+| AI + Automation | **Arpan** | `sprint-2/ai-automation` |
 
-#### Frontend (Members 4, 5 & 6)
-| Task | Owner | Branch |
-|------|-------|--------|
-| Leads List page (`/leads`) — data table with search/filter/sort | Member 4 | `sprint-2/leads-ui` |
-| Add Lead modal — form connected to backend `POST /leads` | Member 5 | `sprint-2/leads-ui` |
-| Lead detail side panel — view/edit lead info | Member 4 | `sprint-2/leads-ui` |
-| Dashboard home — connect stats cards to real `GET /dashboard/stats` | Member 5 | `sprint-2/dashboard-ui` |
-| Design system: colour tokens, typography, spacing in Tailwind | Member 6 | `sprint-2/design-system` |
-| Reusable `DataTable`, `Modal`, `Badge` components | Member 6 | `sprint-2/design-system` |
+#### Dushyant — Backend (`sprint-2/backend`)
+| Task |
+|------|
+| `LeadsModule` — `GET /leads`, `POST /leads`, `PATCH /leads/:id`, `DELETE /leads/:id` |
+| `DealsModule` — CRUD with stage transitions |
+| Pagination, filtering & search on `GET /leads` |
+| `GET /dashboard/stats` — total leads, deals, conversion rate |
+| Input validation DTOs for all new endpoints |
+| Swagger docs for all new endpoints |
 
-#### AI (Members 7 & 8)
-| Task | Owner | Branch |
-|------|-------|--------|
-| Trigger `scoreLead()` automatically on lead creation | Member 7 | `sprint-2/ai-auto-score` |
-| Store AI score + reason back to `Lead.score` in DB | Member 7 | `sprint-2/ai-auto-score` |
-| Display AI score badge on leads list UI | Member 8 | `sprint-2/ai-score-ui` |
+#### Arav — Frontend (`sprint-2/frontend`)
+| Task |
+|------|
+| Leads List page (`/leads`) — data table with search / filter / sort |
+| Add Lead modal — form connected to `POST /leads` |
+| Lead detail side panel — view / edit lead info |
+| Dashboard home — connect stats cards to real `GET /dashboard/stats` |
+| Reusable `DataTable`, `Modal`, `Badge` components |
+| Design refinements — Tailwind colour tokens & typography |
 
-#### QA (Member 10)
-| Task | Owner | Branch |
-|------|-------|--------|
-| End-to-end test: create lead → see score in list | Member 10 | `sprint-2/qa-leads` |
-| Test all filter/search/sort combinations on leads list | Member 10 | `sprint-2/qa-leads` |
+#### Arpan — AI + Automation (`sprint-2/ai-automation`)
+| Task |
+|------|
+| Trigger `scoreLead()` automatically on `POST /leads` creation |
+| Store AI score + reasoning back to `Lead.score` in DB |
+| Display AI score badge on leads list UI |
+| Wire up `InMemoryEventBus` to fire `lead.created` event |
 
 ---
 
 ### 🟡 Sprint 3 — Pipeline, Activity Feed & Task Management
 **Status:** Upcoming  
-**Goal:** Visual deal pipeline (Kanban), activity timeline per lead, and task management.
+**Goal:** Kanban pipeline, per-lead activity timeline, task management.
 
-#### Backend (Members 2 & 3)
-| Task | Owner |
-|------|-------|
-| `TasksModule` — CRUD for tasks with lead association | Member 3 |
-| `ActivitiesModule` — log activity (call, email, note, WhatsApp) | Member 2 |
-| Pipeline stage-change endpoint with activity auto-log | Member 2 |
-| `GET /leads/:id` — full lead detail with deals, tasks, activities, AI insights | Member 3 |
+| Team | Active Member | Branch |
+|------|--------------|--------|
+| Backend | **Saransh** | `sprint-3/backend` |
+| Frontend | **Harshwardhan** | `sprint-3/frontend` |
+| AI + Automation | **Soumya** | `sprint-3/ai-automation` |
 
-#### Frontend (Members 4, 5 & 6)
-| Task | Owner |
-|------|-------|
-| Pipeline page (`/pipeline`) — Kanban board with drag-and-drop deal cards | Member 4 |
-| Deal card component with stage badge, amount, and owner avatar | Member 6 |
-| Activity timeline component — chronological feed per lead | Member 5 |
-| Task management sidebar — add/complete tasks on lead detail | Member 5 |
-| Lead detail page (`/leads/:id`) — full 360° view | Member 4 |
+#### Saransh — Backend
+| Task |
+|------|
+| `TasksModule` — CRUD for tasks with lead association |
+| `ActivitiesModule` — log activity (call, email, note, WhatsApp) |
+| Pipeline stage-change endpoint with activity auto-log |
+| `GET /leads/:id` — full lead detail with deals, tasks, activities, AI insights |
 
-#### Automation (Member 9)
-| Task | Owner |
-|------|-------|
-| Wire `InMemoryEventBus` to fire `lead.status_changed` events on pipeline stage change | Member 9 |
-| Wire `task.completed` event when a task is marked done | Member 9 |
+#### Harshwardhan — Frontend
+| Task |
+|------|
+| Pipeline page (`/pipeline`) — Kanban board with drag-and-drop deal cards |
+| Deal card component — stage badge, amount, owner avatar |
+| Activity timeline component — chronological feed per lead |
+| Task management sidebar — add/complete tasks on lead detail |
+| Lead detail page (`/leads/:id`) — full 360° view |
+
+#### Soumya — AI + Automation
+| Task |
+|------|
+| Wire `InMemoryEventBus` → `lead.status_changed` on pipeline stage change |
+| Wire `task.completed` event when task is marked done |
+| Auto-trigger `scoreLead()` on status change (re-score as lead progresses) |
 
 ---
 
 ### 🟠 Sprint 4 — AI Intelligence Module & Outreach Sequences
 **Status:** Upcoming  
-**Goal:** Real AI intelligence per lead (company audit, outreach plan) connected to the UI. Sequence builder.
+**Goal:** Real per-lead AI analysis (company audit), outreach sequence builder.
 
-#### Backend & AI (Members 2, 7 & 8)
-| Task | Owner |
-|------|-------|
-| `AIInsightModule` — endpoint `POST /leads/:id/analyze` (calls `analyzeCompany()`) | Member 7 |
-| Store AI insights to `AIInsight` DB model | Member 7 |
-| `SequenceModule` — CRUD for sequences and steps | Member 2 |
-| Enroll lead into sequence endpoint `POST /sequences/:id/enroll/:leadId` | Member 8 |
-| `generateOutreachSequence()` — generate and persist 7-day plan per lead | Member 8 |
+| Team | Active Member | Branch |
+|------|--------------|--------|
+| Backend | **Ujjwal** | `sprint-4/backend` |
+| Frontend | **Arav** | `sprint-4/frontend` |
+| AI + Automation | **Arpan** | `sprint-4/ai-automation` |
 
-#### Frontend (Members 4, 5 & 6)
-| Task | Owner |
-|------|-------|
-| AI Intelligence page (`/ai-intelligence`) — company audit UI | Member 4 |
-| AI insight cards — display score, opportunities, risks, next action | Member 6 |
-| Sequence builder UI — step editor with channel/delay/template fields | Member 5 |
-| Sequence enrollment — select leads and enroll from the UI | Member 5 |
+#### Ujjwal — Backend
+| Task |
+|------|
+| `SequenceModule` — CRUD for sequences and steps |
+| Enroll lead endpoint — `POST /sequences/:id/enroll/:leadId` |
+| `AIInsightModule` — `POST /leads/:id/analyze` endpoint |
+| Store AI insights to `AIInsight` DB model |
+
+#### Arav — Frontend
+| Task |
+|------|
+| AI Intelligence page (`/ai-intelligence`) — company audit UI |
+| AI insight cards — score, opportunities, risks, next action |
+| Sequence builder UI — step editor with channel/delay/template fields |
+| Sequence enrollment — select leads and enroll from the UI |
+
+#### Arpan — AI + Automation
+| Task |
+|------|
+| `analyzeCompany()` — wire to `POST /leads/:id/analyze` endpoint |
+| `generateOutreachSequence()` — generate and persist 7-day plan per lead |
+| Persist generated sequence steps to DB via `SequenceModule` |
 
 ---
 
 ### 🔴 Sprint 5 — Automation Builder (Visual Workflow Editor)
 **Status:** Upcoming  
-**Goal:** Drag-and-drop visual workflow builder connected to the real execution engine.
+**Goal:** Drag-and-drop visual workflow builder with real DB-backed execution engine.
 
-#### Automation & Backend (Members 9 & 2)
-| Task | Owner |
-|------|-------|
-| Persist workflows to DB via `WorkflowModule` CRUD | Member 2 |
-| Real workflow executor — replace in-memory engine with DB-backed execution | Member 9 |
-| Schedule cron-triggered workflows (use `@nestjs/schedule`) | Member 9 |
-| `WorkflowExecutionModule` — start, pause, stop, view execution logs | Member 9 |
+| Team | Active Member | Branch |
+|------|--------------|--------|
+| Backend | **Dushyant** | `sprint-5/backend` |
+| Frontend | **Harshwardhan** | `sprint-5/frontend` |
+| AI + Automation | **Soumya** | `sprint-5/ai-automation` |
 
-#### Frontend (Members 4, 5 & 6)
-| Task | Owner |
-|------|-------|
-| Visual workflow canvas (`/automation`) using React Flow | Member 4 |
-| Trigger node panel — select from 8 trigger types | Member 5 |
-| Action node panel — select from 12 action types | Member 5 |
-| AI Decision node — condition branching based on AI score | Member 6 |
-| Workflow run history panel — execution status per workflow | Member 4 |
+#### Dushyant — Backend
+| Task |
+|------|
+| `WorkflowModule` — CRUD for workflows (persist definition to DB) |
+| `WorkflowExecutionModule` — start, pause, stop, view logs |
+| Schedule cron-triggered workflows (`@nestjs/schedule`) |
+
+#### Harshwardhan — Frontend
+| Task |
+|------|
+| Visual workflow canvas (`/automation`) — React Flow integration |
+| Trigger node panel — 8 trigger types |
+| Action node panel — 12 action types |
+| AI Decision node — branching on AI score |
+| Workflow run history panel |
+
+#### Soumya — AI + Automation
+| Task |
+|------|
+| Replace in-memory engine with DB-backed workflow executor |
+| Integrate `suggestWorkflows()` to recommend automations to users |
+| Per-node execution result tracking and logging |
 
 ---
 
@@ -218,78 +260,104 @@ refactor: extract lead validation to guard
 **Status:** Upcoming  
 **Goal:** Outbound communication channels connected to the CRM.
 
-#### Backend (Members 2, 3 & 7)
-| Task | Owner |
-|------|-------|
-| Email integration (Resend / Nodemailer) — send template emails from sequences | Member 3 |
-| WhatsApp integration (Meta Cloud API or Twilio) — send/receive messages | Member 2 |
-| LinkedIn outreach (Sales Navigator API or approved approach) | Member 7 |
-| `CommunicationLog` model — store every outbound/inbound message per lead | Member 3 |
-| Deliverability tracking — open/click/bounce webhook handlers | Member 2 |
+| Team | Active Member | Branch |
+|------|--------------|--------|
+| Backend | **Saransh** | `sprint-6/backend` |
+| Frontend | **Arav** | `sprint-6/frontend` |
+| AI + Automation | **Arpan** | `sprint-6/ai-automation` |
 
-#### Frontend (Members 5 & 6)
-| Task | Owner |
-|------|-------|
-| Communications Hub page (`/communications`) — unified inbox | Member 5 |
-| Conversation thread view per lead (WhatsApp-style) | Member 6 |
-| Email composer with template variables | Member 5 |
+#### Saransh — Backend
+| Task |
+|------|
+| Email integration (Resend / Nodemailer) — send template emails from sequences |
+| WhatsApp integration (Meta Cloud API or Twilio) |
+| `CommunicationLog` model — store every outbound/inbound message per lead |
+| Deliverability tracking — open/click/bounce webhook handlers |
+
+#### Arav — Frontend
+| Task |
+|------|
+| Communications Hub page (`/communications`) — unified inbox |
+| Conversation thread view per lead (WhatsApp-style) |
+| Email composer with template variables |
+
+#### Arpan — AI + Automation
+| Task |
+|------|
+| AI-personalised message generation — use Gemini to write outreach copy |
+| Auto-enroll leads in sequences based on communication triggers |
+| Smart send-time optimisation prompt |
 
 ---
 
 ### 🟢 Sprint 7 — Analytics, Reporting & Admin Panel
 **Status:** Upcoming  
-**Goal:** Data-driven insights dashboard, team performance metrics, and admin controls.
+**Goal:** Charts dashboard, team performance metrics, admin user management.
 
-#### Backend (Members 2 & 3)
-| Task | Owner |
-|------|-------|
-| Analytics endpoints — conversion funnel, revenue pipeline, source breakdown | Member 3 |
-| Lead velocity metrics (time from NEW → CONVERTED) | Member 2 |
-| Team performance endpoint — activities per executive, deals won | Member 3 |
-| Admin user management (already RBAC-protected) | Member 2 |
+| Team | Active Member | Branch |
+|------|--------------|--------|
+| Backend | **Ujjwal** | `sprint-7/backend` |
+| Frontend | **Harshwardhan** | `sprint-7/frontend` |
+| AI + Automation | **Soumya** | `sprint-7/ai-automation` |
 
-#### Frontend (Members 4, 5 & 6)
-| Task | Owner |
-|------|-------|
-| Analytics page (`/analytics`) — charts using Recharts or Chart.js | Member 4 |
-| Conversion funnel chart, pipeline value by stage | Member 5 |
-| Team leaderboard panel | Member 6 |
-| Admin panel (`/admin`) — manage users, roles, team settings | Member 4 |
+#### Ujjwal — Backend
+| Task |
+|------|
+| Analytics endpoints — conversion funnel, revenue pipeline, source breakdown |
+| Lead velocity metrics (time from NEW → CONVERTED) |
+| Team performance endpoint — activities per executive, deals won |
+| Admin user management endpoints |
 
-#### AI (Members 7 & 8)
-| Task | Owner |
-|------|-------|
-| AI-generated weekly performance summary via Gemini | Member 7 |
-| Predictive deal close probability using AI scoring history | Member 8 |
+#### Harshwardhan — Frontend
+| Task |
+|------|
+| Analytics page (`/analytics`) — Recharts / Chart.js |
+| Conversion funnel chart + pipeline value by stage |
+| Team leaderboard panel |
+| Admin panel (`/admin`) — manage users, roles, settings |
+
+#### Soumya — AI + Automation
+| Task |
+|------|
+| AI weekly performance summary — Gemini-generated report |
+| Predictive deal close probability using AI scoring history |
+| Anomaly detection — flag leads with no activity in X days |
 
 ---
 
 ### 🏁 Sprint 8 — Polish, Production Readiness & Launch
 **Status:** Upcoming  
-**Goal:** Production deployment, security hardening, and final demo.
+**Goal:** Deployment, security hardening, final demo.
 
-#### DevOps & Backend (Members 2 & 3)
-| Task | Owner |
-|------|-------|
-| Dockerize frontend + backend into `docker-compose.prod.yml` | Member 2 |
-| CI/CD pipeline (GitHub Actions) — lint, test, build on every PR | Member 3 |
-| Environment secret management (Railway / Render / VPS) | Member 2 |
-| Rate limiting, helmet, CORS hardening on NestJS | Member 3 |
+| Team | Active Member | Branch |
+|------|--------------|--------|
+| Backend | **Dushyant** | `sprint-8/backend` |
+| Frontend | **Arav** | `sprint-8/frontend` |
+| AI + Automation | **Arpan** | `sprint-8/ai-automation` |
 
-#### Frontend (Members 4 & 6)
-| Task | Owner |
-|------|-------|
-| Performance audit — Lighthouse score > 90 | Member 4 |
-| Mobile responsiveness pass on all pages | Member 6 |
-| Loading skeletons, error boundaries, toast notifications | Member 4 |
+#### Dushyant — Backend + DevOps
+| Task |
+|------|
+| `docker-compose.prod.yml` — production-ready multi-container setup |
+| CI/CD pipeline (GitHub Actions) — lint, build, test on every PR |
+| Environment secret management (Railway / Render / VPS) |
+| Rate limiting, helmet, CORS hardening |
 
-#### QA & Docs (Members 10 & 1)
-| Task | Owner |
-|------|-------|
-| Full regression test: all user flows end-to-end | Member 10 |
-| Final `README.md` with production setup guide | Member 1 |
-| Record demo video of the platform | Member 10 |
-| Final sprint review presentation | Member 1 |
+#### Arav — Frontend
+| Task |
+|------|
+| Performance audit — Lighthouse score > 90 |
+| Mobile responsiveness pass on all pages |
+| Loading skeletons, error boundaries, toast notifications |
+
+#### Arpan — AI + Automation + Final Docs
+| Task |
+|------|
+| Final AI prompt review — accuracy, latency, token cost |
+| Full regression test: all AI + automation user flows |
+| Final `README.md` production setup guide |
+| Record demo video of the platform |
+| Sprint 8 review presentation |
 
 ---
 
@@ -297,27 +365,27 @@ refactor: extract lead validation to guard
 
 ```
 Sprint 1  ✅  Foundation & Setup                  DONE
-Sprint 2  🔵  Core CRM — Leads, Deals, Dashboard  Week 2
-Sprint 3  🟡  Pipeline, Activities, Tasks          Week 3
-Sprint 4  🟠  AI Intelligence & Sequences          Week 4
-Sprint 5  🔴  Automation Builder (Visual)          Week 5
-Sprint 6  🟣  Communications Hub                  Week 6
-Sprint 7  🟢  Analytics & Admin                   Week 7
-Sprint 8  🏁  Polish, Deploy & Launch              Week 8
+Sprint 2  🔵  Core CRM — Leads, Deals, Dashboard  Week 2   → Dushyant / Arav / Arpan
+Sprint 3  🟡  Pipeline, Activities, Tasks          Week 3   → Saransh / Harshwardhan / Soumya
+Sprint 4  🟠  AI Intelligence & Sequences          Week 4   → Ujjwal / Arav / Arpan
+Sprint 5  🔴  Automation Builder (Visual)          Week 5   → Dushyant / Harshwardhan / Soumya
+Sprint 6  🟣  Communications Hub                  Week 6   → Saransh / Arav / Arpan
+Sprint 7  🟢  Analytics & Admin                   Week 7   → Ujjwal / Harshwardhan / Soumya
+Sprint 8  🏁  Polish, Deploy & Launch              Week 8   → Dushyant / Arav / Arpan
 ```
 
 ---
 
 ## 📋 Definition of Done (Every Sprint)
 
-Before a branch can be merged to `main`:
+Before any branch is merged to `main`:
 
-- [ ] Feature is fully implemented as described in this roadmap
-- [ ] Code compiles with no TypeScript errors (`npx tsc --noEmit`)
-- [ ] All Swagger endpoints are documented (backend)
+- [ ] Feature fully implemented as described in this roadmap
+- [ ] TypeScript compiles with no errors (`npx tsc --noEmit`)
+- [ ] Swagger docs updated for all backend endpoints
 - [ ] No hardcoded secrets or `.env` values in code
-- [ ] Copilot High/Medium-severity comments addressed
-- [ ] PR description includes: what was built + how to test
+- [ ] Copilot High/Medium severity comments addressed
+- [ ] PR description: what was built + how to test
 - [ ] At least 1 peer review approval
 - [ ] Branch deleted after merge
 
@@ -325,13 +393,14 @@ Before a branch can be merged to `main`:
 
 ## ⚠️ Team Rules (Non-Negotiable)
 
-1. **Never push directly to `main`** — always use a PR
-2. **Always pull `main` before starting a new branch** — avoids merge conflicts
-3. **Each person works on their own branch** — never share a branch
-4. **Commit often, push daily** — don't sit on a week of uncommitted work
-5. **Read the PR description of every merged PR** — stay aware of what changed
-6. **The Prisma schema is shared** — coordinate with Member 2 before adding models
-7. **If you're blocked, communicate immediately** — don't stay stuck silently
+1. **Never push directly to `main`** — always open a PR
+2. **Always `git pull origin main`** before creating your branch
+3. **One person per branch** — never share a working branch
+4. **Commit and push daily** — don't sit on uncommitted work
+5. **Read every merged PR description** — know what changed
+6. **Prisma schema is shared** — coordinate with the active backend dev before touching it
+7. **If you're stuck, speak up immediately** — don't stay blocked silently
+8. **Inactive sprint? Still review PRs and study the new code** — stay sharp
 
 ---
 
@@ -340,27 +409,28 @@ Before a branch can be merged to `main`:
 | Resource | Link |
 |----------|------|
 | GitHub Repo | `github.com/proyotech/AI_LeadOS` |
-| Notion Project Board | _(see Notion link shared by Tech Lead)_ |
-| Backend Swagger Docs | `http://localhost:3001/api/docs` |
+| Notion Board | _(link shared by Arpan)_ |
+| Swagger API Docs | `http://localhost:3001/api/docs` |
 | Architecture Doc | `docs/SPRINT_1_ARCHITECTURE.md` |
 | PR Template | `docs/PR_Description_Sprint1.md` |
-| Environment Template | `backend/.env.example` |
+| Sprint 2 Task Sheet | `docs/SPRINT_2_TASKS.md` |
+| Env Template | `backend/.env.example` |
 
 ---
 
-## 🚦 Quick Start for New Members (Sprint 2)
+## 🚦 Quick Start for Every Member
 
 ```bash
-# 1. Clone the repo
+# 1. Clone the repo (first time only)
 git clone https://github.com/proyotech/AI_LeadOS.git
 cd AI_LeadOS
 
-# 2. Always start from main
+# 2. Always start from latest main
 git checkout main
 git pull origin main
 
-# 3. Create your sprint branch
-git checkout -b sprint-2/your-feature-name
+# 3. Create your sprint branch (use the name from your task sheet)
+git checkout -b sprint-2/backend        # example
 
 # 4. Backend setup
 cd backend
@@ -377,15 +447,15 @@ npm install
 echo "NEXT_PUBLIC_API_URL=http://localhost:3001/api" > .env.local
 npm run dev             # → http://localhost:3000
 
-# 6. Work, commit, push
+# 6. Commit and push your work
 git add .
 git commit -m "feat: your feature description"
-git push origin sprint-2/your-feature-name
+git push origin sprint-2/backend
 
-# 7. Open a Pull Request on GitHub against main
+# 7. Open a Pull Request on GitHub → base: main
 ```
 
 ---
 
-*Last updated: After Sprint 1 completion — ProyoTech Internship 2026*  
-*Maintained by: Tech Lead (Member 1)*
+*Last updated: Sprint 2 planning — ProyoTech Internship 2026*
+*Maintained by: Arpan (Tech Lead)*
