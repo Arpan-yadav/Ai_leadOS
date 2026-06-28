@@ -33,11 +33,11 @@ export class DashboardService {
         this.prisma.deal.aggregate({
           _sum: { amount: true }, 
         }),
-        this.prisma.lead.groupBy({
+        (this.prisma.lead.groupBy as any)({
           by: ['status'],
           _count: { status: true },
         }),
-        this.prisma.deal.groupBy({
+        (this.prisma.deal.groupBy as any)({
           by: ['stage'],
           _count: { stage: true },
         }),
@@ -45,7 +45,7 @@ export class DashboardService {
 
       // 3. Format leadsByStatus shape: { NEW: 30, CONTACTED: 20... }
       const leadsByStatus: Record<string, number> = {};
-      leadsGrouped.forEach((item) => {
+      leadsGrouped.forEach((item: any) => {
         if (item.status) {
           leadsByStatus[item.status] = item._count.status;
         }
@@ -53,7 +53,7 @@ export class DashboardService {
 
       // 4. Format dealsByStage shape: { DISCOVERY: 5, WON: 6... }
       const dealsByStage: Record<string, number> = {};
-      dealsGrouped.forEach((item) => {
+      dealsGrouped.forEach((item: any) => {
         if (item.stage) {
           dealsByStage[item.stage] = item._count.stage;
         }

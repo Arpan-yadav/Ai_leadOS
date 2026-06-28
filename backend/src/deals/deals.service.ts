@@ -13,12 +13,11 @@ export class DealsService {
     this.logger.log(`[DealsService] Creating deal for Lead ID: ${dto.leadId}`);
     return this.prisma.deal.create({
       data: {
-        name: dto.name,
+        title: dto.name, // Mapping DTO's name to Deal's title
         amount: dto.amount,
         stage: dto.stage ?? 'DISCOVERY',
         leadId: dto.leadId,
-        // Agar Deal model mein owner/assignedTo hai, toh userId use kar sakte ho
-        // assignedToId: userId, 
+        ownerId: userId,
       },
     });
   }
