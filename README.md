@@ -6,68 +6,63 @@
 
 > An intelligent Lead Management, Sales Automation, and CRM platform powered by Google Gemini AI.
 
-[![Sprint](https://img.shields.io/badge/Sprint-1%20Foundation-brand)](https://github.com/proyotech/AI_LeadOS)
-[![Stack](https://img.shields.io/badge/Stack-React%20%2B%20Vite%20%2B%20Gemini-blue)](https://github.com/proyotech/AI_LeadOS)
+[![Sprint](https://img.shields.io/badge/Sprint-2%20Active-blue)](https://github.com/proyotech/AI_LeadOS)
+[![Stack](https://img.shields.io/badge/Stack-NestJS%20%2B%20Next.js%20%2B%20Prisma%20%2B%20Gemini-blue)](https://github.com/proyotech/AI_LeadOS)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green)](LICENSE)
 
 ---
 
-## ✨ Features (Sprint 1)
+## ✨ Features (Sprint 1 & 2)
 
 | Module | Description |
 |--------|-------------|
-| 🤖 **AI Intelligence** | Company website audits with Gemini AI — sales score, opportunities, risks |
-| ⚡ **Automation Engine** | Event-driven workflow execution with visual builder |
-| 📧 **Outreach Sequences** | AI-personalized multi-channel drip campaigns |
-| 📊 **Dashboard** | Real-time CRM metrics and activity feed |
-| 🎯 **Lead Management** | Full lead pipeline with AI scoring |
-| 🔄 **Pipeline View** | Kanban-style deal stage management |
+| 🤖 **AI Lead Scoring** | Auto-scores leads (0-100) on creation using Gemini AI, with priority and ICP fit |
+| ⚡ **Event Bus** | Typed, in-process automation event bus (`lead.created`, `lead.scored`) |
+| 🎯 **Lead Management** | Full REST API (CRUD) for Leads with pagination, search, and filtering |
+| 🗄️ **Backend Core** | NestJS + PostgreSQL + Prisma with JWT RBAC Auth and Swagger docs |
+| 🎨 **Frontend Shell** | Next.js 14 layout, Sidebar, and Auth pages |
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-src/
-├── ai/               ← Gemini AI Service Layer
-│   ├── aiService.ts  ← Core AI methods
-│   └── prompts/      ← Prompt Library
-│       └── leadAnalyzer.ts
-│
-├── automation/       ← Automation Engine
-│   ├── engine.ts     ← Event bus + workflow executor
-│   └── schemas/      ← Type system
-│       ├── workflowSchema.ts
-│       ├── sequenceSchema.ts
-│       └── eventSchema.ts
-│
-├── pages/            ← React Pages (Full UI Prototype)
-└── components/       ← Reusable Components
+backend/src/
+├── ai/               ← NestJS AiModule (Gemini wrapper)
+├── automation/       ← AutoScore listeners and rules
+├── events/           ← Typed EventBusService
+├── leads/            ← Leads CRUD API
+├── auth/             ← JWT + RolesGuard
+└── prisma/           ← Schema with 11 core models
+
+frontend/             ← Next.js 14 App Router
 ```
 
 ---
 
 ## 🚀 Quick Start
 
-**Prerequisites:** Node.js 18+
+**Prerequisites:** Node.js 18+, Docker (for PostgreSQL)
 
 ```bash
 # 1. Clone the repository
 git clone https://github.com/proyotech/AI_LeadOS.git
 cd AI_LeadOS
 
-# 2. Install dependencies
+# 2. Start Backend
+cd backend
 npm install
+cp .env.example .env
+docker-compose up -d
+npx prisma migrate dev
+npm run start:dev       # API: http://localhost:3001/api/docs
 
-# 3. Configure environment
-cp .env.example .env.local
-# Add your Gemini API key (optional — demo mode works without it)
-
-# 4. Start development server
-npm run dev
+# 3. Start Frontend (in a new terminal)
+cd ../frontend
+npm install
+echo "NEXT_PUBLIC_API_URL=http://localhost:3001/api" > .env.local
+npm run dev             # UI: http://localhost:3000
 ```
-
-Open **http://localhost:3000** 🎉
 
 ---
 
@@ -75,21 +70,23 @@ Open **http://localhost:3000** 🎉
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `GEMINI_API_KEY` | Optional | Google Gemini API key for live AI analysis |
-| `APP_URL` | Optional | Deployed app URL |
-
-> **Note:** The app runs in demo mode without a Gemini API key — all AI features return realistic sample data.
+| `DATABASE_URL` | Yes | PostgreSQL connection string |
+| `JWT_SECRET` | Yes | Secret for auth tokens |
+| `GEMINI_API_KEY` | Optional | Google Gemini API key (App runs in Demo mode if missing) |
 
 ---
 
-## 🌐 API Reference
+## 🌐 API Reference (Swagger)
+
+All endpoints are documented at `http://localhost:3001/api/docs`
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/analyze-company` | POST | AI company intelligence audit |
-| `/api/generate-outreach` | POST | Generate 7-day outreach sequence |
-| `/api/score-lead` | POST | AI lead scoring (0-100) |
-| `/api/suggest-workflows` | POST | Automation workflow suggestions |
+| `/api/auth/register` | POST | Register a new user |
+| `/api/auth/login` | POST | Get JWT token |
+| `/api/leads` | POST | Create lead (Triggers AI Auto-Score) |
+| `/api/leads` | GET | List leads (paginated, searchable) |
+| `/api/leads/:id` | GET | Get full lead detail with AI insights |
 
 ---
 
@@ -97,10 +94,14 @@ Open **http://localhost:3000** 🎉
 
 | Sprint | Focus | Status |
 |--------|-------|--------|
-| **Sprint 1** | Foundation, AI Service Layer, Automation Schemas | ✅ In Progress |
-| Sprint 2 | Full Lead CRUD, Pipeline, Communications | 🔜 Planned |
-| Sprint 3 | Live Automation Engine, Email Gateway | 🔜 Planned |
-| Sprint 4 | Analytics, Reporting, Team Features | 🔜 Planned |
+| **Sprint 1** | Foundation, Auth, DB Schema, Scaffold | ✅ Done |
+| **Sprint 2** | Core CRM (Leads, Deals) + AI Auto-Scoring | 🔵 Active |
+| **Sprint 3** | Pipeline, Activity Feed & Task Management | 🟡 Upcoming |
+| **Sprint 4** | AI Intelligence Module & Outreach Sequences | 🟠 Upcoming |
+| **Sprint 5** | Automation Builder (Visual Workflow Editor) | 🔴 Upcoming |
+| **Sprint 6** | Communications Hub (Email, WhatsApp, LinkedIn) | 🟣 Upcoming |
+| **Sprint 7** | Analytics, Reporting & Admin Panel | 🟢 Upcoming |
+| **Sprint 8** | Polish, Production Readiness & Launch | 🏁 Upcoming |
 
 ---
 
@@ -108,10 +109,9 @@ Open **http://localhost:3000** 🎉
 
 Built by the **ProyoTech** internship team.
 
-- **AI Team:** AI Service Layer, Prompt Library, Lead Analyzer
-- **Automation Team:** Workflow Schema, Sequence Schema, Event Architecture
-- **Frontend Team:** React UI, Component Library, Dashboard
-- **Backend Team:** NestJS API, PostgreSQL, Authentication
+- **AI + Automation:** Arpan, Soumya
+- **Backend:** Dushyant, Saransh, Ujjwal
+- **Frontend:** Arav, Harshwardhan
 
 ---
 
