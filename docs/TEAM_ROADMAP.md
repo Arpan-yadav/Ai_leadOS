@@ -409,7 +409,7 @@ Before any branch is merged to `main`:
 | Resource | Link |
 |----------|------|
 | GitHub Repo | `github.com/proyotech/AI_LeadOS` |
-| Notion Board | _(link shared by Arpan)_ |
+| Notion Board | _(link shared by mentor)_|
 | Swagger API Docs | `http://localhost:3001/api/docs` |
 | Architecture Doc | `docs/SPRINT_1_ARCHITECTURE.md` |
 | PR Template | `docs/PR_Description_Sprint1.md` |
