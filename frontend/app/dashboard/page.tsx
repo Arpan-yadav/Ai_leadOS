@@ -3,6 +3,7 @@
  * @description Dashboard Home Page
  * Sprint 1 — Frontend Team Deliverable
  */
+'use client'
 
 import { TrendingUp, Users, Target, Zap, ArrowUpRight, Bot, Activity } from 'lucide-react';
 
