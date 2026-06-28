@@ -3,26 +3,50 @@ import React, { useState } from 'react'
 import StatusBadge from '../../components/ui/StatusBadge'
 import ScoreBadge from '../../components/ui/ScoreBadge'
 import SearchBar from '../../components/ui/SearchBar'
+import AddLeadModal from '../../components/leads/AddLeadModal'
 
 const LeadsPage = () => {
   const [search, setSearch] = useState('')
-
-  const mockLeads = [
+  const [showModal, setShowModal] = useState(false)
+  const [leads, setLeads] = useState([
     { id: 1, name: "John Smith", company: "Tech Corp", email: "john@techcorp.com", status: "NEW" as const, score: 85, source: "LINKEDIN" },
     { id: 2, name: "Sarah Johnson", company: "Design Studio", email: "sarah@design.com", status: "CONTACTED" as const, score: 62, source: "EMAIL" },
     { id: 3, name: "Rahul Sharma", company: "Digital Agency", email: "rahul@digital.com", status: "QUALIFIED" as const, score: 91, source: "WHATSAPP" }
-  ]
+  ])
 
-  const filteredLeads = mockLeads.filter(lead =>
+  const filteredLeads = leads.filter(lead =>
     lead.name.toLowerCase().includes(search.toLowerCase()) ||
     lead.email.toLowerCase().includes(search.toLowerCase()) ||
     lead.company.toLowerCase().includes(search.toLowerCase())
   )
 
+  const handleAddLead = (newLead: any) => {
+    setLeads([...leads, { ...newLead, status: "NEW" as const }])
+  }
+
   return (
     <div style={{ padding: "24px" }}>
-      <h1 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "16px" }}>Leads</h1>
+
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "16px" }}>
+        <h1 style={{ fontSize: "24px", fontWeight: "bold" }}>Leads</h1>
+        <button
+          onClick={() => setShowModal(true)}
+          style={{
+            padding: "8px 16px",
+            backgroundColor: "#2563eb",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontWeight: "500"
+          }}
+        >
+          + Add Lead
+        </button>
+      </div>
+
       <SearchBar onSearch={setSearch} />
+
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead>
           <tr style={{ backgroundColor: "#f3f4f6" }}>
@@ -47,6 +71,14 @@ const LeadsPage = () => {
           ))}
         </tbody>
       </table>
+
+      {showModal && (
+        <AddLeadModal
+          onClose={() => setShowModal(false)}
+          onAdd={handleAddLead}
+        />
+      )}
+
     </div>
   )
 }
