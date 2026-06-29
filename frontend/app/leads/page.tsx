@@ -27,18 +27,23 @@ const LeadsPage = () => {
   }
 
   return (
-    <div className="space-y-6 pb-12 animate-fade-in">
-      <header className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <h1 className="text-lg font-black text-slate-800 uppercase tracking-widest">Lead Universe</h1>
-          <span className="text-[10px] bg-slate-100 text-slate-500 font-bold px-2 py-0.5 rounded-full uppercase tracking-[0.2em]">Multi-channel leads</span>
+    <div className="space-y-6 pb-12 animate-fade-in relative">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight uppercase">Lead Universe</h1>
+          <p className="text-slate-500 mt-1 font-medium italic">Multi-channel leads synchronized via AI Automation.</p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="btn-primary"
-        >
-          + Add Lead
-        </button>
+        <div className="flex items-center gap-3">
+          <button className="btn-secondary h-10 flex items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-widest leading-none">Export</span>
+          </button>
+          <button
+            onClick={() => setShowModal(true)}
+            className="btn-primary h-10 flex items-center gap-2 shadow-lg shadow-brand-500/20"
+          >
+            <span className="text-[10px] font-black uppercase tracking-widest leading-none">+ Add Lead</span>
+          </button>
+        </div>
       </header>
 
       <SearchBar onSearch={setSearch} />
