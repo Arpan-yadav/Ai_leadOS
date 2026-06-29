@@ -35,7 +35,7 @@ export default function TopBar() {
           <span className="hidden sm:inline">New Lead</span>
         </button>
 
-        <div className="h-6 w-[1px] bg-slate-200 mx-1" />
+        <div className="h-6 w-px bg-slate-200 mx-1" />
 
         <div className="flex items-center gap-0.5">
           <button className="p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded transition-colors relative">
