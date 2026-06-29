@@ -1,12 +1,6 @@
-/**
- * @file components/layout/TopBar.tsx
- * @description Dashboard Top Navigation Bar
- * Sprint 1 — Frontend Team Deliverable
- */
-
 'use client';
 
-import { Search, Bell, Settings, LogOut } from 'lucide-react';
+import { Search, Bell, Plus, Command, HelpCircle, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { removeToken } from '@/lib/auth';
 
@@ -19,35 +13,53 @@ export default function TopBar() {
   };
 
   return (
-    <header className="h-16 border-b border-slate-200 bg-white/80 backdrop-blur-sm flex items-center justify-between px-6 shrink-0">
-      {/* Search */}
-      <div className="relative w-72">
-        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-        <input
-          type="text"
-          placeholder="Search leads, deals..."
-          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-9 pr-4 text-sm
-                     focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400
-                     placeholder:text-slate-400 transition-all"
-        />
+    <header className="h-14 bg-white border-b border-slate-200 px-6 flex items-center justify-between shrink-0">
+      {/* Search Bar */}
+      <div className="flex-1 max-w-md">
+        <div className="relative group">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-slate-600 transition-colors" size={14} />
+          <input 
+            type="text" 
+            placeholder="Search leads, deals, tasks..."
+            className="w-full bg-slate-100 border-transparent rounded-md py-1.5 pl-9 pr-12 text-xs focus:bg-white focus:outline-none focus:ring-1 focus:ring-brand-500 transition-all"
+          />
+          <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[9px] font-bold text-slate-400 border border-slate-200 rounded px-1 py-0.5 bg-white uppercase">
+            <Command size={9} /> K
+          </div>
+        </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-2">
-        <button className="relative p-2.5 rounded-xl hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition-colors">
-          <Bell size={18} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-brand-500 rounded-full" />
+      <div className="flex items-center gap-4">
+        <button className="btn-primary flex items-center gap-2 px-3 py-1.5 text-xs">
+          <Plus size={14} />
+          <span className="hidden sm:inline">New Lead</span>
         </button>
-        <button className="p-2.5 rounded-xl hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition-colors">
-          <Settings size={18} />
-        </button>
-        <div className="w-[1px] h-6 bg-slate-200 mx-1" />
-        <button
+
+        <div className="h-6 w-[1px] bg-slate-200 mx-1" />
+
+        <div className="flex items-center gap-0.5">
+          <button className="p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded transition-colors relative">
+            <Bell size={18} />
+            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-rose-500 rounded-full border-2 border-white" />
+          </button>
+          <button className="p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded transition-colors">
+            <HelpCircle size={18} />
+          </button>
+        </div>
+
+        <button 
           onClick={handleLogout}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-red-50 text-slate-500 hover:text-red-600 text-sm font-medium transition-colors"
+          className="flex items-center gap-2.5 p-1 px-1.5 rounded-md hover:bg-slate-50 transition-colors ml-1"
         >
-          <LogOut size={15} />
-          <span>Logout</span>
+          <div className="text-right hidden sm:block">
+            <p className="text-xs font-bold text-slate-900 leading-none">Sarah Chen</p>
+            <p className="text-[9px] text-slate-500 font-bold uppercase mt-0.5 tracking-tighter">Admin</p>
+          </div>
+          <img 
+            src="https://api.dicebear.com/7.x/notionists/svg?seed=Sarah&backgroundColor=e2e8f0" 
+            alt="Sarah Chen" 
+            className="w-7 h-7 rounded-sm border border-slate-200"
+          />
         </button>
       </div>
     </header>
