@@ -100,13 +100,13 @@ export default function LandingPage() {
 
           <div className="relative animate-fade-in" style={{ animationDelay: '0.2s' }}>
             <div className="absolute inset-0 bg-brand-600/10 blur-[120px] rounded-full" />
-            <div className="relative bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden aspect-[4/3] group">
+            <div className="relative bg-white border border-slate-200 shadow-2xl overflow-hidden group" style={{ aspectRatio: '4/3', borderRadius: '1rem' }}>
               <img 
                 src="https://images.unsplash.com/photo-1551288049-bbbda50a867c?auto=format&fit=crop&q=80&w=1200" 
                 alt="Dashboard Preview"
                 className="w-full h-full object-cover grayscale transition-all duration-700 group-hover:grayscale-0 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent" />
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(15, 23, 42, 0.4), transparent)' }} />
               
               {/* Floating Element */}
               <div className="absolute top-8 right-8 bg-white/90 backdrop-blur-md p-4 rounded-xl border border-slate-200 shadow-xl max-w-[200px]">
@@ -164,7 +164,7 @@ export default function LandingPage() {
 
       {/* CTA Section */}
       <section className="py-24 px-6">
-        <div className="max-w-7xl mx-auto bg-slate-900 rounded-[2rem] p-12 lg:p-24 relative overflow-hidden text-center lg:text-left">
+        <div className="max-w-7xl mx-auto bg-slate-900 p-12 lg:p-24 relative overflow-hidden text-center lg:text-left" style={{ borderRadius: '2rem' }}>
           <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-brand-600/20 blur-[120px] -translate-y-1/2 translate-x-1/4" />
           <div className="relative z-10 grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
