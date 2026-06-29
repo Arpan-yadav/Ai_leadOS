@@ -227,6 +227,16 @@ const LeadsPage = () => {
             </tbody>
           </table>
         </div>
+        {/* Pagination placeholder */}
+        <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/30">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Intelligence Hub Synchronized</p>
+          <div className="flex items-center gap-2">
+            <button className="btn-secondary py-1 px-3 text-[10px] font-black uppercase tracking-widest disabled:opacity-50" disabled>Prev</button>
+            <button className="btn-secondary py-1 px-3 text-[10px] font-black uppercase tracking-widest active:bg-brand-50">1</button>
+            <button className="btn-secondary py-1 px-3 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50">2</button>
+            <button className="btn-secondary py-1 px-3 text-[10px] font-black uppercase tracking-widest">Next</button>
+          </div>
+        </div>
       </div>
 
       {showModal && (
