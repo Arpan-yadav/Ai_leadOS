@@ -3,24 +3,16 @@ import React from 'react'
 type Status = 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'UNQUALIFIED' | 'CONVERTED'
 
 const StatusBadge = ({ status }: { status: Status }) => {
-
-  const styles: { [key in Status]: React.CSSProperties } = {
-    NEW: { backgroundColor: "#dbeafe", color: "#1e40af" },
-    CONTACTED: { backgroundColor: "#fef9c3", color: "#854d0e" },
-    QUALIFIED: { backgroundColor: "#dcfce7", color: "#166534" },
-    UNQUALIFIED: { backgroundColor: "#fee2e2", color: "#991b1b" },
-    CONVERTED: { backgroundColor: "#f3e8ff", color: "#6b21a8" },
+  const styles: { [key in Status]: string } = {
+    NEW: 'bg-blue-100 text-blue-700',
+    CONTACTED: 'bg-amber-100 text-amber-700',
+    QUALIFIED: 'bg-emerald-100 text-emerald-700',
+    UNQUALIFIED: 'bg-red-100 text-red-700',
+    CONVERTED: 'bg-purple-100 text-purple-700',
   }
 
   return (
-    <span style={{
-      ...styles[status],
-      padding: "4px 10px",
-      borderRadius: "999px",
-      fontSize: "12px",
-      fontWeight: "500",
-      display: "inline-block"
-    }}>
+    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${styles[status]}`}>
       {status}
     </span>
   )

@@ -8,20 +8,22 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-inter)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['var(--font-outfit)', 'sans-serif'],
+        mono: ['var(--font-jetbrains)', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       colors: {
         brand: {
-          50:  '#f0f4ff',
-          100: '#e0e9ff',
-          200: '#c0d1ff',
-          300: '#93adff',
-          400: '#607bff',
-          500: '#3b56f5',
-          600: '#2a3fe8',
-          700: '#2130d4',
-          800: '#2028aa',
-          900: '#1e2786',
+          50:  '#f5f3ff',
+          100: '#ede9fe',
+          200: '#ddd6fe',
+          300: '#a78bfa',
+          400: '#8b5cf6',
+          500: '#6366f1',
+          600: '#4f46e5',
+          700: '#4338ca',
+          800: '#3730a3',
+          900: '#1e1b4b',
         },
       },
       animation: {
@@ -42,5 +44,4 @@ const config: Config = {
   },
   plugins: [],
 };
-
 export default config;

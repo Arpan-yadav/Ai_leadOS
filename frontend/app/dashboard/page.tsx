@@ -23,32 +23,32 @@ const recentActivities = [
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-6 pb-12 animate-fade-in">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Dashboard</h1>
-        <p className="text-slate-500 mt-1">Welcome back — here's what's happening today.</p>
-      </div>
+      <header className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <h1 className="text-lg font-black text-slate-800 uppercase tracking-widest">Global Intelligence</h1>
+          <span className="text-[10px] bg-indigo-100 text-indigo-700 font-bold px-2 py-0.5 rounded-full uppercase tracking-[0.2em] animate-pulse">Live Sync</span>
+        </div>
+      </header>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => (
-          <div key={stat.label} className="glass-card p-5 hover:shadow-md transition-shadow">
+          <div key={stat.label} className="glass-card p-4 group hover:border-brand-300 transition-all duration-300 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-brand-500/5 blur-[40px] -translate-y-12 translate-x-12" />
             <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  {stat.label}
-                </p>
-                <p className="text-2xl font-bold text-slate-900 mt-2">{stat.value}</p>
-              </div>
-              <div className={`p-2.5 rounded-xl ${stat.color}`}>
-                <stat.icon size={20} />
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{stat.label}</p>
+              <div className={`p-1.5 rounded-lg ${stat.color} bg-opacity-10`}>
+                <stat.icon size={14} className="text-current" />
               </div>
             </div>
-            <div className="flex items-center gap-1 mt-3">
-              <ArrowUpRight size={14} className="text-emerald-500" />
-              <span className="text-xs font-semibold text-emerald-600">{stat.change}</span>
-              <span className="text-xs text-slate-400">vs last week</span>
+            <p className="font-display text-2xl font-black mt-2 text-slate-900 tracking-tight">{stat.value}</p>
+            <div className="flex items-center gap-1.5 mt-3">
+              <div className={`flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded ${stat.change.startsWith('+') ? 'text-emerald-700 bg-emerald-100' : 'text-indigo-700 bg-indigo-100'}`}>
+                {stat.change.startsWith('+') ? <ArrowUpRight size={10} /> : <TrendingUp size={10} />}
+                {stat.change}
+              </div>
             </div>
           </div>
         ))}
