@@ -6,7 +6,7 @@
 
 > An intelligent Lead Management, Sales Automation, and CRM platform powered by Google Gemini AI.
 
-[![Sprint](https://img.shields.io/badge/Sprint-2%20Active-blue)](https://github.com/proyotech/AI_LeadOS)
+[![Sprint](https://img.shields.io/badge/Sprint-3%20Active-blue)](https://github.com/proyotech/AI_LeadOS)
 [![Stack](https://img.shields.io/badge/Stack-NestJS%20%2B%20Next.js%20%2B%20Prisma%20%2B%20Gemini-blue)](https://github.com/proyotech/AI_LeadOS)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green)](LICENSE)
 
@@ -19,8 +19,9 @@
 | 🤖 **AI Lead Scoring** | Auto-scores leads (0-100) on creation using Gemini AI, with priority and ICP fit |
 | ⚡ **Event Bus** | Typed, in-process automation event bus (`lead.created`, `lead.scored`) |
 | 🎯 **Lead Management** | Full REST API (CRUD) for Leads with pagination, search, and filtering |
+| 💼 **Deals & Dashboard** | Deals pipeline API and real-time aggregated CRM stats |
 | 🗄️ **Backend Core** | NestJS + PostgreSQL + Prisma with JWT RBAC Auth and Swagger docs |
-| 🎨 **Frontend Shell** | Next.js 14 layout, Sidebar, and Auth pages |
+| 🎨 **Frontend Shell** | Next.js 14 layout, Sidebar, Auth pages, and Leads CRM UI components |
 
 ---
 
@@ -95,8 +96,8 @@ All endpoints are documented at `http://localhost:3001/api/docs`
 | Sprint | Focus | Status |
 |--------|-------|--------|
 | **Sprint 1** | Foundation, Auth, DB Schema, Scaffold | ✅ Done |
-| **Sprint 2** | Core CRM (Leads, Deals) + AI Auto-Scoring | 🔵 Active |
-| **Sprint 3** | Pipeline, Activity Feed & Task Management | 🟡 Upcoming |
+| **Sprint 2** | Core CRM (Leads, Deals) + AI Auto-Scoring + UI | ✅ Done |
+| **Sprint 3** | Live Automation Engine, Activity Feed & Task Mgmt | 🔵 Active |
 | **Sprint 4** | AI Intelligence Module & Outreach Sequences | 🟠 Upcoming |
 | **Sprint 5** | Automation Builder (Visual Workflow Editor) | 🔴 Upcoming |
 | **Sprint 6** | Communications Hub (Email, WhatsApp, LinkedIn) | 🟣 Upcoming |
