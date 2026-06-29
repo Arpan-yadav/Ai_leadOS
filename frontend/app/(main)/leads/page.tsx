@@ -1,9 +1,9 @@
 'use client'
 import React, { useState } from 'react'
 import { Search, Filter, Download, Plus, MoreHorizontal, Mail, Linkedin, Globe, Zap, MessageSquare, Facebook, Sparkles } from 'lucide-react'
-import StatusBadge from '../../components/ui/StatusBadge'
-import AddLeadModal from '../../components/leads/AddLeadModal'
-import LeadDetailPanel from '../../components/leads/LeadDetailPanel'
+import StatusBadge from '@/components/ui/StatusBadge'
+import AddLeadModal from '@/components/leads/AddLeadModal'
+import LeadDetailPanel from '@/components/leads/LeadDetailPanel'
 
 type LeadStatus = 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'UNQUALIFIED' | 'CONVERTED'
 type LeadSource = 'LINKEDIN' | 'EMAIL' | 'WHATSAPP' | 'META' | 'REFERRAL'
