@@ -1,10 +1,10 @@
-import { PrismaClient, LeadStatus, LeadSource, Role } from '@prisma/client';
+import { PrismaClient, LeadStatus, LeadSource, Role, DealStage } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Starting database seed...');
+  console.log('🌱 Starting Supabase database seed...');
 
   // 1. Create an Admin User
   const hashedPassword = await bcrypt.hash('password123', 10);
@@ -23,7 +23,7 @@ async function main() {
   console.log(`✅ Admin user created: ${admin.email}`);
 
   // 2. Create mock Leads
-  const mockLeads = [
+  const mockLeadsData = [
     {
       name: 'James Wilson',
       company: 'TechCorp Solutions',
@@ -66,18 +66,56 @@ async function main() {
     }
   ];
 
-  console.log(`📦 Seeding ${mockLeads.length} leads...`);
+  console.log(`📦 Seeding ${mockLeadsData.length} leads...`);
   
-  for (const lead of mockLeads) {
-    await prisma.lead.create({
+  const createdLeads: any[] = [];
+  for (const lead of mockLeadsData) {
+    const createdLead = await prisma.lead.create({
       data: {
         ...lead,
         assignedToId: admin.id,
       },
     });
+    createdLeads.push(createdLead);
   }
 
   console.log('✅ Leads created successfully!');
+
+  // 3. Create Deals for the pipeline
+  console.log('💼 Seeding Deals...');
+  const deals = [
+    { title: 'TechCorp Enterprise Plan', amount: 45000, stage: DealStage.PROPOSAL, leadId: createdLeads[0].id },
+    { title: 'BrightMedia Q3 Campaign', amount: 12500, stage: DealStage.NEGOTIATION, leadId: createdLeads[1].id },
+    { title: 'Digital Agency Audit', amount: 5000, stage: DealStage.DISCOVERY, leadId: createdLeads[2].id }
+  ];
+
+  for (const deal of deals) {
+    await prisma.deal.create({
+      data: { ...deal, ownerId: admin.id }
+    });
+  }
+
+  // 4. Create Tasks
+  console.log('📋 Seeding Tasks...');
+  await prisma.task.createMany({
+    data: [
+      { title: 'Send revised proposal to James', dueDate: new Date(Date.now() + 86400000), leadId: createdLeads[0].id, assignedToId: admin.id, priority: 'high', status: 'pending' },
+      { title: 'Follow up on BrightMedia negotiations', dueDate: new Date(Date.now() + 172800000), leadId: createdLeads[1].id, assignedToId: admin.id, priority: 'medium', status: 'pending' },
+      { title: 'Initial discovery call with Rahul', dueDate: new Date(Date.now() - 86400000), leadId: createdLeads[2].id, assignedToId: admin.id, priority: 'medium', status: 'completed', completedAt: new Date() }
+    ]
+  });
+
+  // 5. Create Activities
+  console.log('📝 Seeding Activities...');
+  await prisma.activity.createMany({
+    data: [
+      { type: 'email', content: 'Sent initial outreach email regarding our enterprise plans.', leadId: createdLeads[0].id, userId: admin.id, timestamp: new Date(Date.now() - 259200000) },
+      { type: 'call', content: 'Discovery call completed. Strong interest in automation features.', leadId: createdLeads[0].id, userId: admin.id, timestamp: new Date(Date.now() - 172800000) },
+      { type: 'whatsapp', content: 'Messaged to coordinate next meeting time.', leadId: createdLeads[1].id, userId: admin.id, timestamp: new Date(Date.now() - 86400000) }
+    ]
+  });
+
+  console.log('✅ Supabase Database fully seeded with mock data!');
 }
 
 main()
