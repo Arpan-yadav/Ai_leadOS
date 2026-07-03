@@ -1,0 +1,97 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { CreateTaskDto } from './dto/create-task.dto';
+import { UpdateTaskDto } from './dto/update-task.dto';
+import { TaskQueryDto } from './dto/task-query.dto';
+
+@Injectable()
+export class TasksService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async create(dto: CreateTaskDto, userId: string) {
+    return this.prisma.task.create({
+      data: {
+        title: dto.title,
+        description: dto.description,
+        dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
+        priority: dto.priority ?? 'medium',
+        status: 'pending',
+        leadId: dto.leadId,
+        assignedToId: userId,
+      },
+    });
+  }
+
+  async findAll(query: TaskQueryDto) {
+    const { page = 1, limit = 20, status } = query;
+    const skip = (page - 1) * limit;
+
+    const where = {
+      ...(status && { status }),
+    };
+
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.task.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          lead: { select: { id: true, name: true, company: true } },
+          assignedTo: { select: { id: true, name: true, email: true } },
+        },
+      }),
+      this.prisma.task.count({ where }),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async findOne(id: string) {
+    const task = await this.prisma.task.findUnique({
+      where: { id },
+      include: {
+        lead: { select: { id: true, name: true, company: true } },
+        assignedTo: { select: { id: true, name: true, email: true } },
+      },
+    });
+
+    if (!task) throw new NotFoundException(`Task #${id} not found`);
+    return task;
+  }
+
+  async update(id: string, dto: UpdateTaskDto) {
+    await this.findOne(id);
+
+    return this.prisma.task.update({
+      where: { id },
+      data: {
+        ...dto,
+        dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
+      },
+    });
+  }
+
+  async complete(id: string) {
+    await this.findOne(id);
+
+    return this.prisma.task.update({
+      where: { id },
+      data: {
+        status: 'completed',
+        completedAt: new Date(),
+      },
+    });
+  }
+
+  async remove(id: string) {
+    await this.findOne(id);
+    return this.prisma.task.delete({ where: { id } });
+  }
+}

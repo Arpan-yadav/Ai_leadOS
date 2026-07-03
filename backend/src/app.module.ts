@@ -3,6 +3,7 @@
  * @description Root Application Module
  * Sprint 1 — Backend Team Deliverable
  * Sprint 2 — AI + Automation modules added (Arpan)
+ * Sprint 3 — Tasks + Activities modules
  */
 
 import { Module } from '@nestjs/common';
@@ -15,6 +16,8 @@ import { AiModule } from './ai/ai.module';
 import { AutomationModule } from './automation/automation.module';
 import { LeadsModule } from './leads/leads.module';
 import { DealsModule } from './deals/deals.module';
+import { TasksModule } from './tasks/tasks.module';
+import { ActivitiesModule } from './activities/activities.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
@@ -30,12 +33,14 @@ import { DashboardModule } from './dashboard/dashboard.module';
     UsersModule,
     AuthModule,
 
-    // ─── Sprint 2: Events + AI + Automation + CRM ─────────────────
+    // ─── Sprint 2 & Sprint 3 Modules ──────────────────────────────
     EventsModule,      // Global event bus (available everywhere)
     AiModule,          // Gemini AI service
     AutomationModule,  // Event listeners and workflow engine
     LeadsModule,       // Lead CRUD + AI auto-scoring
     DealsModule,       // Deal pipeline
+    TasksModule,       // Sprint 3 Task Management
+    ActivitiesModule,  // Sprint 3 Activity Timeline
     DashboardModule,   // Aggregated stats
   ],
 })

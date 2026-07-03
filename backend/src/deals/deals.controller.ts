@@ -21,6 +21,7 @@ import {
 import { DealsService } from './deals.service';
 import { CreateDealDto } from './dto/create-deal.dto';
 import { UpdateDealDto } from './dto/update-deal.dto';
+import { UpdateStageDto } from './dto/update-stage.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Deals')
@@ -49,6 +50,17 @@ export class DealsController {
   @ApiParam({ name: 'id', description: 'Deal ID (cuid)' })
   findOne(@Param('id') id: string) {
     return this.dealsService.findOne(id);
+  }
+
+  @Patch(':id/stage')
+  @ApiOperation({ summary: 'Update deal pipeline stage and auto-log activity' })
+  @ApiParam({ name: 'id', description: 'Deal ID (cuid)' })
+  updateStage(
+    @Param('id') id: string,
+    @Body() dto: UpdateStageDto,
+    @Request() req: any,
+  ) {
+    return this.dealsService.updateStage(id, dto.stage, req.user.id);
   }
 
   @Patch(':id')
