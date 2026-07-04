@@ -197,58 +197,60 @@ export default function PipelinePage() {
         </div>
       )}
 
-      {/* Kanban Board with Drag and Drop — only renders client-side to prevent SSR hydration mismatch */}
-      {isMounted && <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex-1 overflow-x-auto pb-4">
-          <div className="flex gap-4 h-full min-w-max">
-            {STAGES.map((stage) => {
-              const stageDeals = getDealsByStage(stage.id);
-              const stageTotalAmount = stageDeals.reduce((sum, d) => sum + d.amount, 0);
+      {/* Kanban Board — only renders client-side to prevent react-beautiful-dnd SSR error */}
+      {isMounted && (
+        <DragDropContext onDragEnd={onDragEnd}>
+          <div className="flex-1 overflow-x-auto pb-4">
+            <div className="flex gap-4 h-full min-w-max">
+              {STAGES.map((stage) => {
+                const stageDeals = getDealsByStage(stage.id);
+                const stageTotalAmount = stageDeals.reduce((sum, d) => sum + d.amount, 0);
 
-              return (
-                <div key={stage.id} className="w-64 flex flex-col">
-                  {/* Column Header */}
-                  <div className={`flex items-center justify-between mb-3 px-2 py-1.5 rounded-lg ${stage.bg} border ${stage.border}`}>
-                    <div className="flex items-center gap-2">
-                      <h3 className={`font-bold text-[10px] uppercase tracking-widest ${stage.color}`}>
-                        {stage.label}
-                      </h3>
-                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${stage.bg} ${stage.color} border ${stage.border}`}>
-                        {stageDeals.length}
-                      </span>
-                    </div>
-                    <span className="text-[9px] text-slate-400 font-medium">{formatCurrency(stageTotalAmount)}</span>
-                  </div>
-
-                  {/* Droppable Column */}
-                  <Droppable droppableId={stage.id}>
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        className={`flex-1 space-y-2.5 p-2 rounded-lg min-h-[200px] transition-colors
-                          ${snapshot.isDraggingOver ? 'bg-indigo-50/80 border-2 border-dashed border-indigo-300' : 'bg-slate-50/50'}`}
-                      >
-                        {stageDeals.map((deal, index) => (
-                          <DealCard key={deal.id} deal={deal} index={index} />
-                        ))}
-
-                        {stageDeals.length === 0 && !snapshot.isDraggingOver && (
-                          <div className="flex items-center justify-center h-16 border border-dashed border-slate-200 rounded-lg text-slate-300">
-                            <Plus size={16} className="opacity-50" />
-                          </div>
-                        )}
-
-                        {provided.placeholder}
+                return (
+                  <div key={stage.id} className="w-64 flex flex-col">
+                    {/* Column Header */}
+                    <div className={`flex items-center justify-between mb-3 px-2 py-1.5 rounded-lg ${stage.bg} border ${stage.border}`}>
+                      <div className="flex items-center gap-2">
+                        <h3 className={`font-bold text-[10px] uppercase tracking-widest ${stage.color}`}>
+                          {stage.label}
+                        </h3>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${stage.bg} ${stage.color} border ${stage.border}`}>
+                          {stageDeals.length}
+                        </span>
                       </div>
-                    )}
-                  </Droppable>
-                </div>
-              );
-            })}
+                      <span className="text-[9px] text-slate-400 font-medium">{formatCurrency(stageTotalAmount)}</span>
+                    </div>
+
+                    {/* Droppable Column */}
+                    <Droppable droppableId={stage.id}>
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                          className={`flex-1 space-y-2.5 p-2 rounded-lg min-h-[200px] transition-colors
+                            ${snapshot.isDraggingOver ? 'bg-indigo-50/80 border-2 border-dashed border-indigo-300' : 'bg-slate-50/50'}`}
+                        >
+                          {stageDeals.map((deal, index) => (
+                            <DealCard key={deal.id} deal={deal} index={index} />
+                          ))}
+
+                          {stageDeals.length === 0 && !snapshot.isDraggingOver && (
+                            <div className="flex items-center justify-center h-16 border border-dashed border-slate-200 rounded-lg text-slate-300">
+                              <Plus size={16} className="opacity-50" />
+                            </div>
+                          )}
+
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </DragDropContext>}
+        </DragDropContext>
+      )}
     </div>
   );
 }
