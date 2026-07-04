@@ -9,7 +9,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft, Mail, Phone, Globe, Linkedin, Building2, Zap, CheckCircle2,
-  Circle, Plus, Loader2, MessageSquare, PhoneCall, FileText, Sparkles, Clock
+  Circle, Plus, Loader2, MessageSquare, PhoneCall, FileText, Sparkles, Clock, Edit2, X, Check
 } from 'lucide-react';
 import { getToken } from '@/lib/auth';
 
@@ -108,6 +108,8 @@ export default function LeadDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [addingTask, setAddingTask] = useState(false);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editingTaskTitle, setEditingTaskTitle] = useState('');
 
   const token = getToken();
 
@@ -137,6 +139,33 @@ export default function LeadDetailPage() {
       fetchLead();
     } catch (err) {
       console.error('Failed to complete task', err);
+    }
+  };
+
+  const handleUndoTask = async (taskId: string) => {
+    try {
+      await fetch(`http://localhost:3001/api/tasks/${taskId}/undo`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchLead();
+    } catch (err) {
+      console.error('Failed to undo task', err);
+    }
+  };
+
+  const handleUpdateTask = async (taskId: string) => {
+    if (!editingTaskTitle.trim()) return;
+    try {
+      await fetch(`http://localhost:3001/api/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ title: editingTaskTitle }),
+      });
+      setEditingTaskId(null);
+      fetchLead();
+    } catch (err) {
+      console.error('Failed to update task', err);
     }
   };
 
@@ -325,23 +354,55 @@ export default function LeadDetailPage() {
                   <p className="text-xs text-slate-400 text-center py-6">No tasks yet. Add one above!</p>
                 ) : (
                   lead.tasks.map((task) => (
-                    <div key={task.id} className={`flex items-start gap-2.5 p-2.5 rounded-lg border transition-all
+                    <div key={task.id} className={`flex items-start gap-2.5 p-2.5 rounded-lg border transition-all group
                       ${task.status === 'completed' ? 'bg-slate-50 border-slate-100 opacity-60' : 'bg-white border-slate-200 hover:border-indigo-200'}`}
                     >
                       <button
-                        onClick={() => task.status !== 'completed' && handleCompleteTask(task.id)}
+                        onClick={() => task.status !== 'completed' ? handleCompleteTask(task.id) : handleUndoTask(task.id)}
                         className="mt-0.5 flex-shrink-0"
-                        disabled={task.status === 'completed'}
+                        title={task.status === 'completed' ? 'Undo task' : 'Complete task'}
                       >
                         {task.status === 'completed'
-                          ? <CheckCircle2 size={15} className="text-emerald-500" />
+                          ? <CheckCircle2 size={15} className="text-emerald-500 hover:text-slate-400 transition-colors" />
                           : <Circle size={15} className="text-slate-300 hover:text-indigo-400 transition-colors" />
                         }
                       </button>
                       <div className="flex-1 min-w-0">
-                        <p className={`text-xs font-medium leading-snug ${task.status === 'completed' ? 'line-through text-slate-400' : 'text-slate-700'}`}>
-                          {task.title}
-                        </p>
+                        {editingTaskId === task.id ? (
+                          <div className="flex items-center gap-2">
+                            <input
+                              autoFocus
+                              value={editingTaskTitle}
+                              onChange={(e) => setEditingTaskTitle(e.target.value)}
+                              onKeyDown={(e) => e.key === 'Enter' && handleUpdateTask(task.id)}
+                              className="flex-1 text-xs border border-slate-300 rounded px-2 py-1 focus:outline-none focus:border-indigo-500"
+                            />
+                            <button onClick={() => handleUpdateTask(task.id)} className="text-emerald-600 hover:bg-emerald-50 p-1 rounded">
+                              <Check size={14} />
+                            </button>
+                            <button onClick={() => setEditingTaskId(null)} className="text-slate-400 hover:bg-slate-100 p-1 rounded">
+                              <X size={14} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex justify-between items-start group">
+                            <p className={`text-xs font-medium leading-snug ${task.status === 'completed' ? 'line-through text-slate-400' : 'text-slate-700'}`}>
+                              {task.title}
+                            </p>
+                            {task.status !== 'completed' && (
+                              <button
+                                onClick={() => {
+                                  setEditingTaskId(task.id);
+                                  setEditingTaskTitle(task.title);
+                                }}
+                                className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-indigo-600 p-1 transition-opacity"
+                                title="Edit task"
+                              >
+                                <Edit2 size={12} />
+                              </button>
+                            )}
+                          </div>
+                        )}
                         <div className="flex items-center gap-2 mt-1">
                           <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded
                             ${task.priority === 'high' ? 'bg-red-100 text-red-600' : task.priority === 'medium' ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-500'}`}>

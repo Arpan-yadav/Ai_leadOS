@@ -67,6 +67,13 @@ export class TasksController {
     return this.tasksService.complete(id, req.user.id);
   }
 
+  @Patch(':id/undo')
+  @ApiOperation({ summary: 'Revert a completed task to pending' })
+  @ApiParam({ name: 'id', description: 'Task ID (cuid)' })
+  undo(@Param('id') id: string) {
+    return this.tasksService.undo(id);
+  }
+
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a task' })

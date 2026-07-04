@@ -109,6 +109,18 @@ export class TasksService {
     return completed;
   }
 
+  async undo(id: string) {
+    await this.findOne(id);
+
+    return this.prisma.task.update({
+      where: { id },
+      data: {
+        status: 'pending',
+        completedAt: null,
+      },
+    });
+  }
+
   async remove(id: string) {
     await this.findOne(id);
     return this.prisma.task.delete({ where: { id } });
