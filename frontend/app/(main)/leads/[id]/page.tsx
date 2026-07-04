@@ -113,7 +113,7 @@ export default function LeadDetailPage() {
 
   const fetchLead = async () => {
     try {
-      const res = await fetch(`http://localhost:3001/leads/${id}`, {
+      const res = await fetch(`http://localhost:3001/api/leads/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error('Lead not found');
@@ -130,7 +130,7 @@ export default function LeadDetailPage() {
 
   const handleCompleteTask = async (taskId: string) => {
     try {
-      await fetch(`http://localhost:3001/tasks/${taskId}/complete`, {
+      await fetch(`http://localhost:3001/api/tasks/${taskId}/complete`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -144,7 +144,7 @@ export default function LeadDetailPage() {
     if (!newTaskTitle.trim()) return;
     setAddingTask(true);
     try {
-      await fetch('http://localhost:3001/tasks', {
+      await fetch('http://localhost:3001/api/tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ title: newTaskTitle, leadId: id, priority: 'medium' }),

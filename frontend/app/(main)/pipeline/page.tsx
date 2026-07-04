@@ -7,8 +7,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
-import { Plus, Filter, LayoutGrid, DollarSign, Loader2, RefreshCw } from 'lucide-react';
+import { Plus, Filter, DollarSign, Loader2, RefreshCw } from 'lucide-react';
 import { getToken } from '@/lib/auth';
+
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type DealStage = 'DISCOVERY' | 'PROPOSAL' | 'NEGOTIATION' | 'CLOSING' | 'WON' | 'LOST';
@@ -94,13 +95,16 @@ export default function PipelinePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => { setIsMounted(true); }, []);
 
   const fetchDeals = async () => {
     setLoading(true);
     setError(null);
     try {
       const token = getToken();
-      const res = await fetch('http://localhost:3001/deals', {
+      const res = await fetch('http://localhost:3001/api/deals', {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error('Failed to fetch deals');
@@ -129,7 +133,7 @@ export default function PipelinePage() {
 
     try {
       const token = getToken();
-      const res = await fetch(`http://localhost:3001/deals/${draggableId}/stage`, {
+      const res = await fetch(`http://localhost:3001/api/deals/${draggableId}/stage`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ stage: newStage }),
@@ -193,8 +197,8 @@ export default function PipelinePage() {
         </div>
       )}
 
-      {/* Kanban Board with Drag and Drop */}
-      <DragDropContext onDragEnd={onDragEnd}>
+      {/* Kanban Board with Drag and Drop — only renders client-side to prevent SSR hydration mismatch */}
+      {isMounted && <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex-1 overflow-x-auto pb-4">
           <div className="flex gap-4 h-full min-w-max">
             {STAGES.map((stage) => {
@@ -244,7 +248,7 @@ export default function PipelinePage() {
             })}
           </div>
         </div>
-      </DragDropContext>
+      </DragDropContext>}
     </div>
   );
 }
