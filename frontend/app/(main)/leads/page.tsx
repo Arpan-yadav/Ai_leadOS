@@ -49,6 +49,7 @@ const defaultLeads: Lead[] = [
 ]
 
 const LeadsPage = () => {
+  const router = useRouter()
   const [search, setSearch]             = useState('')
   const [channel, setChannel]           = useState('All')
   const [showModal, setShowModal]       = useState(false)
