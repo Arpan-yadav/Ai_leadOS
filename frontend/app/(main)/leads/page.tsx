@@ -1,5 +1,6 @@
 'use client'
 import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Search, Filter, Download, Plus, MoreHorizontal, Mail, Linkedin, Globe, Zap, MessageSquare, Facebook, Sparkles } from 'lucide-react'
 import StatusBadge from '@/components/ui/StatusBadge'
 import AddLeadModal from '@/components/leads/AddLeadModal'
@@ -157,10 +158,10 @@ const LeadsPage = () => {
               {filteredLeads.map(lead => (
                 <tr
                   key={lead.id}
-                  onClick={() => setSelectedLead(lead)}
+                  onClick={() => router.push(`/leads/${lead.id}`)}
                   className={`group hover:bg-slate-50 transition-colors cursor-pointer ${
                     selectedIds.includes(lead.id) ? 'bg-brand-50/30' : ''
-                  } ${selectedLead?.id === lead.id ? 'bg-brand-50/50 ring-1 ring-inset ring-brand-200' : ''}`}
+                  }`}
                 >
                   <td className="px-6 py-4 text-center" onClick={e => e.stopPropagation()}>
                     <input

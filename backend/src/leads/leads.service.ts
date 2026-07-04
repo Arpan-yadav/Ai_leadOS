@@ -177,9 +177,22 @@ export class LeadsService {
 
   // ─── Update ───────────────────────────────────────────────────────────────
 
-  async update(id: string, dto: UpdateLeadDto) {
-    await this.findOne(id); // throws if not found
-    return this.prisma.lead.update({ where: { id }, data: dto });
+  async update(id: string, dto: UpdateLeadDto, userId?: string) {
+    const existing = await this.findOne(id); // throws if not found
+    const updated = await this.prisma.lead.update({ where: { id }, data: dto });
+
+    // Sprint 3 (Soumya): Fire lead.status_changed event when status changes
+    if (dto.status && dto.status !== existing.status) {
+      this.eventBus.emit('lead.status_changed', {
+        leadId: id,
+        previousStatus: existing.status,
+        newStatus: dto.status,
+        changedBy: userId ?? 'system',
+        timestamp: new Date(),
+      });
+    }
+
+    return updated;
   }
 
   // ─── Delete ───────────────────────────────────────────────────────────────
@@ -189,3 +202,4 @@ export class LeadsService {
     return this.prisma.lead.delete({ where: { id } });
   }
 }
+

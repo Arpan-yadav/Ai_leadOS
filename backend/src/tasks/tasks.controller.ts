@@ -63,8 +63,8 @@ export class TasksController {
   @Patch(':id/complete')
   @ApiOperation({ summary: 'Mark a task as completed' })
   @ApiParam({ name: 'id', description: 'Task ID (cuid)' })
-  complete(@Param('id') id: string) {
-    return this.tasksService.complete(id);
+  complete(@Param('id') id: string, @Request() req: any) {
+    return this.tasksService.complete(id, req.user.id);
   }
 
   @Delete(':id')

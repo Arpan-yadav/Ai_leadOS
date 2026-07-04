@@ -23,12 +23,12 @@ import { motion } from 'framer-motion';
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: Users, label: 'Leads', path: '/leads' },
-  { icon: Kanban, label: 'Pipeline', path: '/dashboard/pipeline' },
+  { icon: Kanban, label: 'Pipeline', path: '/pipeline' },
   { icon: MessageSquare, label: 'Communications', path: '/dashboard/communications' },
   { icon: Bot, label: 'AI Intelligence', path: '/dashboard/ai-intelligence' },
   { icon: Workflow, label: 'Automations', path: '/dashboard/automations' },
-  { icon: TrendingUp, label: 'Tasks', path: '/dashboard/tasks' },
-  { icon: BarChart3, label: 'Analytics', path: '/dashboard/analytics' },
+  { icon: TrendingUp, label: 'Analytics', path: '/dashboard/analytics' },
+  { icon: BarChart3, label: 'Settings', path: '/dashboard/settings' },
 ];
 
 export default function Sidebar() {
