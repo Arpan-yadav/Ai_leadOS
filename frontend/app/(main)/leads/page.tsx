@@ -1,15 +1,17 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Search, Filter, Download, Plus, MoreHorizontal, Mail, Linkedin, Globe, Zap, MessageSquare, Facebook, Sparkles } from 'lucide-react'
 import StatusBadge from '@/components/ui/StatusBadge'
 import AddLeadModal from '@/components/leads/AddLeadModal'
 import LeadDetailPanel from '@/components/leads/LeadDetailPanel'
+import { getToken } from '@/lib/auth'
 
 type LeadStatus = 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'UNQUALIFIED' | 'CONVERTED'
 type LeadSource = 'LINKEDIN' | 'EMAIL' | 'WHATSAPP' | 'META' | 'REFERRAL'
 
 interface Lead {
-  id: number
+  id: string
   name: string
   company: string
   email: string
@@ -39,21 +41,36 @@ const SourceIcon = ({ source }: { source: LeadSource }) => {
 
 const CHANNELS = ['All', 'WhatsApp', 'Meta', 'Email', 'LinkedIn']
 
-const defaultLeads: Lead[] = [
-  { id: 1, name: 'James Wilson',    company: 'TechCorp',       email: 'james@techcorp.com',    status: 'QUALIFIED',   score: 85, source: 'LINKEDIN', createdAt: '2026-06-25' },
-  { id: 2, name: 'Elena Rodriguez', company: 'BrightMedia',    email: 'elena@brightmedia.com', status: 'CONTACTED',   score: 92, source: 'META',     createdAt: '2026-06-26' },
-  { id: 3, name: 'Rahul Sharma',    company: 'Digital Agency', email: 'rahul@digital.com',     status: 'NEW',         score: 71, source: 'WHATSAPP', createdAt: '2026-06-27' },
-  { id: 4, name: 'Sarah Jenkins',   company: 'Innovate Co',    email: 'sarah@innovate.com',    status: 'NEW',         score: 60, source: 'EMAIL',    createdAt: '2026-06-28' },
-  { id: 5, name: 'David Park',      company: 'GlobalTrade',    email: 'david@globaltrade.com', status: 'UNQUALIFIED', score: 38, source: 'REFERRAL', createdAt: '2026-06-29' },
-]
 
 const LeadsPage = () => {
+  const router = useRouter()
   const [search, setSearch]             = useState('')
   const [channel, setChannel]           = useState('All')
   const [showModal, setShowModal]       = useState(false)
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
-  const [selectedIds, setSelectedIds]   = useState<number[]>([])
-  const [leads, setLeads]               = useState<Lead[]>(defaultLeads)
+  const [selectedIds, setSelectedIds]   = useState<string[]>([])
+  const [leads, setLeads]               = useState<Lead[]>([])
+  const [loading, setLoading]           = useState(true)
+
+  useEffect(() => {
+    const fetchLeads = async () => {
+      try {
+        const token = getToken()
+        const res = await fetch('http://localhost:3001/api/leads', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        if (!res.ok) throw new Error('Failed to fetch leads')
+        const data = await res.json()
+        // API returns { data: Lead[], meta: ... }
+        setLeads(data.data || [])
+      } catch (error) {
+        console.error('Error fetching leads:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchLeads()
+  }, [])
 
   const filteredLeads = leads.filter(lead => {
     const matchesSearch = lead.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -64,14 +81,14 @@ const LeadsPage = () => {
     return matchesSearch && matchesChannel
   })
 
-  const toggleId = (id: number) =>
+  const toggleId = (id: string) =>
     setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
 
   const toggleAll = () =>
     setSelectedIds(selectedIds.length === filteredLeads.length ? [] : filteredLeads.map(l => l.id))
 
   const handleAddLead = (newLead: any) => {
-    setLeads([...leads, { ...newLead, id: leads.length + 1, status: 'NEW' as const, createdAt: new Date().toISOString().slice(0, 10) }])
+    setLeads([...leads, { ...newLead, id: Math.random().toString(), status: 'NEW' as const, createdAt: new Date().toISOString().slice(0, 10) }])
     setShowModal(false)
   }
 
@@ -157,10 +174,10 @@ const LeadsPage = () => {
               {filteredLeads.map(lead => (
                 <tr
                   key={lead.id}
-                  onClick={() => setSelectedLead(lead)}
+                  onClick={() => router.push(`/leads/${lead.id}`)}
                   className={`group hover:bg-slate-50 transition-colors cursor-pointer ${
                     selectedIds.includes(lead.id) ? 'bg-brand-50/30' : ''
-                  } ${selectedLead?.id === lead.id ? 'bg-brand-50/50 ring-1 ring-inset ring-brand-200' : ''}`}
+                  }`}
                 >
                   <td className="px-6 py-4 text-center" onClick={e => e.stopPropagation()}>
                     <input

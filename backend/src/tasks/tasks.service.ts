@@ -1,12 +1,21 @@
+/**
+ * @file tasks.service.ts
+ * @description Tasks Service — Sprint 3, Backend (Saransh) + AI (Soumya)
+ * Sprint 3 addition: fires task.completed event on the EventBus when a task is marked done.
+ */
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { EventBusService } from '../events/event-bus.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TaskQueryDto } from './dto/task-query.dto';
 
 @Injectable()
 export class TasksService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventBus: EventBusService,
+  ) {}
 
   async create(dto: CreateTaskDto, userId: string) {
     return this.prisma.task.create({
@@ -78,14 +87,36 @@ export class TasksService {
     });
   }
 
-  async complete(id: string) {
+  async complete(id: string, userId: string) {
+    const task = await this.findOne(id);
+
+    const completed = await this.prisma.task.update({
+      where: { id },
+      data: {
+        status: 'completed',
+        completedAt: new Date(),
+      },
+    });
+
+    // Sprint 3 (Soumya): Fire task.completed event for the automation listener
+    this.eventBus.emit('task.completed', {
+      taskId: id,
+      leadId: task.leadId ?? undefined,
+      completedBy: userId,
+      timestamp: new Date(),
+    });
+
+    return completed;
+  }
+
+  async undo(id: string) {
     await this.findOne(id);
 
     return this.prisma.task.update({
       where: { id },
       data: {
-        status: 'completed',
-        completedAt: new Date(),
+        status: 'pending',
+        completedAt: null,
       },
     });
   }

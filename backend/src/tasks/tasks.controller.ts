@@ -63,8 +63,15 @@ export class TasksController {
   @Patch(':id/complete')
   @ApiOperation({ summary: 'Mark a task as completed' })
   @ApiParam({ name: 'id', description: 'Task ID (cuid)' })
-  complete(@Param('id') id: string) {
-    return this.tasksService.complete(id);
+  complete(@Param('id') id: string, @Request() req: any) {
+    return this.tasksService.complete(id, req.user.id);
+  }
+
+  @Patch(':id/undo')
+  @ApiOperation({ summary: 'Revert a completed task to pending' })
+  @ApiParam({ name: 'id', description: 'Task ID (cuid)' })
+  undo(@Param('id') id: string) {
+    return this.tasksService.undo(id);
   }
 
   @Delete(':id')

@@ -1,19 +1,28 @@
 /**
  * @file auto-score.listener.ts
- * @description Auto-Score Event Listener — Sprint 2, Automation Team
+ * @description Auto-Score Event Listener — Sprint 3, Automation Team (Soumya)
  *
- * Listens for 'lead.created' events and triggers high-priority alerts.
- * Additional listeners for status changes will be added in Sprint 3.
+ * Listens to all key events from the EventBus:
+ *  - lead.created   → log and trigger downstream actions
+ *  - lead.scored    → alert team if hot lead
+ *  - lead.status_changed → re-score lead automatically via Gemini AI
+ *  - task.completed → log task completion for activity tracking
  */
 
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { EventBusService, LeadCreatedPayload } from '../events/event-bus.service';
+import { EventBusService, LeadCreatedPayload, LeadStatusChangedPayload, TaskCompletedPayload } from '../events/event-bus.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { AiService } from '../ai/ai.service';
 
 @Injectable()
 export class AutoScoreListener implements OnModuleInit {
   private readonly logger = new Logger(AutoScoreListener.name);
 
-  constructor(private readonly eventBus: EventBusService) {}
+  constructor(
+    private readonly eventBus: EventBusService,
+    private readonly prisma: PrismaService,
+    private readonly aiService: AiService,
+  ) {}
 
   onModuleInit(): void {
     this.registerListeners();
@@ -35,7 +44,17 @@ export class AutoScoreListener implements OnModuleInit {
       }
     });
 
-    this.logger.log('[AutoScoreListener] Registered lead.created and lead.scored handlers');
+    // ── Sprint 3: Lead Status Changed → Re-score lead with AI ────────────
+    this.eventBus.on('lead.status_changed', (payload: LeadStatusChangedPayload) => {
+      this.onLeadStatusChanged(payload);
+    });
+
+    // ── Sprint 3: Task Completed → Log the event ──────────────────────────
+    this.eventBus.on('task.completed', (payload: TaskCompletedPayload) => {
+      this.onTaskCompleted(payload);
+    });
+
+    this.logger.log('[AutoScoreListener] Registered all Sprint 3 event handlers');
   }
 
   private onLeadCreated(payload: LeadCreatedPayload): void {
@@ -50,5 +69,83 @@ export class AutoScoreListener implements OnModuleInit {
     } else {
       this.logger.log(`📁 LOW PRIORITY — ${payload.leadName} at ${payload.company} added to cold list.`);
     }
+  }
+
+  /**
+   * Sprint 3 (Soumya): When a lead's status changes in the pipeline,
+   * automatically re-score the lead using Gemini AI to reflect its new context.
+   */
+  private async onLeadStatusChanged(payload: LeadStatusChangedPayload): Promise<void> {
+    this.logger.log(
+      `[lead.status_changed] Lead ${payload.leadId}: ${payload.previousStatus} → ${payload.newStatus}`,
+    );
+
+    try {
+      const lead = await this.prisma.lead.findUnique({ where: { id: payload.leadId } });
+      if (!lead) return;
+
+      // Re-score the lead with its updated status context
+      const aiResult = await this.aiService.scoreLead({
+        name: lead.name,
+        company: lead.company,
+        title: lead.title ?? undefined,
+        source: lead.source,
+        interactions: 1, // At least 1 interaction since they progressed
+      });
+
+      const previousScore = lead.score ?? 0;
+
+      // Update the lead score in the database
+      await this.prisma.lead.update({
+        where: { id: payload.leadId },
+        data: { score: aiResult.score },
+      });
+
+      // Create a new AI Insight record for this scoring
+      await this.prisma.aIInsight.create({
+        data: {
+          leadId: payload.leadId,
+          analysis: `Re-scored after status changed to ${payload.newStatus}. ${aiResult.reason}`,
+          opportunities: [],
+          sentiment: aiResult.score >= 75 ? 'positive' : aiResult.score >= 50 ? 'neutral' : 'negative',
+          qualityScore: aiResult.icpFit,
+          qualityReason: `ICP Fit: ${aiResult.icpFit}/100 — Priority: ${aiResult.priority}`,
+          nextAction: aiResult.priority === 'high'
+            ? 'Reach out within 24 hours'
+            : aiResult.priority === 'medium'
+            ? 'Add to nurture sequence'
+            : 'Add to cold outreach list',
+          model: 'gemini-1.5-flash',
+          promptKey: 'lead_re_scorer',
+          rawResponse: aiResult as any,
+        },
+      });
+
+      // Fire the lead.scored event so the hot-lead alert handler picks it up
+      this.eventBus.emit('lead.scored', {
+        leadId: payload.leadId,
+        score: aiResult.score,
+        previousScore,
+        reason: aiResult.reason,
+        timestamp: new Date(),
+      });
+
+      this.logger.log(
+        `[AutoScoreListener] Lead ${payload.leadId} re-scored after status change: ${previousScore} → ${aiResult.score}`,
+      );
+    } catch (err) {
+      this.logger.error(`[AutoScoreListener] Re-scoring failed for lead ${payload.leadId}:`, err);
+    }
+  }
+
+  /**
+   * Sprint 3 (Soumya): When a task is completed, log it and potentially
+   * trigger downstream actions (future: send congratulation notifications).
+   */
+  private onTaskCompleted(payload: TaskCompletedPayload): void {
+    this.logger.log(
+      `[task.completed] Task ${payload.taskId} completed by ${payload.completedBy}${payload.leadId ? ` for Lead ${payload.leadId}` : ''}`,
+    );
+    // Sprint 6: trigger Slack/WhatsApp notification to sales rep here
   }
 }
