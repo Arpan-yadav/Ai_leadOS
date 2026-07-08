@@ -19,6 +19,9 @@ import { DealsModule } from './deals/deals.module';
 import { TasksModule } from './tasks/tasks.module';
 import { ActivitiesModule } from './activities/activities.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { SequencesModule } from './sequences/sequences.module';
+import { AiInsightsModule } from './ai-insights/ai-insights.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
 
 @Module({
   imports: [
@@ -41,7 +44,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
     DealsModule,       // Deal pipeline
     TasksModule,       // Sprint 3 Task Management
     ActivitiesModule,  // Sprint 3 Activity Timeline
-    DashboardModule,   // Aggregated stats
+    DashboardModule, SequencesModule, AiInsightsModule, WebhooksModule,   // Aggregated stats
   ],
 })
 export class AppModule {}

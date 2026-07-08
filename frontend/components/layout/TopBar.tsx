@@ -1,30 +1,44 @@
 'use client';
 
-import { Search, Bell, Plus, Command, HelpCircle, LogOut } from 'lucide-react';
+import { Search, Bell, Plus, Command, HelpCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { removeToken } from '@/lib/auth';
+import { useTheme } from 'next-themes';
+import { useState, useEffect } from 'react';
 
 export default function TopBar() {
   const router = useRouter();
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   const handleLogout = () => {
     removeToken();
     router.push('/login');
   };
 
+  const isDark = !mounted || resolvedTheme === 'dark';
+
   return (
-    <header className="h-14 bg-white border-b border-slate-200 px-6 flex items-center justify-between shrink-0">
+    <header className={`h-[72px] px-6 flex items-center justify-between shrink-0 border-b transition-colors duration-300 ${
+      isDark 
+        ? 'bg-[#0A0A0C] border-[#27272A]' 
+        : 'bg-white border-slate-200'
+    }`}>
       {/* Search Bar */}
       <div className="flex-1 max-w-md">
         <div className="relative group">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-slate-600 transition-colors" size={14} />
+          <Search className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${isDark ? 'text-[#b9cacb]' : 'text-slate-400'} group-hover:text-[#00f0ff]`} size={16} />
           <input 
             type="text" 
             placeholder="Search leads, deals, tasks..."
-            className="w-full bg-slate-100 border-transparent rounded-md py-1.5 pl-9 pr-12 text-xs focus:bg-white focus:outline-none focus:ring-1 focus:ring-brand-500 transition-all"
+            className="input-field pl-10 pr-12 text-[14px]"
           />
-          <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[9px] font-bold text-slate-400 border border-slate-200 rounded px-1 py-0.5 bg-white uppercase">
-            <Command size={9} /> K
+          <div className={`absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[10px] font-bold border rounded px-1.5 py-0.5 uppercase font-mono ${
+            isDark ? 'text-[#b9cacb] border-[#27272A] bg-[#16161D]' : 'text-slate-400 border-slate-200 bg-slate-50'
+          }`}>
+            <Command size={10} /> K
           </div>
         </div>
       </div>
@@ -35,31 +49,31 @@ export default function TopBar() {
           <span className="hidden sm:inline">New Lead</span>
         </button>
 
-        <div className="h-6 w-px bg-slate-200 mx-1" />
+        <div className={`h-6 w-px mx-2 ${isDark ? 'bg-[#27272A]' : 'bg-slate-200'}`} />
 
-        <div className="flex items-center gap-0.5">
-          <button className="p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded transition-colors relative">
+        <div className="flex items-center gap-1">
+          <button className={`p-2 rounded-xl transition-all relative ${isDark ? 'text-[#b9cacb] hover:text-[#00f0ff] hover:bg-[#00f0ff]/10' : 'text-slate-500 hover:text-[#00a3ff] hover:bg-[#00a3ff]/10'}`}>
             <Bell size={18} />
-            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-rose-500 rounded-full border-2 border-white" />
+            <span className={`absolute top-1.5 right-1.5 w-2 h-2 bg-[#ff007a] rounded-full ${isDark ? 'border-2 border-[#0A0A0C] shadow-[0_0_8px_rgba(255,0,122,0.8)]' : 'border-2 border-white'}`} />
           </button>
-          <button className="p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded transition-colors">
+          <button className={`p-2 rounded-xl transition-all ${isDark ? 'text-[#b9cacb] hover:text-[#00f0ff] hover:bg-[#00f0ff]/10' : 'text-slate-500 hover:text-[#00a3ff] hover:bg-[#00a3ff]/10'}`}>
             <HelpCircle size={18} />
           </button>
         </div>
 
         <button 
           onClick={handleLogout}
-          className="flex items-center gap-2.5 p-1 px-1.5 rounded-md hover:bg-slate-50 transition-colors ml-1"
+          className={`flex items-center gap-3 p-1.5 pr-2 rounded-xl border border-transparent transition-all ml-2 ${
+            isDark ? 'hover:bg-[#16161D] hover:border-[#27272A]' : 'hover:bg-slate-50 hover:border-slate-200'
+          }`}
         >
           <div className="text-right hidden sm:block">
-            <p className="text-xs font-bold text-slate-900 leading-none">Sarah Chen</p>
-            <p className="text-[9px] text-slate-500 font-bold uppercase mt-0.5 tracking-tighter">Admin</p>
+            <p className={`text-[13px] font-bold leading-none ${isDark ? 'text-[#e5e1e4]' : 'text-slate-800'}`}>Sarah Chen</p>
+            <p className="text-[10px] text-[#00f0ff] font-bold uppercase mt-1 tracking-tighter font-mono">Admin</p>
           </div>
-          <img 
-            src="https://api.dicebear.com/7.x/notionists/svg?seed=Sarah&backgroundColor=e2e8f0" 
-            alt="Sarah Chen" 
-            className="w-7 h-7 rounded-sm border border-slate-200"
-          />
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00f0ff]/30 to-[#bd00ff]/30 border border-[#00f0ff]/30 flex items-center justify-center text-[#00f0ff] text-[11px] font-bold shadow-[0_0_8px_rgba(0,240,255,0.2)]">
+            SC
+          </div>
         </button>
       </div>
     </header>

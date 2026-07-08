@@ -92,21 +92,24 @@ refactor: extract lead validation to guard
 ---
 
 ### ✅ Sprint 1 — Foundation & Setup
-**Status:** Merged to `main`  
+**Status:** Merged to `main` (Completed 19 June)
 **Active:** Arpan (solo bootstrap)
 
-| Deliverable | Status |
-|-------------|--------|
-| NestJS backend scaffold + PostgreSQL Docker | ✅ Done |
-| Prisma schema — 11 models | ✅ Done |
-| Auth Module (register / login / me + JWT) | ✅ Done |
-| RolesGuard + RBAC | ✅ Done |
-| Next.js 14 frontend scaffold | ✅ Done |
-| Login / Register pages | ✅ Done |
-| Dashboard shell (sidebar + topbar) | ✅ Done |
-| AI Service Layer (Gemini wrapper + 4 prompts) | ✅ Done |
-| Workflow + Sequence + Event schemas | ✅ Done |
-| Automation Engine stub | ✅ Done |
+*Sprint 1 was completed structured by Arpan to set up the foundation for everyone.*
+
+#### Arpan — Setup & Foundation
+| Task |
+|------|
+| NestJS backend scaffold + PostgreSQL Docker |
+| Prisma schema — 11 models |
+| Auth Module (register / login / me + JWT) |
+| RolesGuard + RBAC |
+| Next.js 14 frontend scaffold |
+| Login / Register pages |
+| Dashboard shell (sidebar + topbar) |
+| AI Service Layer (Gemini wrapper + 4 prompts) |
+| Workflow + Sequence + Event schemas |
+| Automation Engine stub |
 
 ---
 
@@ -364,14 +367,14 @@ refactor: extract lead validation to guard
 ## 🗓️ Sprint Timeline Overview
 
 ```
-Sprint 1  ✅  Foundation & Setup                  DONE
-Sprint 2  🔵  Core CRM — Leads, Deals, Dashboard  Week 2   → Dushyant / Arav / Arpan
-Sprint 3  🟡  Pipeline, Activities, Tasks          Week 3   → Saransh / Harshwardhan / Soumya
-Sprint 4  🟠  AI Intelligence & Sequences          Week 4   → Ujjwal / Arav / Arpan
-Sprint 5  🔴  Automation Builder (Visual)          Week 5   → Dushyant / Harshwardhan / Soumya
-Sprint 6  🟣  Communications Hub                  Week 6   → Saransh / Arav / Arpan
-Sprint 7  🟢  Analytics & Admin                   Week 7   → Ujjwal / Harshwardhan / Soumya
-Sprint 8  🏁  Polish, Deploy & Launch              Week 8   → Dushyant / Arav / Arpan
+Sprint 1  ✅  Foundation & Setup                  19 June
+Sprint 2  🔵  Core CRM — Leads, Deals, Dashboard  26 June
+Sprint 3  🟡  Pipeline, Activities, Tasks          3 July
+Sprint 4  🟠  AI Intelligence & Sequences          8 July
+Sprint 5  🔴  Automation Builder (Visual)          11 July
+Sprint 6  🟣  Communications Hub                  15 July
+Sprint 7  🟢  Analytics & Admin                   18 July
+Sprint 8  🏁  Polish, Deploy & Launch              22 July
 ```
 
 ---
