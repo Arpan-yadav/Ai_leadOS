@@ -281,4 +281,37 @@ Only return valid JSON array.`.trim();
       },
     ];
   }
+
+  /**
+   * Generate a personalized email draft for a lead.
+   */
+  async generateEmailDraft(leadName: string, company: string, title?: string, instructions?: string): Promise<string> {
+    const client = this.getClient();
+    if (!client) {
+      return `Subject: Quick question for ${leadName} at ${company}\n\nHi ${leadName},\n\nI hope this message finds you well. I was reviewing your profile as ${title ?? 'a leader'} at ${company} and wanted to reach out. I would love to share how our platform can help you automate your workflows.\n\nBest regards,\nSales Team`;
+    }
+
+    try {
+      const prompt = `
+You are an expert sales representative.
+Write a personalized outreach email to a lead.
+
+Lead Details:
+- Name: ${leadName}
+- Company: ${company}
+- Title: ${title ?? 'Unknown'}
+- Extra instructions/context: ${instructions ?? 'Introduce our AI LeadOS platform'}
+
+Return only the email subject line and body. No other conversational text or markdown blocks.`.trim();
+
+      const result = await client.models.generateContent({
+        model: this.model,
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      });
+      return (result as any).text ?? '';
+    } catch (err) {
+      this.logger.error('generateEmailDraft error:', err);
+      return 'Failed to generate email draft.';
+    }
+  }
 }
