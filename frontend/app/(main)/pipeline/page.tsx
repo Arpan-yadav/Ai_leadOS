@@ -9,6 +9,9 @@ import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { Plus, Filter, LayoutGrid, DollarSign, Loader2, RefreshCw } from 'lucide-react';
 import { getToken } from '@/lib/auth';
+import toast from 'react-hot-toast';
+import AddDealModal from '@/components/pipeline/AddDealModal';
+import DealDetailModal from '@/components/pipeline/DealDetailModal';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type DealStage = 'DISCOVERY' | 'PROPOSAL' | 'NEGOTIATION' | 'CLOSING' | 'WON' | 'LOST';
@@ -44,7 +47,7 @@ function formatCurrency(amount: number): string {
 }
 
 // ─── Deal Card ────────────────────────────────────────────────────────────────
-function DealCard({ deal, index }: { deal: Deal; index: number }) {
+function DealCard({ deal, index, onClick }: { deal: Deal; index: number; onClick: () => void }) {
   return (
     <Draggable draggableId={deal.id} index={index}>
       {(provided, snapshot) => (
@@ -52,6 +55,7 @@ function DealCard({ deal, index }: { deal: Deal; index: number }) {
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
+          onClick={onClick}
           className={`glass-card p-3 rounded-xl border cursor-grab active:cursor-grabbing transition-all group
             ${snapshot.isDragging ? 'shadow-[0_0_20px_rgba(0,240,255,0.3)] rotate-2 scale-105 border-[#00f0ff]' : 'border-[#27272A] light:border-slate-200 hover:border-[#bd00ff]/50 light:hover:border-indigo-300'}`}
         >
@@ -92,6 +96,8 @@ export default function PipelinePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [isAddDealModalOpen, setIsAddDealModalOpen] = useState(false);
+  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
 
   const fetchDeals = async () => {
     setLoading(true);
@@ -103,7 +109,9 @@ export default function PipelinePage() {
       });
       if (!res.ok) throw new Error('Failed to fetch deals');
       const data = await res.json();
-      setDeals(data);
+      // API may return array directly or wrapped in {data: []}
+      const list = Array.isArray(data) ? data : (data.data ?? data.deals ?? []);
+      setDeals(list);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -158,7 +166,7 @@ export default function PipelinePage() {
   return (
     <div className="h-[calc(100vh-64px)] flex flex-col p-6 gap-4">
       {/* Header */}
-      <div className="flex items-center justify-between flex-shrink-0">
+      <div className="flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <h1 className="text-lg font-bold text-white light:text-slate-800">Sales Pipeline</h1>
           <span className="text-[10px] bg-[#00f0ff]/10 light:bg-indigo-100 text-[#00f0ff] light:text-indigo-700 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border border-[#00f0ff]/20 light:border-transparent">
@@ -174,11 +182,11 @@ export default function PipelinePage() {
           <button onClick={fetchDeals} className="p-1.5 rounded-lg border border-[#27272A] light:border-slate-200 text-[#b9cacb] light:text-slate-500 hover:text-[#00f0ff] light:hover:text-indigo-600 hover:border-[#00f0ff]/50 light:hover:border-indigo-200 transition-all bg-[#111114] light:bg-transparent">
             <RefreshCw size={14} />
           </button>
-          <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#27272A] light:border-slate-200 text-sm text-[#e5e1e4] light:text-slate-600 hover:bg-white/5 light:hover:bg-slate-50 transition-all bg-[#111114] light:bg-transparent">
+          <button onClick={() => toast('Filters menu opened', { icon: '🔍' })} className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#27272A] light:border-slate-200 text-sm text-[#e5e1e4] light:text-slate-600 hover:bg-white/5 light:hover:bg-slate-50 transition-all bg-[#111114] light:bg-transparent">
             <Filter size={14} />
             <span>Filter</span>
           </button>
-          <button className="btn-primary">
+          <button onClick={() => setIsAddDealModalOpen(true)} className="btn-primary">
             <Plus size={14} className="mr-2" />
             New Deal
           </button>
@@ -186,7 +194,7 @@ export default function PipelinePage() {
       </div>
 
       {error && (
-        <div className="bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-lg p-3 text-sm flex-shrink-0">
+        <div className="bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-lg p-3 text-sm shrink-0">
           ⚠️ {error} — Is the backend running on port 3001?
         </div>
       )}
@@ -224,7 +232,12 @@ export default function PipelinePage() {
                           ${snapshot.isDraggingOver ? 'bg-[#111114]/80 border-2 border-dashed border-[#00f0ff] light:bg-indigo-50/80 light:border-indigo-300' : 'bg-[#111114]/40 border-transparent light:bg-slate-50/50'}`}
                       >
                         {stageDeals.map((deal, index) => (
-                          <DealCard key={deal.id} deal={deal} index={index} />
+                          <DealCard 
+                            key={deal.id} 
+                            deal={deal} 
+                            index={index} 
+                            onClick={() => setSelectedDeal(deal)}
+                          />
                         ))}
 
                         {stageDeals.length === 0 && !snapshot.isDraggingOver && (
@@ -243,6 +256,23 @@ export default function PipelinePage() {
           </div>
         </div>
       </DragDropContext>
+
+      {isAddDealModalOpen && (
+        <AddDealModal 
+          onClose={() => setIsAddDealModalOpen(false)}
+          onAdd={() => {
+            setIsAddDealModalOpen(false);
+            fetchDeals();
+          }}
+        />
+      )}
+
+      {selectedDeal && (
+        <DealDetailModal 
+          deal={selectedDeal}
+          onClose={() => setSelectedDeal(null)}
+        />
+      )}
     </div>
   );
 }

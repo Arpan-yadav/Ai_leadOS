@@ -42,7 +42,8 @@ export default function TasksPage() {
       });
       if (!res.ok) throw new Error('Failed to fetch tasks');
       const responseBody = await res.json();
-      setTasks(responseBody.data || []);
+      const list = Array.isArray(responseBody) ? responseBody : (responseBody.data ?? responseBody.tasks ?? []);
+      setTasks(list);
     } catch (err: any) {
       setError(err.message);
     } finally {

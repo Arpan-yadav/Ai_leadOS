@@ -5,11 +5,17 @@ import { useRouter } from 'next/navigation';
 import { removeToken } from '@/lib/auth';
 import { useTheme } from 'next-themes';
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
+import AddLeadModal from '@/components/leads/AddLeadModal';
+import CommandPalette from '@/components/layout/CommandPalette';
+import NotificationsPanel from '@/components/layout/NotificationsPanel';
 
 export default function TopBar() {
   const router = useRouter();
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -44,19 +50,24 @@ export default function TopBar() {
       </div>
 
       <div className="flex items-center gap-4">
-        <button className="btn-primary flex items-center gap-2 px-3 py-1.5 text-xs">
+        <button onClick={() => setIsLeadModalOpen(true)} className="btn-primary flex items-center gap-2 px-3 py-1.5 text-xs">
           <Plus size={14} />
           <span className="hidden sm:inline">New Lead</span>
         </button>
 
         <div className={`h-6 w-px mx-2 ${isDark ? 'bg-[#27272A]' : 'bg-slate-200'}`} />
 
-        <div className="flex items-center gap-1">
-          <button className={`p-2 rounded-xl transition-all relative ${isDark ? 'text-[#b9cacb] hover:text-[#00f0ff] hover:bg-[#00f0ff]/10' : 'text-slate-500 hover:text-[#00a3ff] hover:bg-[#00a3ff]/10'}`}>
+        <div className="flex items-center gap-1 relative">
+          <button onClick={() => setIsNotificationsOpen(!isNotificationsOpen)} className={`p-2 rounded-xl transition-all relative ${isDark ? 'text-[#b9cacb] hover:text-[#00f0ff] hover:bg-[#00f0ff]/10' : 'text-slate-500 hover:text-[#00a3ff] hover:bg-[#00a3ff]/10'} ${isNotificationsOpen ? (isDark ? 'bg-[#00f0ff]/10 text-[#00f0ff]' : 'bg-[#00a3ff]/10 text-[#00a3ff]') : ''}`}>
             <Bell size={18} />
             <span className={`absolute top-1.5 right-1.5 w-2 h-2 bg-[#ff007a] rounded-full ${isDark ? 'border-2 border-[#0A0A0C] shadow-[0_0_8px_rgba(255,0,122,0.8)]' : 'border-2 border-white'}`} />
           </button>
-          <button className={`p-2 rounded-xl transition-all ${isDark ? 'text-[#b9cacb] hover:text-[#00f0ff] hover:bg-[#00f0ff]/10' : 'text-slate-500 hover:text-[#00a3ff] hover:bg-[#00a3ff]/10'}`}>
+          
+          {isNotificationsOpen && (
+            <NotificationsPanel onClose={() => setIsNotificationsOpen(false)} />
+          )}
+
+          <button onClick={() => toast('Help Center coming soon!', { icon: 'ℹ️' })} className={`p-2 rounded-xl transition-all ${isDark ? 'text-[#b9cacb] hover:text-[#00f0ff] hover:bg-[#00f0ff]/10' : 'text-slate-500 hover:text-[#00a3ff] hover:bg-[#00a3ff]/10'}`}>
             <HelpCircle size={18} />
           </button>
         </div>
@@ -71,11 +82,19 @@ export default function TopBar() {
             <p className={`text-[13px] font-bold leading-none ${isDark ? 'text-[#e5e1e4]' : 'text-slate-800'}`}>Sarah Chen</p>
             <p className="text-[10px] text-[#00f0ff] font-bold uppercase mt-1 tracking-tighter font-mono">Admin</p>
           </div>
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00f0ff]/30 to-[#bd00ff]/30 border border-[#00f0ff]/30 flex items-center justify-center text-[#00f0ff] text-[11px] font-bold shadow-[0_0_8px_rgba(0,240,255,0.2)]">
+          <div className="w-8 h-8 rounded-lg bg-linear-to-br from-[#00f0ff]/30 to-[#bd00ff]/30 border border-[#00f0ff]/30 flex items-center justify-center text-[#00f0ff] text-[11px] font-bold shadow-[0_0_8px_rgba(0,240,255,0.2)]">
             SC
           </div>
         </button>
       </div>
+
+      {isLeadModalOpen && (
+        <AddLeadModal 
+          onClose={() => setIsLeadModalOpen(false)} 
+        />
+      )}
+
+      <CommandPalette />
     </header>
   );
 }

@@ -4,11 +4,16 @@ import React, { useState, useEffect } from 'react'
 import { Plus, Workflow, Trash2, Users, Calendar, Play, Mail, Linkedin, MessageSquare, Loader2 } from 'lucide-react'
 import { getToken } from '@/lib/auth'
 import { useTheme } from 'next-themes'
+import toast from 'react-hot-toast'
+import AddSequenceModal from '@/components/sequences/AddSequenceModal'
+import EnrollLeadsModal from '@/components/sequences/EnrollLeadsModal'
 
 export default function SequencesPage() {
   const [sequences, setSequences] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
+  const [isAddSequenceModalOpen, setIsAddSequenceModalOpen] = useState(false)
+  const [enrollingSequence, setEnrollingSequence] = useState<{id: string, name: string} | null>(null)
   const { resolvedTheme } = useTheme()
   const token = getToken()
 
@@ -24,7 +29,8 @@ export default function SequencesPage() {
       })
       if (res.ok) {
         const data = await res.json()
-        setSequences(data)
+        const list = Array.isArray(data) ? data : (data.data ?? data.sequences ?? [])
+        setSequences(list)
       }
     } catch (err) {
       console.error('Failed to fetch sequences', err)
@@ -33,30 +39,8 @@ export default function SequencesPage() {
     }
   }
 
-  const createDemoSequence = async () => {
-    try {
-      const res = await fetch('http://localhost:3001/api/sequences', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: "Q4 High-Value Outreach",
-          description: "A 7-day multi-channel outreach sequence targeting enterprise CTOs.",
-          durationDays: 7,
-          steps: [
-            { day: 1, channel: 'email',    title: 'Intro & Value Prop' },
-            { day: 3, channel: 'linkedin', title: 'Connection Request' },
-            { day: 5, channel: 'email',    title: 'Follow up with Case Study' },
-            { day: 7, channel: 'whatsapp', title: 'Quick check-in text' }
-          ]
-        })
-      })
-      if (res.ok) fetchSequences()
-    } catch (err) {
-      console.error('Failed to create sequence', err)
-    }
+  const openEnrollModal = (seq: any) => {
+    setEnrollingSequence({ id: seq.id, name: seq.name })
   }
 
   const deleteSequence = async (id: string) => {
@@ -149,7 +133,7 @@ export default function SequencesPage() {
             Build and manage multi-channel automated campaigns.
           </p>
         </div>
-        <button onClick={createDemoSequence} className="btn-primary flex items-center gap-2">
+        <button onClick={() => setIsAddSequenceModalOpen(true)} className="btn-primary flex items-center gap-2">
           <Plus size={16} />
           <span className="text-[10px] font-black uppercase tracking-widest">Create Sequence</span>
         </button>
@@ -173,7 +157,7 @@ export default function SequencesPage() {
           <p className={`text-sm max-w-md leading-relaxed ${t.subtext}`}>
             Create your first automated sequence to start enrolling leads into targeted email, LinkedIn, and WhatsApp cadences.
           </p>
-          <button onClick={createDemoSequence} className="btn-primary mt-6 flex items-center gap-2">
+          <button onClick={() => setIsAddSequenceModalOpen(true)} className="btn-primary mt-6 flex items-center gap-2">
             <Plus size={14} />
             Create your first sequence
           </button>
@@ -258,7 +242,7 @@ export default function SequencesPage() {
                 <span className="text-[11px]">
                   Last updated {new Date(seq.updatedAt).toLocaleDateString()}
                 </span>
-                <button className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${t.enrollBtn}`}>
+                <button onClick={() => openEnrollModal(seq)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${t.enrollBtn}`}>
                   <Play size={11} />
                   Enroll Leads
                 </button>
@@ -266,6 +250,26 @@ export default function SequencesPage() {
             </div>
           ))}
         </div>
+      )}
+
+      {isAddSequenceModalOpen && (
+        <AddSequenceModal 
+          onClose={() => setIsAddSequenceModalOpen(false)}
+          onAdd={() => {
+            setIsAddSequenceModalOpen(false)
+            fetchSequences()
+          }}
+        />
+      )}
+
+      {enrollingSequence && (
+        <EnrollLeadsModal
+          sequenceName={enrollingSequence.name}
+          onClose={() => {
+            setEnrollingSequence(null)
+            fetchSequences()
+          }}
+        />
       )}
     </div>
   )

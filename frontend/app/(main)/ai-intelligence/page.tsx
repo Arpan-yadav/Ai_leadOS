@@ -40,7 +40,8 @@ export default function AIIntelligencePage() {
         })
         if (res.ok) {
           const data = await res.json()
-          setLeads(data.data || [])
+          const list = Array.isArray(data) ? data : (data.data ?? data.leads ?? [])
+          setLeads(list)
         }
       } catch (err) {
         console.error('Failed to fetch leads', err)
@@ -126,7 +127,7 @@ export default function AIIntelligencePage() {
           {/* Executive Summary & Score */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2 glass-card p-6 bg-transparent border-[#bd00ff]/30 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-[#bd00ff]/10 light:bg-indigo-50 blur-[40px] pointer-events-none" />
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#bd00ff]/10 light:bg-indigo-50 blur-2xl pointer-events-none" />
               <h3 className="text-[12px] font-bold text-[#bd00ff] light:text-indigo-600 uppercase tracking-widest mb-4 flex items-center gap-2 font-mono">
                 <Sparkles size={16} className="text-[#bd00ff] light:text-indigo-600" />
                 Executive Analysis

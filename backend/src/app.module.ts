@@ -8,6 +8,7 @@
 
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -22,6 +23,8 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { SequencesModule } from './sequences/sequences.module';
 import { AiInsightsModule } from './ai-insights/ai-insights.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
+import { WorkflowsModule } from './workflows/workflows.module';
+import { WorkflowExecutionsModule } from './workflow-executions/workflow-executions.module';
 
 @Module({
   imports: [
@@ -32,11 +35,12 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     }),
 
     // ─── Core Modules ─────────────────────────────────────────────
+    ScheduleModule.forRoot(),
     PrismaModule,
     UsersModule,
     AuthModule,
 
-    // ─── Sprint 2 & Sprint 3 Modules ──────────────────────────────
+    // ─── Sprint 2, 3, 4, 5 Modules ──────────────────────────────
     EventsModule,      // Global event bus (available everywhere)
     AiModule,          // Gemini AI service
     AutomationModule,  // Event listeners and workflow engine
@@ -44,7 +48,12 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     DealsModule,       // Deal pipeline
     TasksModule,       // Sprint 3 Task Management
     ActivitiesModule,  // Sprint 3 Activity Timeline
-    DashboardModule, SequencesModule, AiInsightsModule, WebhooksModule,   // Aggregated stats
+    DashboardModule,   // Aggregated stats
+    SequencesModule,
+    AiInsightsModule,
+    WebhooksModule,
+    WorkflowsModule,
+    WorkflowExecutionsModule,
   ],
 })
 export class AppModule {}

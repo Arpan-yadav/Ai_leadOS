@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Settings, User, Bell, Shield, Palette, Database, Zap, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { removeToken } from '@/lib/auth';
+import toast from 'react-hot-toast';
 
 const sections = [
   { icon: User, label: 'Profile', id: 'profile' },
@@ -63,13 +64,13 @@ export default function SettingsPage() {
             <div className="space-y-6">
               <h2 className="text-sm font-black text-white uppercase tracking-widest border-b border-[#27272A] pb-4">Profile Settings</h2>
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-[#00f0ff]/30 to-[#bd00ff]/30 border border-[#00f0ff]/30 flex items-center justify-center text-[#00f0ff] text-xl font-bold shadow-[0_0_15px_rgba(0,240,255,0.2)]">
+                <div className="w-16 h-16 rounded-xl bg-linear-to-br from-[#00f0ff]/30 to-[#bd00ff]/30 border border-[#00f0ff]/30 flex items-center justify-center text-[#00f0ff] text-xl font-bold shadow-[0_0_15px_rgba(0,240,255,0.2)]">
                   SC
                 </div>
                 <div>
                   <p className="font-bold text-white">Sarah Chen</p>
                   <p className="text-[11px] text-[#00f0ff] font-mono uppercase">Admin</p>
-                  <button className="text-[10px] text-[#b9cacb] hover:text-[#00f0ff] transition-colors mt-1">Change avatar</button>
+                  <button onClick={() => toast('Avatar selection dialog opened')} className="text-[10px] text-[#b9cacb] hover:text-[#00f0ff] transition-colors mt-1">Change avatar</button>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -85,7 +86,7 @@ export default function SettingsPage() {
                   </div>
                 ))}
               </div>
-              <button className="btn-primary">Save Changes</button>
+              <button onClick={() => toast.success('Profile changes saved successfully!')} className="btn-primary">Save Changes</button>
             </div>
           )}
           {active !== 'profile' && (

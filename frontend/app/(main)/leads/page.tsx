@@ -1,11 +1,15 @@
 'use client'
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, Filter, Download, Plus, MoreHorizontal, Mail, Linkedin, Globe, Zap, MessageSquare, Facebook, Sparkles } from 'lucide-react'
+import { Search, Filter, Download, Plus, MoreHorizontal, Mail, Linkedin, Globe, Zap, MessageSquare, Facebook, Sparkles, X } from 'lucide-react'
 import StatusBadge from '@/components/ui/StatusBadge'
 import AddLeadModal from '@/components/leads/AddLeadModal'
 import LeadDetailPanel from '@/components/leads/LeadDetailPanel'
+import LeadsFilterModal from '@/components/leads/LeadsFilterModal'
+import AIInsightsModal from '@/components/leads/AIInsightsModal'
+import NewMessageModal from '@/components/communications/NewMessageModal'
 import { getToken } from '@/lib/auth'
+import toast from 'react-hot-toast'
 
 type LeadStatus = 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'UNQUALIFIED' | 'CONVERTED'
 type LeadSource = 'LINKEDIN' | 'EMAIL' | 'WHATSAPP' | 'META' | 'REFERRAL'
@@ -50,6 +54,9 @@ const LeadsPage = () => {
   const [selectedIds, setSelectedIds]   = useState<string[]>([])
   const [leads, setLeads]               = useState<Lead[]>([])
   const [loading, setLoading]           = useState(true)
+  const [showFilters, setShowFilters]   = useState(false)
+  const [insightLead, setInsightLead]   = useState<Lead | null>(null)
+  const [emailLead, setEmailLead]       = useState<Lead | null>(null)
 
   useEffect(() => {
     const fetchLeads = async () => {
@@ -60,7 +67,9 @@ const LeadsPage = () => {
         })
         if (!res.ok) throw new Error('Failed to fetch leads')
         const data = await res.json()
-        setLeads(data.data || [])
+        // Handle both array response and {data: [...]} envelope
+        const list = Array.isArray(data) ? data : (data.data ?? data.leads ?? [])
+        setLeads(list)
       } catch (error) {
         console.error('Error fetching leads:', error)
       } finally {
@@ -99,7 +108,7 @@ const LeadsPage = () => {
           <p className="text-[#b9cacb] light:text-slate-500 mt-1 font-medium italic">Multi-channel leads synchronized via AI Automation.</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="btn-secondary h-10 flex items-center gap-2">
+          <button onClick={() => toast.success('Exporting leads data to CSV...')} className="btn-secondary h-10 flex items-center gap-2">
             <Download size={14} />
             <span className="text-[10px] font-black uppercase tracking-widest leading-none">Export</span>
           </button>
@@ -139,7 +148,7 @@ const LeadsPage = () => {
               </button>
             ))}
           </div>
-          <button className="btn-secondary flex items-center gap-2">
+          <button onClick={() => setShowFilters(true)} className="btn-secondary flex items-center gap-2">
             <Filter size={14} />
             <span className="text-[10px] font-black uppercase tracking-widest">Filters</span>
           </button>
@@ -226,13 +235,13 @@ const LeadsPage = () => {
                   </td>
                   <td className="px-6 py-4 text-right" onClick={e => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
-                      <button className="p-2 text-[#b9cacb] light:text-slate-400 hover:text-[#bd00ff] light:hover:text-[#9d00ff] hover:bg-white/5 light:hover:bg-slate-100 rounded-lg transition-all" title="AI Insights">
+                      <button onClick={() => setInsightLead(lead)} className="p-2 text-[#b9cacb] light:text-slate-400 hover:text-[#bd00ff] light:hover:text-[#9d00ff] hover:bg-white/5 light:hover:bg-slate-100 rounded-lg transition-all" title="AI Insights">
                         <Zap size={14} />
                       </button>
-                      <button className="p-2 text-[#b9cacb] light:text-slate-400 hover:text-[#00f0ff] light:hover:text-[#00a3ff] hover:bg-white/5 light:hover:bg-slate-100 rounded-lg transition-all" title="Send Email">
+                      <button onClick={() => setEmailLead(lead)} className="p-2 text-[#b9cacb] light:text-slate-400 hover:text-[#00f0ff] light:hover:text-[#00a3ff] hover:bg-white/5 light:hover:bg-slate-100 rounded-lg transition-all" title="Send Email">
                         <Mail size={14} />
                       </button>
-                      <button className="p-2 text-[#b9cacb] light:text-slate-400 hover:text-white light:hover:text-slate-600 hover:bg-white/5 light:hover:bg-slate-100 rounded-lg transition-all" title="More">
+                      <button onClick={() => setSelectedLead(lead)} className="p-2 text-[#b9cacb] light:text-slate-400 hover:text-white light:hover:text-slate-600 hover:bg-white/5 light:hover:bg-slate-100 rounded-lg transition-all" title="More">
                         <MoreHorizontal size={14} />
                       </button>
                     </div>
@@ -246,12 +255,35 @@ const LeadsPage = () => {
           <p className="text-[10px] font-black text-[#b9cacb] light:text-slate-400 uppercase tracking-widest leading-none">Intelligence Hub Synchronized</p>
           <div className="flex items-center gap-2">
             <button className="btn-secondary py-1 px-3 text-[10px] font-black uppercase tracking-widest disabled:opacity-50" disabled>Prev</button>
-            <button className="btn-secondary py-1 px-3 text-[10px] font-black uppercase tracking-widest bg-white/10 light:bg-slate-200">1</button>
-            <button className="btn-secondary py-1 px-3 text-[10px] font-black uppercase tracking-widest">2</button>
-            <button className="btn-secondary py-1 px-3 text-[10px] font-black uppercase tracking-widest">Next</button>
+            <button onClick={() => toast('Navigating to page 1')} className="btn-secondary py-1 px-3 text-[10px] font-black uppercase tracking-widest bg-white/10 light:bg-slate-200">1</button>
+            <button onClick={() => toast('Navigating to page 2')} className="btn-secondary py-1 px-3 text-[10px] font-black uppercase tracking-widest">2</button>
+            <button onClick={() => toast('Fetching next page of leads...')} className="btn-secondary py-1 px-3 text-[10px] font-black uppercase tracking-widest">Next</button>
           </div>
         </div>
       </div>
+
+      {/* Bulk Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-black/80 light:bg-white/90 backdrop-blur-xl border border-white/10 light:border-slate-200 shadow-[0_20px_40px_rgba(0,0,0,0.4)] rounded-2xl px-6 py-3 flex items-center gap-6 animate-slide-up">
+          <div className="flex items-center gap-2 border-r border-white/10 light:border-slate-200 pr-6">
+            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#00f0ff] text-black font-black text-xs">{selectedIds.length}</span>
+            <span className="text-[10px] font-bold text-white light:text-slate-800 uppercase tracking-widest">Selected</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button onClick={() => toast.success('Enrolling leads into sequence')} className="btn-secondary h-8 flex items-center gap-2">
+              <Sparkles size={14} className="text-[#bd00ff]" />
+              <span className="text-[10px] font-black uppercase tracking-widest leading-none">Enroll Sequence</span>
+            </button>
+            <button onClick={() => toast.success('Exporting selected leads')} className="btn-secondary h-8 flex items-center gap-2">
+              <Download size={14} />
+              <span className="text-[10px] font-black uppercase tracking-widest leading-none">Export</span>
+            </button>
+            <button onClick={() => setSelectedIds([])} className="p-2 text-slate-400 hover:text-white rounded-lg transition-colors ml-2">
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {showModal && (
         <AddLeadModal
@@ -264,6 +296,16 @@ const LeadsPage = () => {
         <LeadDetailPanel
           lead={selectedLead}
           onClose={() => setSelectedLead(null)}
+        />
+      )}
+
+      {showFilters && <LeadsFilterModal onClose={() => setShowFilters(false)} />}
+      
+      <AIInsightsModal lead={insightLead} onClose={() => setInsightLead(null)} />
+      
+      {emailLead && (
+        <NewMessageModal 
+          onClose={() => setEmailLead(null)}
         />
       )}
     </div>

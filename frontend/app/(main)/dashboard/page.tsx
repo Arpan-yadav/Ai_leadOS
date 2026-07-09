@@ -10,6 +10,8 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer
 } from 'recharts';
+import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 
 const stats = [
   { label: 'Total Revenue', value: '$124,500', change: '+12.5%', trend: 'up', icon: TrendingUp, color: 'text-emerald-400 light:text-emerald-600', bg: 'bg-emerald-500/10 light:bg-emerald-50' },
@@ -44,6 +46,8 @@ const recentLeads = [
 ];
 
 export default function DashboardPage() {
+  const router = useRouter();
+
   return (
     <div className="space-y-6 pb-12 animate-fade-in">
       {/* Header */}
@@ -53,7 +57,7 @@ export default function DashboardPage() {
           <span className="text-[10px] bg-[#00f0ff]/10 light:bg-indigo-100 text-[#00f0ff] light:text-indigo-700 font-bold px-2 py-0.5 rounded-full uppercase tracking-[0.2em] animate-pulse">Syncing Sources...</span>
         </div>
         <div className="flex items-center gap-3">
-          <button className="btn-secondary h-8 flex items-center gap-2">
+          <button onClick={() => toast.success('Real-time sync initiated', { icon: '🔄' })} className="btn-secondary h-8 flex items-center gap-2">
             <Clock size={12} />
             <span className="text-[10px] font-bold uppercase tracking-widest leading-none">Real-time</span>
           </button>
@@ -154,7 +158,7 @@ export default function DashboardPage() {
         <div className="glass-card p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-bold text-xs uppercase tracking-[0.2em] text-white light:text-slate-800">Intelligence Log</h3>
-            <button className="text-[10px] font-black uppercase tracking-widest text-[#00f0ff] light:text-brand-600 hover:text-[#bd00ff] light:hover:text-brand-700">View Feed</button>
+            <button onClick={() => router.push('/communications')} className="text-[10px] font-black uppercase tracking-widest text-[#00f0ff] light:text-brand-600 hover:text-[#bd00ff] light:hover:text-brand-700">View Feed</button>
           </div>
           <div className="space-y-6">
             {recentLeads.map((lead, i) => (
@@ -199,7 +203,7 @@ export default function DashboardPage() {
               <p className="text-[10px] text-[#b9cacb] light:text-slate-500 mt-2 font-medium italic leading-relaxed">AI has drafted a CTO-personalized proposal. Ready for one-click deployment.</p>
             </div>
           </div>
-          <button className="w-full btn-primary bg-indigo-600 hover:bg-indigo-700 text-[10px] uppercase tracking-[0.2em] font-black mt-8 flex items-center justify-center gap-2 py-3 shadow-[0_0_15px_rgba(0,240,255,0.3)] light:shadow-xl light:shadow-indigo-600/10">
+          <button onClick={() => router.push('/automation')} className="w-full btn-primary bg-indigo-600 hover:bg-indigo-700 text-[10px] uppercase tracking-[0.2em] font-black mt-8 flex items-center justify-center gap-2 py-3 shadow-[0_0_15px_rgba(0,240,255,0.3)] light:shadow-xl light:shadow-indigo-600/10">
             <Bot size={14} />
             <span>Engage AI Automation</span>
           </button>
