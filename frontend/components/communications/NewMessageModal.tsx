@@ -3,7 +3,7 @@ import React, { useState } from 'react'
 import { X, Loader2, Send } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-export default function NewMessageModal({ onClose }: { onClose: () => void }) {
+export default function NewMessageModal({ onClose, onSent }: { onClose: () => void, onSent?: () => void }) {
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
     recipient: '',
@@ -25,13 +25,55 @@ export default function NewMessageModal({ onClose }: { onClose: () => void }) {
 
     try {
       setLoading(true)
-      // Simulate sending message API call
-      await new Promise(resolve => setTimeout(resolve, 800))
+      const token = localStorage.getItem('token')
+      const res = await fetch('http://localhost:3001/api/communications/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          recipient: form.recipient,
+          channel: form.channel,
+          content: form.message,
+          subject: form.subject
+        })
+      })
+      
+      if (!res.ok) throw new Error('Failed to send')
       
       toast.success('Message sent successfully!')
-      onClose()
+      if (onSent) onSent()
+      else onClose()
     } catch (err: any) {
       toast.error('Failed to send message')
+    } finally {
+      setLoading(false)
+    }
+  }
+  const handleAIGenerate = async () => {
+    try {
+      setLoading(true)
+      const token = localStorage.getItem('token')
+      // Determine dummy company/lead name based on recipient or use defaults
+      const leadName = form.recipient || 'Prospect'
+      const company = 'Their Company'
+
+      const res = await fetch('http://localhost:3001/api/communications/generate-message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ leadName, company, context: form.subject || form.channel })
+      })
+      const data = await res.json()
+      if (data.message) {
+        setForm(prev => ({ ...prev, message: data.message }))
+        toast.success('AI Draft Generated!')
+      }
+    } catch (err) {
+      toast.error('Failed to generate message')
     } finally {
       setLoading(false)
     }
@@ -48,6 +90,7 @@ export default function NewMessageModal({ onClose }: { onClose: () => void }) {
             New Message
           </h2>
           <button 
+            type="button"
             onClick={onClose} 
             className="p-2 -mr-2 rounded-xl text-slate-400 hover:text-white light:hover:text-slate-900 hover:bg-white/5 light:hover:bg-slate-200 transition-colors"
           >
@@ -82,7 +125,17 @@ export default function NewMessageModal({ onClose }: { onClose: () => void }) {
             )}
             
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-[#b9cacb] light:text-slate-500 uppercase tracking-widest block">Message *</label>
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-black text-[#b9cacb] light:text-slate-500 uppercase tracking-widest block">Message *</label>
+                <button 
+                  type="button" 
+                  onClick={handleAIGenerate} 
+                  disabled={loading}
+                  className="text-[10px] font-bold text-[#bd00ff] light:text-purple-600 uppercase tracking-widest hover:underline flex items-center gap-1"
+                >
+                  ✨ Generate with AI
+                </button>
+              </div>
               <textarea 
                 name="message" 
                 value={form.message} 

@@ -79,11 +79,21 @@ export default function TopBar() {
           }`}
         >
           <div className="text-right hidden sm:block">
-            <p className={`text-[13px] font-bold leading-none ${isDark ? 'text-[#e5e1e4]' : 'text-slate-800'}`}>Sarah Chen</p>
-            <p className="text-[10px] text-[#00f0ff] font-bold uppercase mt-1 tracking-tighter font-mono">Admin</p>
+            <p className={`text-[13px] font-bold leading-none ${isDark ? 'text-[#e5e1e4]' : 'text-slate-800'}`}>
+              {mounted && typeof window !== 'undefined' && localStorage.getItem('leados_user') 
+                ? JSON.parse(localStorage.getItem('leados_user')!).name 
+                : 'Sarah Chen'}
+            </p>
+            <p className="text-[10px] text-[#00f0ff] font-bold uppercase mt-1 tracking-tighter font-mono">
+              {mounted && typeof window !== 'undefined' && localStorage.getItem('leados_user') 
+                ? JSON.parse(localStorage.getItem('leados_user')!).role 
+                : 'Admin'}
+            </p>
           </div>
           <div className="w-8 h-8 rounded-lg bg-linear-to-br from-[#00f0ff]/30 to-[#bd00ff]/30 border border-[#00f0ff]/30 flex items-center justify-center text-[#00f0ff] text-[11px] font-bold shadow-[0_0_8px_rgba(0,240,255,0.2)]">
-            SC
+            {mounted && typeof window !== 'undefined' && localStorage.getItem('leados_user') 
+              ? JSON.parse(localStorage.getItem('leados_user')!).name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()
+              : 'SC'}
           </div>
         </button>
       </div>

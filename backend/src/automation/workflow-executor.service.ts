@@ -310,8 +310,18 @@ export class WorkflowExecutorService {
           }
 
           case 'ai_score_lead': {
-            await this.leadsService.reScoreLead(leadId);
-            return { success: true, output: { reScored: true } };
+            const aiResult = await this.aiService.scoreLead({
+              name: lead.name,
+              company: lead.company,
+              title: lead.title || undefined,
+              source: lead.source,
+              interactions: 1,
+            });
+            await this.prisma.lead.update({
+              where: { id: leadId },
+              data: { score: aiResult.score },
+            });
+            return { success: true, output: { reScored: true, newScore: aiResult.score } };
           }
 
           case 'ai_generate_email': {
@@ -356,6 +366,7 @@ export class WorkflowExecutorService {
         const config = node.config as any;
         if (config.type === 'draft_email') {
           const lead = await this.prisma.lead.findUnique({ where: { id: leadId } });
+          if (!lead) return { success: false, error: 'Lead not found for email draft' };
           const draft = await this.aiService.generateEmailDraft(
             lead.name,
             lead.company,

@@ -1,18 +1,238 @@
-// This is your Prisma schema file
-// Sprint 1 — Backend Team Deliverable
-// Docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
-// ─── Enums ───────────────────────────────────────────────────────────────────
+model User {
+  id                String             @id @default(cuid())
+  email             String             @unique
+  name              String
+  password          String
+  role              Role               @default(EXECUTIVE)
+  avatar            String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  activities        Activity[]
+  communicationLogs CommunicationLog[]
+  deals             Deal[]
+  leads             Lead[]
+  sequences         Sequence[]
+  tasks             Task[]
+  workflows         Workflow[]
+
+  @@map("users")
+}
+
+model Lead {
+  id                String               @id @default(cuid())
+  name              String
+  email             String
+  company           String
+  title             String?
+  phone             String?
+  website           String?
+  linkedin          String?
+  status            LeadStatus           @default(NEW)
+  source            LeadSource           @default(WEBSITE)
+  score             Int                  @default(0)
+  lastContacted     DateTime?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  assignedToId      String?
+  activities        Activity[]
+  aiInsights        AIInsight[]
+  communicationLogs CommunicationLog[]
+  deals             Deal[]
+  assignedTo        User?                @relation(fields: [assignedToId], references: [id])
+  enrollments       SequenceEnrollment[]
+  tasks             Task[]
+
+  @@map("leads")
+}
+
+model Deal {
+  id                String    @id @default(cuid())
+  title             String
+  amount            Float
+  stage             DealStage @default(DISCOVERY)
+  expectedCloseDate DateTime?
+  closedAt          DateTime?
+  notes             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  leadId            String
+  ownerId           String
+  lead              Lead      @relation(fields: [leadId], references: [id])
+  owner             User      @relation(fields: [ownerId], references: [id])
+
+  @@map("deals")
+}
+
+model Task {
+  id           String    @id @default(cuid())
+  title        String
+  description  String?
+  dueDate      DateTime?
+  priority     String    @default("medium")
+  status       String    @default("pending")
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  assignedToId String
+  leadId       String?
+  assignedTo   User      @relation(fields: [assignedToId], references: [id])
+  lead         Lead?     @relation(fields: [leadId], references: [id])
+
+  @@map("tasks")
+}
+
+model Activity {
+  id        String   @id @default(cuid())
+  type      String
+  content   String
+  timestamp DateTime @default(now())
+  metadata  Json?
+  createdAt DateTime @default(now())
+  userId    String
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("activities")
+}
+
+model AIInsight {
+  id            String   @id @default(cuid())
+  analysis      String
+  opportunities String[]
+  websiteAudit  String?
+  sentiment     String
+  qualityScore  Int
+  qualityReason String
+  nextAction    String?
+  rawResponse   Json?
+  model         String   @default("gemini-1.5-flash")
+  promptKey     String?
+  createdAt     DateTime @default(now())
+  leadId        String
+  lead          Lead     @relation(fields: [leadId], references: [id])
+
+  @@map("ai_insights")
+}
+
+model Workflow {
+  id          String              @id @default(cuid())
+  name        String
+  description String?
+  status      WorkflowStatus      @default(DRAFT)
+  hasAINodes  Boolean             @default(false)
+  definition  Json
+  metrics     Json?
+  tags        String[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  createdById String
+  executions  WorkflowExecution[]
+  createdBy   User                @relation(fields: [createdById], references: [id])
+
+  @@map("workflows")
+}
+
+model WorkflowExecution {
+  id          String    @id @default(cuid())
+  status      String
+  leadId      String?
+  context     Json?
+  nodeResults Json?
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  workflowId  String
+  workflow    Workflow  @relation(fields: [workflowId], references: [id])
+
+  @@map("workflow_executions")
+}
+
+model Sequence {
+  id           String               @id @default(cuid())
+  name         String
+  description  String?
+  status       SequenceStatus       @default(DRAFT)
+  durationDays Int                  @default(7)
+  aiEnabled    Boolean              @default(true)
+  steps        Json
+  enrollment   Json
+  exitRules    Json
+  metrics      Json?
+  tags         String[]
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  createdById  String
+  enrollments  SequenceEnrollment[]
+  createdBy    User                 @relation(fields: [createdById], references: [id])
+
+  @@map("sequences")
+}
+
+model SequenceEnrollment {
+  id                String    @id @default(cuid())
+  status            String    @default("active")
+  currentStepNumber Int       @default(1)
+  enrolledAt        DateTime  @default(now())
+  nextStepAt        DateTime?
+  exitedAt          DateTime?
+  exitReason        String?
+  stepHistory       Json?
+  sequenceId        String
+  leadId            String
+  lead              Lead      @relation(fields: [leadId], references: [id])
+  sequence          Sequence  @relation(fields: [sequenceId], references: [id])
+
+  @@map("sequence_enrollments")
+}
+
+model EventLog {
+  id          String        @id @default(cuid())
+  type        String
+  category    EventCategory
+  entityId    String
+  entityType  String
+  userId      String?
+  payload     Json
+  metadata    Json?
+  processed   Boolean       @default(false)
+  processedAt DateTime?
+  timestamp   DateTime      @default(now())
+
+  @@index([type, timestamp])
+  @@index([entityId, entityType])
+  @@map("event_logs")
+}
+
+model CommunicationLog {
+  id          String    @id @default(cuid())
+  channel     String
+  direction   String
+  status      String
+  subject     String?
+  content     String
+  metadata    Json?
+  sentAt      DateTime  @default(now())
+  deliveredAt DateTime?
+  readAt      DateTime?
+  failedAt    DateTime?
+  leadId      String
+  userId      String?
+  lead        Lead      @relation(fields: [leadId], references: [id])
+  user        User?     @relation(fields: [userId], references: [id])
+
+  @@index([leadId])
+  @@map("communication_logs")
+}
 
 enum Role {
   ADMIN
@@ -68,249 +288,4 @@ enum EventCategory {
   AI
   AUTOMATION
   SYSTEM
-}
-
-// ─── User Entity ──────────────────────────────────────────────────────────────
-
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  password  String
-  role      Role     @default(EXECUTIVE)
-  avatar    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  leads      Lead[]
-  deals      Deal[]
-  tasks      Task[]
-  activities Activity[]
-  workflows  Workflow[]
-  sequences  Sequence[]
-
-  @@map("users")
-}
-
-// ─── Lead Entity ──────────────────────────────────────────────────────────────
-
-model Lead {
-  id            String     @id @default(cuid())
-  name          String
-  email         String
-  company       String
-  title         String?
-  phone         String?
-  website       String?
-  linkedin      String?
-  status        LeadStatus @default(NEW)
-  source        LeadSource @default(WEBSITE)
-  score         Int        @default(0)
-  lastContacted DateTime?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-
-  // Relations
-  assignedTo   User?       @relation(fields: [assignedToId], references: [id])
-  assignedToId String?
-  deals        Deal[]
-  tasks        Task[]
-  activities   Activity[]
-  aiInsights   AIInsight[]
-  enrollments  SequenceEnrollment[]
-
-  @@map("leads")
-}
-
-// ─── Deal Entity ──────────────────────────────────────────────────────────────
-
-model Deal {
-  id                String    @id @default(cuid())
-  title             String
-  amount            Float
-  stage             DealStage @default(DISCOVERY)
-  expectedCloseDate DateTime?
-  closedAt          DateTime?
-  notes             String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-
-  // Relations
-  lead   Lead   @relation(fields: [leadId], references: [id])
-  leadId String
-  owner  User   @relation(fields: [ownerId], references: [id])
-  ownerId String
-
-  @@map("deals")
-}
-
-// ─── Task Entity ──────────────────────────────────────────────────────────────
-
-model Task {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  dueDate     DateTime?
-  priority    String   @default("medium") // low | medium | high
-  status      String   @default("pending") // pending | completed
-  completedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  assignedTo   User   @relation(fields: [assignedToId], references: [id])
-  assignedToId String
-  lead         Lead?  @relation(fields: [leadId], references: [id])
-  leadId       String?
-
-  @@map("tasks")
-}
-
-// ─── Activity Entity ──────────────────────────────────────────────────────────
-
-model Activity {
-  id        String   @id @default(cuid())
-  type      String   // email | call | meeting | note | whatsapp | ai_automation
-  content   String
-  timestamp DateTime @default(now())
-  metadata  Json?
-  createdAt DateTime @default(now())
-
-  // Relations
-  user   User   @relation(fields: [userId], references: [id])
-  userId String
-  lead   Lead   @relation(fields: [leadId], references: [id])
-  leadId String
-
-  @@map("activities")
-}
-
-// ─── AI Insight Entity ────────────────────────────────────────────────────────
-
-model AIInsight {
-  id              String   @id @default(cuid())
-  analysis        String
-  opportunities   String[] // Array of opportunity strings
-  websiteAudit    String?
-  sentiment       String   // positive | neutral | negative
-  qualityScore    Int
-  qualityReason   String
-  nextAction      String?
-  rawResponse     Json?    // Full Gemini response stored for reference
-  model           String   @default("gemini-1.5-flash")
-  promptKey       String?
-  createdAt       DateTime @default(now())
-
-  // Relations
-  lead   Lead   @relation(fields: [leadId], references: [id])
-  leadId String
-
-  @@map("ai_insights")
-}
-
-// ─── Workflow Entity (Automation Team) ───────────────────────────────────────
-
-model Workflow {
-  id          String         @id @default(cuid())
-  name        String
-  description String?
-  status      WorkflowStatus @default(DRAFT)
-  hasAINodes  Boolean        @default(false)
-  definition  Json           // Stores nodes[], edges{} as JSON
-  metrics     Json?          // Runtime metrics JSON
-  tags        String[]
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-
-  // Relations
-  createdBy   User   @relation(fields: [createdById], references: [id])
-  createdById String
-  executions  WorkflowExecution[]
-
-  @@map("workflows")
-}
-
-// ─── Workflow Execution ───────────────────────────────────────────────────────
-
-model WorkflowExecution {
-  id          String   @id @default(cuid())
-  status      String   // running | completed | failed | paused
-  leadId      String?
-  context     Json?
-  nodeResults Json?
-  startedAt   DateTime @default(now())
-  completedAt DateTime?
-
-  // Relations
-  workflow   Workflow @relation(fields: [workflowId], references: [id])
-  workflowId String
-
-  @@map("workflow_executions")
-}
-
-// ─── Sequence Entity (Automation Team) ───────────────────────────────────────
-
-model Sequence {
-  id           String         @id @default(cuid())
-  name         String
-  description  String?
-  status       SequenceStatus @default(DRAFT)
-  durationDays Int            @default(7)
-  aiEnabled    Boolean        @default(true)
-  steps        Json           // SequenceStep[] as JSON
-  enrollment   Json           // EnrollmentSettings as JSON
-  exitRules    Json           // ExitSettings as JSON
-  metrics      Json?
-  tags         String[]
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-
-  // Relations
-  createdBy   User   @relation(fields: [createdById], references: [id])
-  createdById String
-  enrollments SequenceEnrollment[]
-
-  @@map("sequences")
-}
-
-// ─── Sequence Enrollment ──────────────────────────────────────────────────────
-
-model SequenceEnrollment {
-  id                String   @id @default(cuid())
-  status            String   @default("active") // active | completed | exited | paused
-  currentStepNumber Int      @default(1)
-  enrolledAt        DateTime @default(now())
-  nextStepAt        DateTime?
-  exitedAt          DateTime?
-  exitReason        String?
-  stepHistory       Json?
-
-  // Relations
-  sequence   Sequence @relation(fields: [sequenceId], references: [id])
-  sequenceId String
-  lead       Lead     @relation(fields: [leadId], references: [id])
-  leadId     String
-
-  @@map("sequence_enrollments")
-}
-
-// ─── Event Log (Automation Team) ─────────────────────────────────────────────
-
-model EventLog {
-  id          String        @id @default(cuid())
-  type        String        // EventType string
-  category    EventCategory
-  entityId    String
-  entityType  String
-  userId      String?
-  payload     Json
-  metadata    Json?
-  processed   Boolean       @default(false)
-  processedAt DateTime?
-  timestamp   DateTime      @default(now())
-
-  @@index([type, timestamp])
-  @@index([entityId, entityType])
-  @@map("event_logs")
 }

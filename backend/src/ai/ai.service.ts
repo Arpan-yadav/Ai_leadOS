@@ -314,4 +314,88 @@ Return only the email subject line and body. No other conversational text or mar
       return 'Failed to generate email draft.';
     }
   }
+
+  /**
+   * Generate highly personalized outreach message using Gemini
+   */
+  async generatePersonalizedMessage(leadName: string, company: string, context?: string): Promise<{ message: string }> {
+    const prompt = `
+You are a top-tier B2B sales copywriter.
+Write a personalized opening email or message.
+
+Lead: ${leadName} at ${company}
+Context: ${context ?? 'Standard B2B intro'}
+
+Return JSON:
+{
+  "message": "<the generated message>"
+}
+
+Only return valid JSON.`.trim();
+
+    const result = await this.generateJSON<{ message: string }>(prompt);
+    if (result) return result;
+
+    return {
+      message: `Hi ${leadName},\n\nI was researching ${company} and noticed some impressive growth. I thought it would be a great time to connect and explore how our platform could help your team scale even faster.\n\nWould you be open to a brief chat next week?`
+    };
+  }
+
+  /**
+   * Suggest optimal send time based on lead details
+   */
+  async suggestOptimalSendTime(leadName: string, company: string): Promise<{ suggestedTime: string, reason: string }> {
+    const prompt = `
+You are a B2B sales optimization engine.
+Suggest the best time and day to send a cold outreach message to:
+Lead: ${leadName}
+Company: ${company}
+
+Return JSON:
+{
+  "suggestedTime": "<e.g., Tuesday at 10:00 AM local time>",
+  "reason": "<short explanation why>"
+}
+
+Only return valid JSON.`.trim();
+
+    const result = await this.generateJSON<{ suggestedTime: string, reason: string }>(prompt);
+    if (result) return result;
+
+    return {
+      suggestedTime: "Tuesday at 10:00 AM",
+      reason: "Mid-morning on Tuesday typically sees the highest open rates for B2B executives before their afternoon meetings."
+    };
+  }
+
+  /**
+   * Generate an autonomous reply as a sales executive based on recent conversation history.
+   */
+  async generateAutonomousReply(leadName: string, company: string, messageHistory: string[]): Promise<{ reply: string }> {
+    const prompt = `
+You are a highly skilled, polite, and persuasive B2B sales executive working for a CRM software company.
+A lead has just replied to your message. You need to read the recent conversation history and generate an appropriate, concise, and human-sounding response.
+
+Lead: ${leadName}
+Company: ${company}
+
+Recent Conversation History (from oldest to newest):
+${messageHistory.map((msg, i) => `[${i + 1}] ${msg}`).join('\n')}
+
+Generate the next logical response. Keep it under 3 sentences. Be helpful and try to move them towards a demo or call if they show intent.
+
+Return JSON:
+{
+  "reply": "<the generated message>"
+}
+
+Only return valid JSON.`.trim();
+
+    const result = await this.generateJSON<{ reply: string }>(prompt);
+    if (result) return result;
+
+    return {
+      reply: `Thanks for the response, ${leadName}. I completely understand. Would it make sense to schedule a quick 5-minute call to discuss how we can help ${company}?`
+    };
+  }
 }

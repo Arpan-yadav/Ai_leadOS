@@ -31,6 +31,9 @@ export default function RegisterPage() {
     try {
       const res = await apiClient.post('/auth/register', data);
       saveToken(res.data.accessToken);
+      if (res.data.user) {
+        import('@/lib/auth').then(({ saveUser }) => saveUser(res.data.user));
+      }
       router.push('/dashboard');
     } catch (err: any) {
       setServerError(err?.response?.data?.message || 'Registration failed.');

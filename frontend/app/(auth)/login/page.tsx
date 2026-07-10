@@ -30,6 +30,9 @@ export default function LoginPage() {
     try {
       const res = await apiClient.post('/auth/login', data);
       saveToken(res.data.accessToken);
+      if (res.data.user) {
+        import('@/lib/auth').then(({ saveUser }) => saveUser(res.data.user));
+      }
       router.push('/dashboard');
     } catch (err: any) {
       setServerError(err?.response?.data?.message || 'Invalid credentials.');

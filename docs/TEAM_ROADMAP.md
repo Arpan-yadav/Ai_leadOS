@@ -291,6 +291,11 @@ refactor: extract lead validation to guard
 | Auto-enroll leads in sequences based on communication triggers |
 | Smart send-time optimisation prompt |
 
+#### 🌟 Extra Features (Added ad-hoc)
+| Task |
+|------|
+| Autonomous AI Responder Loop — Backend webhook dynamically replies to inbound leads |
+
 ---
 
 ### 🟢 Sprint 7 — Analytics, Reporting & Admin Panel

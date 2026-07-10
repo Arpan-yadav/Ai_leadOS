@@ -12,6 +12,20 @@ export function saveToken(token: string): void {
   }
 }
 
+export function saveUser(user: any): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('leados_user', JSON.stringify(user));
+  }
+}
+
+export function getUser(): any | null {
+  if (typeof window !== 'undefined') {
+    const userStr = localStorage.getItem('leados_user');
+    return userStr ? JSON.parse(userStr) : null;
+  }
+  return null;
+}
+
 export function getToken(): string | null {
   if (typeof window !== 'undefined') {
     return localStorage.getItem(TOKEN_KEY);
@@ -22,6 +36,7 @@ export function getToken(): string | null {
 export function removeToken(): void {
   if (typeof window !== 'undefined') {
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem('leados_user');
   }
 }
 

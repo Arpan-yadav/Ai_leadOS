@@ -58,26 +58,33 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Content */}
         <div className="glass-card p-6 flex-1">
-          {active === 'profile' && (
+          {active === 'profile' && (() => {
+            let user = { name: 'Sarah Chen', email: 'sarah.chen@proyotech.com', role: 'Admin' };
+            if (typeof window !== 'undefined') {
+              const str = localStorage.getItem('leados_user');
+              if (str) user = JSON.parse(str);
+            }
+            const initials = user.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
+
+            return (
             <div className="space-y-6">
               <h2 className="text-sm font-black text-white uppercase tracking-widest border-b border-[#27272A] pb-4">Profile Settings</h2>
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-16 h-16 rounded-xl bg-linear-to-br from-[#00f0ff]/30 to-[#bd00ff]/30 border border-[#00f0ff]/30 flex items-center justify-center text-[#00f0ff] text-xl font-bold shadow-[0_0_15px_rgba(0,240,255,0.2)]">
-                  SC
+                  {initials}
                 </div>
                 <div>
-                  <p className="font-bold text-white">Sarah Chen</p>
-                  <p className="text-[11px] text-[#00f0ff] font-mono uppercase">Admin</p>
+                  <p className="font-bold text-white">{user.name}</p>
+                  <p className="text-[11px] text-[#00f0ff] font-mono uppercase">{user.role}</p>
                   <button onClick={() => toast('Avatar selection dialog opened')} className="text-[10px] text-[#b9cacb] hover:text-[#00f0ff] transition-colors mt-1">Change avatar</button>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {[
-                  { label: 'Full Name', value: 'Sarah Chen' },
-                  { label: 'Email', value: 'sarah.chen@proyotech.com' },
-                  { label: 'Role', value: 'Admin' },
+                  { label: 'Full Name', value: user.name },
+                  { label: 'Email', value: user.email },
+                  { label: 'Role', value: user.role },
                   { label: 'Team', value: 'Sales' },
                 ].map(f => (
                   <div key={f.label}>
@@ -88,7 +95,7 @@ export default function SettingsPage() {
               </div>
               <button onClick={() => toast.success('Profile changes saved successfully!')} className="btn-primary">Save Changes</button>
             </div>
-          )}
+          )})()}
           {active !== 'profile' && (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
               {React.createElement(sections.find(s => s.id === active)?.icon || Settings, { size: 32, className: 'text-[#00f0ff]/40' })}

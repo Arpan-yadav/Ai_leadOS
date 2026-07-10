@@ -1,54 +1,11 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MessageSquare, Mail, Phone, Linkedin, Facebook, Send, Clock, X, ArrowLeft, Archive, Edit2, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import NewMessageModal from '@/components/communications/NewMessageModal';
+import { getToken } from '@/lib/auth';
 
-const recentMessages = [
-  {
-    name: 'James Wilson', company: 'TechCorp', channel: 'WhatsApp', time: '2m ago', read: true,
-    message: 'Sounds great! When can we schedule a call?',
-    thread: [
-      { from: 'them', text: 'Hey, I saw your product demo online.', time: '10m ago' },
-      { from: 'me', text: 'Hi James! Thanks for reaching out. Happy to tell you more.', time: '8m ago' },
-      { from: 'them', text: 'It looks really promising. Does it integrate with HubSpot?', time: '6m ago' },
-      { from: 'me', text: 'Yes! We have a native HubSpot integration. Want a live demo?', time: '4m ago' },
-      { from: 'them', text: 'Sounds great! When can we schedule a call?', time: '2m ago' },
-    ],
-  },
-  {
-    name: 'Elena Rodriguez', company: 'BrightMedia', channel: 'Email', time: '15m ago', read: false,
-    message: 'I reviewed the proposal. A few questions...',
-    thread: [
-      { from: 'me', text: 'Hi Elena, please find attached the proposal for BrightMedia.', time: '2h ago' },
-      { from: 'them', text: 'I reviewed the proposal. A few questions about pricing...', time: '15m ago' },
-    ],
-  },
-  {
-    name: 'Rahul Sharma', company: 'Digital Agency', channel: 'LinkedIn', time: '1h ago', read: true,
-    message: 'Thank you for connecting! Excited to chat.',
-    thread: [
-      { from: 'me', text: 'Hi Rahul, I noticed your agency specialises in B2B SaaS — thought AI LeadOS could be a great fit.', time: '2h ago' },
-      { from: 'them', text: 'Thank you for connecting! Excited to chat.', time: '1h ago' },
-    ],
-  },
-  {
-    name: 'Sarah Jenkins', company: 'Innovate Co', channel: 'Meta', time: '2h ago', read: false,
-    message: 'Clicked on your ad. Looking for CRM solutions.',
-    thread: [
-      { from: 'them', text: 'Clicked on your ad. Looking for CRM solutions.', time: '2h ago' },
-    ],
-  },
-  {
-    name: 'Michael Torres', company: 'Globus Logistics', channel: 'Email', time: '3h ago', read: true,
-    message: 'Following up on the quote we discussed...',
-    thread: [
-      { from: 'them', text: 'Hi, I wanted to follow up on the quote we discussed last week.', time: '3h ago' },
-      { from: 'me', text: 'Hi Michael! Yes, I have updated the quote. Sending now.', time: '2h 45m ago' },
-      { from: 'them', text: 'Following up on the quote we discussed...', time: '3h ago' },
-    ],
-  },
-];
+
 
 const channelIcon = (channel: string, size = 14) => {
   switch(channel) {
@@ -61,11 +18,57 @@ const channelIcon = (channel: string, size = 14) => {
 };
 
 export default function CommunicationsPage() {
-  const [selected, setSelected] = useState<typeof recentMessages[0] | null>(null);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [selected, setSelected] = useState<any | null>(null);
   const [reply, setReply] = useState('');
   const [isNewMessageModalOpen, setIsNewMessageModalOpen] = useState(false);
   const [editingMsgIndex, setEditingMsgIndex] = useState<number | null>(null);
   const [editContent, setEditContent] = useState('');
+
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        const token = getToken();
+        if (!token) return;
+        const res = await fetch('http://localhost:3001/api/communications', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        
+        // Group by lead to form threads
+        const grouped: Record<string, any> = {};
+        data.forEach((log: any) => {
+          if (!grouped[log.leadId]) {
+            grouped[log.leadId] = {
+              name: log.lead.name,
+              company: log.lead.company,
+              channel: log.channel,
+              time: new Date(log.sentAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+              rawTime: new Date(log.sentAt).getTime(),
+              read: log.status === 'read',
+              message: log.content,
+              thread: []
+            };
+          }
+          grouped[log.leadId].thread.unshift({
+            from: log.direction === 'inbound' ? 'them' : 'me',
+            text: log.content,
+            time: new Date(log.sentAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+          });
+          // update last message
+          if (new Date(log.sentAt).getTime() > grouped[log.leadId].rawTime) {
+            grouped[log.leadId].message = log.content;
+            grouped[log.leadId].time = new Date(log.sentAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            grouped[log.leadId].rawTime = new Date(log.sentAt).getTime();
+          }
+        });
+        setMessages(Object.values(grouped));
+      } catch (err) {
+        console.error('Failed to fetch communications', err);
+      }
+    };
+    fetchLogs();
+  }, []);
 
   const handleArchive = () => {
     toast.success('Conversation archived');
@@ -123,11 +126,11 @@ export default function CommunicationsPage() {
           <div className="px-6 py-4 border-b border-slate-200 dark:border-white/5 flex items-center justify-between">
             <h3 className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-widest">Recent Conversations</h3>
             <span className="text-[10px] bg-[#ff007a]/10 text-[#ff007a] border border-[#ff007a]/20 px-2 py-0.5 rounded-full font-bold uppercase">
-              {recentMessages.filter(m => !m.read).length} Unread
+              {messages.filter(m => !m.read).length} Unread
             </span>
           </div>
           <div className="divide-y divide-slate-100 dark:divide-white/5">
-            {recentMessages.map((msg, i) => (
+            {messages.map((msg, i) => (
               <div
                 key={i}
                 onClick={() => setSelected(msg)}
@@ -140,7 +143,7 @@ export default function CommunicationsPage() {
                   }`}
               >
                 <div className="w-10 h-10 rounded-full bg-linear-to-br from-[#00f0ff]/20 to-[#bd00ff]/20 border border-[#00f0ff]/20 flex items-center justify-center text-[11px] font-bold text-[#00f0ff] shrink-0">
-                  {msg.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                  {msg.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
@@ -178,7 +181,7 @@ export default function CommunicationsPage() {
                 <ArrowLeft size={16} />
               </button>
               <div className="w-9 h-9 rounded-full bg-linear-to-br from-[#00f0ff]/20 to-[#bd00ff]/20 border border-[#00f0ff]/20 flex items-center justify-center text-[11px] font-bold text-[#00f0ff] shrink-0">
-                {selected.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                {selected.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-slate-800 dark:text-white">{selected.name}</p>
@@ -198,7 +201,7 @@ export default function CommunicationsPage() {
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-5 space-y-4 min-h-[250px] max-h-[350px]">
-              {selected.thread.map((msg, i) => (
+              {selected.thread.map((msg: any, i: number) => (
                 <div key={i} className={`flex ${msg.from === 'me' ? 'justify-end' : 'justify-start'} group`}>
                   
                   {msg.from === 'me' && editingMsgIndex !== i && (
@@ -272,7 +275,14 @@ export default function CommunicationsPage() {
       </div>
 
       {isNewMessageModalOpen && (
-        <NewMessageModal onClose={() => setIsNewMessageModalOpen(false)} />
+        <NewMessageModal 
+          onClose={() => setIsNewMessageModalOpen(false)} 
+          onSent={() => {
+            setIsNewMessageModalOpen(false);
+            // Trigger a re-fetch of logs by re-mounting the effect (or we can just reload for simplicity)
+            window.location.reload();
+          }}
+        />
       )}
     </div>
   );

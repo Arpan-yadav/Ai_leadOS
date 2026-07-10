@@ -25,6 +25,7 @@ import { AiInsightsModule } from './ai-insights/ai-insights.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { WorkflowsModule } from './workflows/workflows.module';
 import { WorkflowExecutionsModule } from './workflow-executions/workflow-executions.module';
+import { CommunicationsModule } from './communications/communications.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { WorkflowExecutionsModule } from './workflow-executions/workflow-executi
     WebhooksModule,
     WorkflowsModule,
     WorkflowExecutionsModule,
+    CommunicationsModule,
   ],
 })
 export class AppModule {}
