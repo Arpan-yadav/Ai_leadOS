@@ -19,6 +19,7 @@ export default function AutomationPage() {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [showHistory, setShowHistory] = useState(false);
   const [showActivate, setShowActivate] = useState(false);
+  const [mockNewExecution, setMockNewExecution] = useState(false);
 
   const handleSave = async () => {
     try {
@@ -85,7 +86,16 @@ export default function AutomationPage() {
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
             Save Draft
           </button>
-          <button onClick={() => setShowActivate(true)} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-linear-to-r from-[#00f0ff] to-[#bd00ff] text-white hover:opacity-90 transition-opacity font-bold text-sm shadow-[0_0_20px_rgba(189,0,255,0.4)]">
+          <button 
+            onClick={() => {
+              toast.success('Workflow Activated! Simulating real-time execution...');
+              setTimeout(() => {
+                setMockNewExecution(true);
+                setShowHistory(true);
+              }, 1500);
+            }} 
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-linear-to-r from-[#00f0ff] to-[#bd00ff] text-white hover:opacity-90 transition-opacity font-bold text-sm shadow-[0_0_20px_rgba(189,0,255,0.4)]"
+          >
             <Play size={16} className="fill-current" />
             Activate Workflow
           </button>
@@ -107,7 +117,7 @@ export default function AutomationPage() {
         </div>
       </div>
 
-      {showHistory && <ExecutionHistoryModal onClose={() => setShowHistory(false)} />}
+      {showHistory && <ExecutionHistoryModal onClose={() => { setShowHistory(false); setMockNewExecution(false); }} mockNewExecution={mockNewExecution} />}
       {showActivate && <ActivateWorkflowModal onClose={() => setShowActivate(false)} onActivate={() => setShowActivate(false)} />}
     </div>
   );

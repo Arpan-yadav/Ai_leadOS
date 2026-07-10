@@ -1,7 +1,7 @@
 'use client'
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, Filter, Download, Plus, MoreHorizontal, Mail, Linkedin, Globe, Zap, MessageSquare, Facebook, Sparkles, X } from 'lucide-react'
+import { Search, Filter, Download, Plus, MoreHorizontal, Mail, Linkedin, Globe, Zap, MessageSquare, Facebook, Sparkles, X, Trash2 } from 'lucide-react'
 import StatusBadge from '@/components/ui/StatusBadge'
 import AddLeadModal from '@/components/leads/AddLeadModal'
 import LeadDetailPanel from '@/components/leads/LeadDetailPanel'
@@ -95,8 +95,49 @@ const LeadsPage = () => {
     setSelectedIds(selectedIds.length === filteredLeads.length ? [] : filteredLeads.map(l => l.id))
 
   const handleAddLead = (newLead: any) => {
-    setLeads([...leads, { ...newLead, id: Math.random().toString(), status: 'NEW' as const, createdAt: new Date().toISOString().slice(0, 10) }])
+    setLeads([newLead, ...leads])
     setShowModal(false)
+  }
+
+  const exportToCSV = () => {
+    const headers = ['ID,Name,Company,Email,Status,Score,Source,Created At'];
+    const rows = filteredLeads.map(lead => 
+      `${lead.id},"${lead.name}","${lead.company}","${lead.email}",${lead.status},${lead.score},${lead.source},${lead.createdAt}`
+    );
+    const csvContent = headers.concat(rows).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'leads_export.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Leads exported successfully!');
+  }
+
+  const deleteSelectedLeads = async () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm('Are you sure you want to delete the selected leads?')) return;
+
+    setLoading(true);
+    const token = getToken();
+    try {
+      await Promise.all(selectedIds.map(id => 
+        fetch(`http://localhost:3001/api/leads/${id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ));
+      
+      setLeads(leads.filter(l => !selectedIds.includes(l.id)));
+      setSelectedIds([]);
+      toast.success('Leads deleted successfully!');
+    } catch (err) {
+      toast.error('Failed to delete leads');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -108,7 +149,13 @@ const LeadsPage = () => {
           <p className="text-[#b9cacb] light:text-slate-500 mt-1 font-medium italic">Multi-channel leads synchronized via AI Automation.</p>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => toast.success('Exporting leads data to CSV...')} className="btn-secondary h-10 flex items-center gap-2">
+          {selectedIds.length > 0 && (
+            <button onClick={deleteSelectedLeads} className="h-10 px-4 rounded-lg bg-rose-500/10 text-rose-500 border border-rose-500/20 hover:bg-rose-500/20 flex items-center gap-2 transition-all">
+              <Trash2 size={14} />
+              <span className="text-[10px] font-black uppercase tracking-widest leading-none">Delete ({selectedIds.length})</span>
+            </button>
+          )}
+          <button onClick={exportToCSV} className="btn-secondary h-10 flex items-center gap-2">
             <Download size={14} />
             <span className="text-[10px] font-black uppercase tracking-widest leading-none">Export</span>
           </button>

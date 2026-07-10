@@ -7,13 +7,18 @@ import { useTheme } from 'next-themes'
 import toast from 'react-hot-toast'
 import AddSequenceModal from '@/components/sequences/AddSequenceModal'
 import EnrollLeadsModal from '@/components/sequences/EnrollLeadsModal'
+import { useSearchParams } from 'next/navigation'
 
 export default function SequencesPage() {
+  const searchParams = useSearchParams()
+  const initialTab = searchParams.get('tab') === 'enrollments' ? 'enrollments' : 'sequences'
+  
   const [sequences, setSequences] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
   const [isAddSequenceModalOpen, setIsAddSequenceModalOpen] = useState(false)
   const [enrollingSequence, setEnrollingSequence] = useState<{id: string, name: string} | null>(null)
+  const [activeTab, setActiveTab] = useState<'sequences' | 'enrollments'>(initialTab)
   const { resolvedTheme } = useTheme()
   const token = getToken()
 
@@ -147,8 +152,57 @@ export default function SequencesPage() {
         </div>
       )}
 
-      {/* ── Empty State ── */}
-      {!loading && sequences.length === 0 && (
+      {/* ── Tabs ── */}
+      {!loading && (
+        <div className="flex gap-4 border-b border-[#27272A] light:border-slate-200 mb-6">
+          <button 
+            onClick={() => setActiveTab('sequences')}
+            className={`pb-2 font-bold uppercase tracking-wider text-sm transition-colors border-b-2 ${activeTab === 'sequences' ? 'border-[#bd00ff] text-[#bd00ff]' : 'border-transparent text-slate-500 hover:text-white light:hover:text-slate-800'}`}
+          >
+            Sequences
+          </button>
+          <button 
+            onClick={() => setActiveTab('enrollments')}
+            className={`pb-2 font-bold uppercase tracking-wider text-sm transition-colors border-b-2 ${activeTab === 'enrollments' ? 'border-[#00f0ff] text-[#00f0ff]' : 'border-transparent text-slate-500 hover:text-white light:hover:text-slate-800'}`}
+          >
+            Active Enrollments
+          </button>
+        </div>
+      )}
+
+      {/* ── Active Enrollments View ── */}
+      {!loading && activeTab === 'enrollments' && (
+        <div className="glass-panel p-6">
+          <h2 className={`text-lg font-bold mb-4 uppercase tracking-wider ${t.heading}`}>Currently Enrolled Leads</h2>
+          <div className="space-y-4">
+            {sequences.flatMap(seq => 
+              (seq.enrollments || []).map((enr: any) => (
+                <div key={enr.id} className="flex items-center justify-between p-4 rounded-xl border border-[#27272A] light:border-slate-200 bg-[#111114] light:bg-white hover:border-[#00f0ff]/50 transition-colors">
+                  <div className="flex flex-col">
+                    <span className="font-bold text-white light:text-slate-800">{enr.lead?.name || 'Unknown Lead'}</span>
+                    <span className="text-[11px] text-[#b9cacb] uppercase tracking-wider">{enr.lead?.company || 'Company'}</span>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="text-[10px] text-slate-500 uppercase font-bold mb-1">Sequence</span>
+                    <span className="text-xs font-medium text-[#bd00ff]">{seq.name}</span>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <span className="text-[10px] text-slate-500 uppercase font-bold mb-1">Progress</span>
+                    <span className="text-xs font-bold text-[#00f0ff]">Step {enr.currentStepNumber}</span>
+                  </div>
+                </div>
+              ))
+            ).length === 0 && (
+              <div className="text-center text-slate-500 py-8 italic font-mono text-sm">
+                No active enrollments found.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Empty State (Sequences) ── */}
+      {!loading && activeTab === 'sequences' && sequences.length === 0 && (
         <div className="glass-panel py-20 flex flex-col items-center justify-center text-center">
           <div className={`w-16 h-16 rounded-2xl border flex items-center justify-center mb-4 ${t.emptyIcon}`}>
             <Workflow size={32} className={t.emptyIconClr} />
@@ -164,8 +218,8 @@ export default function SequencesPage() {
         </div>
       )}
 
-      {/* ── Cards Grid ── */}
-      {!loading && sequences.length > 0 && (
+      {/* ── Cards Grid (Sequences) ── */}
+      {!loading && activeTab === 'sequences' && sequences.length > 0 && (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {sequences.map(seq => (
             <div key={seq.id} className="glass-card flex flex-col hover:-translate-y-1 transition-transform duration-300 overflow-hidden">
@@ -264,6 +318,7 @@ export default function SequencesPage() {
 
       {enrollingSequence && (
         <EnrollLeadsModal
+          sequenceId={enrollingSequence.id}
           sequenceName={enrollingSequence.name}
           onClose={() => {
             setEnrollingSequence(null)

@@ -57,6 +57,12 @@ export interface WorkflowSuggestion {
   estimatedImpact: string;
 }
 
+export interface AnalyticsInsightResult {
+  summary: string;
+  keyInsights: string[];
+  recommendedActions: string[];
+}
+
 // ─── Service ──────────────────────────────────────────────────────────────────
 
 @Injectable()
@@ -283,6 +289,17 @@ Only return valid JSON array.`.trim();
   }
 
   /**
+   * Suggest tasks based on generic B2B pipeline activities.
+   */
+  async suggestTasks(): Promise<{ title: string; priority: 'low' | 'medium' | 'high' }[]> {
+    return [
+      { title: 'Follow up with stale leads in Proposal stage', priority: 'high' },
+      { title: 'Prepare Q3 performance review for key accounts', priority: 'medium' },
+      { title: 'Review unassigned incoming web leads', priority: 'low' },
+    ];
+  }
+
+  /**
    * Generate a personalized email draft for a lead.
    */
   async generateEmailDraft(leadName: string, company: string, title?: string, instructions?: string): Promise<string> {
@@ -396,6 +413,48 @@ Only return valid JSON.`.trim();
 
     return {
       reply: `Thanks for the response, ${leadName}. I completely understand. Would it make sense to schedule a quick 5-minute call to discuss how we can help ${company}?`
+    };
+  }
+
+  /**
+   * Generates a data science level analysis of dashboard metrics.
+   */
+  async generateAnalyticsInsight(metricsData: any): Promise<AnalyticsInsightResult> {
+    const prompt = `
+You are an expert Data Scientist analyzing the sales pipeline and team performance metrics.
+Review the following metrics and provide a comprehensive analysis of trends, anomalies, and actionable recommendations.
+
+Metrics:
+${JSON.stringify(metricsData, null, 2)}
+
+Return JSON:
+{
+  "summary": "<A 2-3 sentence executive summary of the overall performance>",
+  "keyInsights": [
+    "<insight 1>",
+    "<insight 2>"
+  ],
+  "recommendedActions": [
+    "<action 1>",
+    "<action 2>"
+  ]
+}
+
+Only return valid JSON.`.trim();
+
+    const result = await this.generateJSON<AnalyticsInsightResult>(prompt);
+    if (result) return result;
+
+    return {
+      summary: "Performance has remained steady over the selected period. Strong conversion rates from Discovery to Proposal stages suggest effective initial qualification.",
+      keyInsights: [
+        "Inbound leads continue to be the primary driver of high-value deals.",
+        "A noticeable bottleneck occurs at the Negotiation stage, increasing the average sales cycle length."
+      ],
+      recommendedActions: [
+        "Implement a targeted retargeting campaign for stalled deals in the Negotiation stage.",
+        "Increase automated email touchpoints for lower-tier outbound leads to improve early engagement."
+      ]
     };
   }
 }

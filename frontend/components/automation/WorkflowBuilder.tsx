@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { X, Settings2 } from 'lucide-react';
 import ReactFlow, {
   Background,
   Controls,
@@ -68,6 +69,13 @@ export default function WorkflowBuilder({
   onEdgesChange: any,
   setEdges: any
 }) {
+  const [selectedNode, setSelectedNode] = useState<any>(null);
+
+  const onNodeClick = useCallback((event: React.MouseEvent, node: any) => {
+    setSelectedNode(node);
+  }, []);
+
+  const closePanel = () => setSelectedNode(null);
 
   const onConnect = useCallback(
     (params: Connection | Edge) => setEdges((eds: Edge[]) => addEdge({ ...params, animated: true, style: { stroke: '#00f0ff', strokeWidth: 2 } }, eds)),
@@ -122,6 +130,7 @@ export default function WorkflowBuilder({
           onConnect={onConnect}
           onDrop={onDrop}
           onDragOver={onDragOver}
+          onNodeClick={onNodeClick}
           nodeTypes={nodeTypes}
           fitView
           className="bg-[#0A0A0C] light:bg-slate-50"
@@ -139,6 +148,59 @@ export default function WorkflowBuilder({
             style={{ backgroundColor: theme === 'dark' ? '#111114' : '#ffffff' }}
           />
         </ReactFlow>
+        
+        {/* Node Config Panel */}
+        {selectedNode && (
+          <div className="absolute top-4 right-4 w-80 glass-panel border border-[#00f0ff]/30 shadow-[0_0_30px_rgba(0,240,255,0.15)] flex flex-col overflow-hidden animate-slide-left z-50">
+            <div className="p-4 bg-black/40 border-b border-white/10 flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Settings2 size={16} className="text-[#00f0ff]" />
+                <h3 className="font-bold text-white text-sm uppercase tracking-wide">Node Config</h3>
+              </div>
+              <button onClick={closePanel} className="text-slate-400 hover:text-white transition-colors">
+                <X size={16} />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-[10px] text-slate-400 uppercase tracking-widest mb-1 font-bold">Node Label</label>
+                <input 
+                  type="text" 
+                  value={selectedNode.data?.label || ''} 
+                  readOnly
+                  className="input-field w-full text-sm bg-black/20"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] text-slate-400 uppercase tracking-widest mb-1 font-bold">Description</label>
+                <textarea 
+                  value={selectedNode.data?.description || ''} 
+                  readOnly
+                  className="input-field w-full text-sm bg-black/20 h-20 resize-none"
+                />
+              </div>
+              {selectedNode.type === 'actionNode' && (
+                <div>
+                  <label className="block text-[10px] text-[#00f0ff] uppercase tracking-widest mb-1 font-bold">Email Template</label>
+                  <select className="input-field w-full text-sm border-[#00f0ff]/30 text-white focus:border-[#00f0ff]">
+                    <option>High-Intent Welcome</option>
+                    <option>Nurture Drip 1</option>
+                    <option>Post-Webinar Follow-up</option>
+                  </select>
+                </div>
+              )}
+              {selectedNode.type === 'aiDecisionNode' && (
+                <div>
+                  <label className="block text-[10px] text-[#bd00ff] uppercase tracking-widest mb-1 font-bold">Score Threshold</label>
+                  <input type="number" defaultValue={80} className="input-field w-full text-sm border-[#bd00ff]/30 text-white" />
+                </div>
+              )}
+              <div className="pt-4 border-t border-white/10">
+                <button onClick={closePanel} className="btn-primary w-full shadow-[0_0_15px_rgba(0,240,255,0.3)]">Save Configuration</button>
+              </div>
+            </div>
+          </div>
+        )}
       </ReactFlowProvider>
     </div>
   );

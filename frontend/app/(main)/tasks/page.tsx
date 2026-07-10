@@ -10,7 +10,8 @@ import {
   Trash2, 
   Undo2, 
   AlertCircle,
-  MoreHorizontal
+  MoreHorizontal,
+  Sparkles
 } from 'lucide-react';
 
 interface Task {
@@ -32,6 +33,9 @@ export default function TasksPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskPriority, setNewTaskPriority] = useState<'low' | 'medium' | 'high'>('medium');
+
+  const [suggestingTasks, setSuggestingTasks] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
 
   const fetchTasks = async () => {
     try {
@@ -122,6 +126,23 @@ export default function TasksPage() {
     }
   };
 
+  const handleSuggestTasks = async () => {
+    try {
+      setSuggestingTasks(true);
+      const token = getToken();
+      const res = await fetch('http://localhost:3001/api/tasks/suggest', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed to fetch AI suggestions');
+      const data = await res.json();
+      setAiSuggestions(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSuggestingTasks(false);
+    }
+  };
+
   const pendingTasks = tasks.filter(t => t.status === 'pending');
   const completedTasks = tasks.filter(t => t.status === 'completed');
 
@@ -134,19 +155,60 @@ export default function TasksPage() {
           <h1 className="text-3xl font-display font-bold text-white light:text-slate-800 tracking-tight uppercase">Action Items</h1>
           <p className="text-[#b9cacb] light:text-slate-500 mt-1 font-mono text-[11px] uppercase tracking-wider">Manage your daily sales tasks and AI-generated follow-ups.</p>
         </div>
-        <button 
-          onClick={() => setShowAddForm(!showAddForm)}
-          className="btn-primary flex items-center gap-2"
-        >
-          <Plus size={14} />
-          {showAddForm ? 'Cancel' : 'New Task'}
-        </button>
+        <div className="flex gap-2">
+          <button 
+            onClick={handleSuggestTasks}
+            disabled={suggestingTasks}
+            className="btn-secondary flex items-center gap-2 border-[#bd00ff]/30 text-[#bd00ff] hover:bg-[#bd00ff]/10"
+          >
+            {suggestingTasks ? <MoreHorizontal className="animate-pulse" size={14} /> : <Sparkles size={14} />}
+            AI Suggest
+          </button>
+          <button 
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="btn-primary flex items-center gap-2"
+          >
+            <Plus size={14} />
+            {showAddForm ? 'Cancel' : 'New Task'}
+          </button>
+        </div>
       </header>
 
       {error && (
         <div className="p-4 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg flex items-center gap-2 text-sm font-medium border border-red-100 dark:border-red-500/20">
           <AlertCircle size={16} />
           {error}
+        </div>
+      )}
+
+      {aiSuggestions.length > 0 && (
+        <div className="glass-panel p-5 mb-6 border border-[#bd00ff]/30 animate-fade-in">
+          <h3 className="text-[#bd00ff] font-bold text-[10px] uppercase tracking-widest mb-3 flex items-center gap-2">
+            <Sparkles size={14} />
+            AI Suggested Tasks
+          </h3>
+          <div className="space-y-2">
+            {aiSuggestions.map((sug, i) => (
+              <div key={i} className="flex items-center justify-between bg-[#111114] p-3 rounded-lg border border-[#27272A]">
+                <div>
+                  <p className="text-sm text-white font-medium">{sug.title}</p>
+                  <span className={`text-[10px] uppercase font-bold ${sug.priority === 'high' ? 'text-red-500' : 'text-amber-500'}`}>{sug.priority}</span>
+                </div>
+                <button 
+                  onClick={() => {
+                    setNewTaskTitle(sug.title);
+                    setNewTaskPriority(sug.priority);
+                    setShowAddForm(true);
+                    setAiSuggestions(aiSuggestions.filter((_, idx) => idx !== i));
+                  }}
+                  className="btn-secondary h-8 px-3 text-[10px]"
+                >
+                  Add
+                </button>
+              </div>
+            ))}
+          </div>
+          <button onClick={() => setAiSuggestions([])} className="mt-3 text-[#b9cacb] text-xs hover:text-white">Dismiss</button>
         </div>
       )}
 

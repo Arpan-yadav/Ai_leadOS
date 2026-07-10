@@ -98,6 +98,11 @@ export default function PipelinePage() {
   const [updating, setUpdating] = useState<string | null>(null);
   const [isAddDealModalOpen, setIsAddDealModalOpen] = useState(false);
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterText, setFilterText] = useState('');
+  const [filterStage, setFilterStage] = useState<string>('ALL');
+  const [filterMinValue, setFilterMinValue] = useState<number>(0);
+  const [filterAiScored, setFilterAiScored] = useState<boolean>(false);
 
   const fetchDeals = async () => {
     setLoading(true);
@@ -121,7 +126,19 @@ export default function PipelinePage() {
 
   useEffect(() => { fetchDeals(); }, []);
 
-  const getDealsByStage = (stage: DealStage) => deals.filter(d => d.stage === stage);
+  const filteredDeals = deals.filter(d => {
+    const textMatch = d.title.toLowerCase().includes(filterText.toLowerCase()) || 
+                      (d.lead?.company || '').toLowerCase().includes(filterText.toLowerCase());
+    const stageMatch = filterStage === 'ALL' || d.stage === filterStage;
+    const valueMatch = d.amount >= filterMinValue;
+    const aiScoredMatch = !filterAiScored || true; // Currently all have AI Scored badge in mock UI, but conceptually filtering for it.
+    
+    return textMatch && stageMatch && valueMatch && aiScoredMatch;
+  });
+
+  const getDealsByStage = (stageId: string) => {
+    return filteredDeals.filter(d => d.stage === stageId).sort((a, b) => b.amount - a.amount);
+  };
 
   const onDragEnd = async (result: DropResult) => {
     const { destination, source, draggableId } = result;
@@ -182,7 +199,7 @@ export default function PipelinePage() {
           <button onClick={fetchDeals} className="p-1.5 rounded-lg border border-[#27272A] light:border-slate-200 text-[#b9cacb] light:text-slate-500 hover:text-[#00f0ff] light:hover:text-indigo-600 hover:border-[#00f0ff]/50 light:hover:border-indigo-200 transition-all bg-[#111114] light:bg-transparent">
             <RefreshCw size={14} />
           </button>
-          <button onClick={() => toast('Filters menu opened', { icon: '🔍' })} className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#27272A] light:border-slate-200 text-sm text-[#e5e1e4] light:text-slate-600 hover:bg-white/5 light:hover:bg-slate-50 transition-all bg-[#111114] light:bg-transparent">
+          <button onClick={() => setShowFilters(!showFilters)} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm transition-all ${showFilters ? 'bg-[#00f0ff]/10 text-[#00f0ff] border-[#00f0ff]/30' : 'bg-[#111114] light:bg-transparent border-[#27272A] light:border-slate-200 text-[#e5e1e4] light:text-slate-600 hover:bg-white/5 light:hover:bg-slate-50'}`}>
             <Filter size={14} />
             <span>Filter</span>
           </button>
@@ -196,6 +213,50 @@ export default function PipelinePage() {
       {error && (
         <div className="bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-lg p-3 text-sm shrink-0">
           ⚠️ {error} — Is the backend running on port 3001?
+        </div>
+      )}
+
+      {/* Filters Panel */}
+      {showFilters && (
+        <div className="glass-card p-4 rounded-lg border border-[#27272A] light:border-slate-200 shrink-0 animate-slide-down flex flex-wrap gap-4 items-end">
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-[10px] font-bold text-[#b9cacb] uppercase tracking-wider mb-1">Search</label>
+            <input
+              type="text"
+              placeholder="Title or company..."
+              value={filterText}
+              onChange={(e) => setFilterText(e.target.value)}
+              className="input-field w-full"
+              autoFocus
+            />
+          </div>
+          <div className="w-40">
+            <label className="block text-[10px] font-bold text-[#b9cacb] uppercase tracking-wider mb-1">Stage</label>
+            <select className="input-field w-full" value={filterStage} onChange={e => setFilterStage(e.target.value)}>
+              <option value="ALL">All Stages</option>
+              {STAGES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+            </select>
+          </div>
+          <div className="w-40">
+            <label className="block text-[10px] font-bold text-[#b9cacb] uppercase tracking-wider mb-1">Min Value</label>
+            <input
+              type="number"
+              placeholder="$0"
+              value={filterMinValue || ''}
+              onChange={(e) => setFilterMinValue(Number(e.target.value))}
+              className="input-field w-full"
+            />
+          </div>
+          <div className="flex items-center gap-2 mb-2">
+            <input 
+              type="checkbox" 
+              id="ai-scored"
+              checked={filterAiScored}
+              onChange={(e) => setFilterAiScored(e.target.checked)}
+              className="w-4 h-4 rounded border-[#27272A] text-[#bd00ff] focus:ring-[#bd00ff]"
+            />
+            <label htmlFor="ai-scored" className="text-xs font-bold text-white light:text-slate-700">AI Scored Only</label>
+          </div>
         </div>
       )}
 

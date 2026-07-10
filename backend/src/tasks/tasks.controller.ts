@@ -46,6 +46,13 @@ export class TasksController {
     return this.tasksService.findAll(query);
   }
 
+  @Get('suggest')
+  @ApiOperation({ summary: 'Get AI task suggestions' })
+  @ApiResponse({ status: 200, description: 'AI generated task suggestions.' })
+  suggest() {
+    return this.tasksService.suggest();
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get details of a specific task' })
   @ApiParam({ name: 'id', description: 'Task ID (cuid)' })

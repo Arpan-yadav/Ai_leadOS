@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Search, Loader2, Sparkles, TrendingUp, AlertTriangle, Crosshair, ChevronRight } from 'lucide-react'
+import { Search, Loader2, Sparkles, TrendingUp, AlertTriangle, Crosshair, ChevronRight, ChevronDown } from 'lucide-react'
 import { getToken } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
 
@@ -25,6 +25,9 @@ export default function AIIntelligencePage() {
   const [leads, setLeads] = useState<any[]>([])
   const [selectedLeadId, setSelectedLeadId] = useState<string>('')
   const [insight, setInsight] = useState<AIInsight | null>(null)
+  
+  // Custom dropdown state
+  const [dropdownOpen, setDropdownOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
@@ -90,18 +93,47 @@ export default function AIIntelligencePage() {
       </header>
 
       <div className="glass-panel p-6 mb-8 flex flex-col md:flex-row gap-4 items-end max-w-4xl border border-[#27272A] light:border-slate-200">
-        <div className="flex-1 w-full">
+        <div className="flex-1 w-full relative">
           <label className="block text-[10px] font-mono font-bold text-[#b9cacb] light:text-slate-500 uppercase tracking-wider mb-2">Select a Target Lead</label>
-          <select 
-            value={selectedLeadId} 
-            onChange={(e) => setSelectedLeadId(e.target.value)}
-            className="input-field cursor-pointer"
+          <div 
+            className="input-field cursor-pointer flex items-center justify-between"
+            onClick={() => setDropdownOpen(!dropdownOpen)}
           >
-            <option value="">-- Choose a Lead to Analyze --</option>
-            {leads.map(lead => (
-              <option key={lead.id} value={lead.id}>{lead.name} ({lead.company})</option>
-            ))}
-          </select>
+            <span className={selectedLeadId ? 'text-white light:text-slate-900' : 'text-slate-500'}>
+              {selectedLeadId 
+                ? (() => {
+                    const l = leads.find(l => l.id === selectedLeadId)
+                    return l ? `${l.name} (${l.company})` : 'Unknown Lead'
+                  })()
+                : '-- Choose a Lead to Analyze --'
+              }
+            </span>
+            <ChevronDown size={16} className={`transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+          </div>
+          
+          {dropdownOpen && (
+            <div className="absolute z-50 w-full mt-2 bg-[#0A0A0C] light:bg-white border border-[#27272A] light:border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto animate-fade-in">
+              {leads.map(lead => (
+                <div 
+                  key={lead.id}
+                  onClick={() => {
+                    setSelectedLeadId(lead.id)
+                    setDropdownOpen(false)
+                  }}
+                  className={`p-3 cursor-pointer text-sm border-b border-[#27272A] light:border-slate-100 last:border-0 transition-colors
+                    ${selectedLeadId === lead.id 
+                      ? 'bg-[#bd00ff]/20 text-[#bd00ff]' 
+                      : 'text-white light:text-slate-700 hover:bg-white/5 light:hover:bg-slate-50'}`}
+                >
+                  <span className="font-bold">{lead.name}</span>
+                  <span className="ml-2 text-xs opacity-70">({lead.company})</span>
+                </div>
+              ))}
+              {leads.length === 0 && (
+                <div className="p-4 text-center text-sm text-slate-500">No leads available</div>
+              )}
+            </div>
+          )}
         </div>
         <button 
           onClick={handleAnalyze} 

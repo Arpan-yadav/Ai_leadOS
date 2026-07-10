@@ -21,7 +21,8 @@ export class CreateTaskDto {
   @IsIn(['low', 'medium', 'high'])
   priority?: string;
 
-  @ApiProperty({ example: 'lead_id_here' })
+  @ApiPropertyOptional({ example: 'lead_id_here' })
+  @IsOptional()
   @IsString()
-  leadId: string;
+  leadId?: string;
 }

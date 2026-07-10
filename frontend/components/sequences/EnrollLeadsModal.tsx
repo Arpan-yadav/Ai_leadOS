@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react'
 import { X, Loader2, CheckSquare, Square } from 'lucide-react'
 import { getToken } from '@/lib/auth'
 import toast from 'react-hot-toast'
+import { useRouter } from 'next/navigation'
 
 interface Lead {
   id: string
@@ -10,11 +11,12 @@ interface Lead {
   company: string
 }
 
-export default function EnrollLeadsModal({ sequenceName, onClose }: { sequenceName: string, onClose: () => void }) {
+export default function EnrollLeadsModal({ sequenceId, sequenceName, onClose }: { sequenceId: string, sequenceName: string, onClose: () => void }) {
   const [loading, setLoading] = useState(false)
   const [fetchingLeads, setFetchingLeads] = useState(true)
   const [leads, setLeads] = useState<Lead[]>([])
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set())
+  const [isSuccess, setIsSuccess] = useState(false)
 
   useEffect(() => {
     const fetchLeads = async () => {
@@ -59,15 +61,47 @@ export default function EnrollLeadsModal({ sequenceName, onClose }: { sequenceNa
 
     try {
       setLoading(true)
-      // Simulate enrolling leads
-      await new Promise(resolve => setTimeout(resolve, 800))
-      toast.success(`Successfully enrolled ${selectedLeads.size} leads into ${sequenceName}!`)
-      onClose()
+      const token = getToken()
+      
+      // Call backend to enroll leads one by one or in bulk (assuming sequenceId exists)
+      const enrollPromises = Array.from(selectedLeads).map(leadId => 
+        fetch(`http://localhost:3001/api/sequences/${sequenceId}/enroll/${leadId}`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      )
+      
+      await Promise.all(enrollPromises)
+      
+      toast.success('Leads successfully enrolled!')
+      setIsSuccess(true)
     } catch (err: any) {
       toast.error('Error enrolling leads')
     } finally {
       setLoading(false)
     }
+  }
+
+  const router = useRouter()
+
+  if (isSuccess) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+        <div className="glass-panel w-full max-w-sm p-8 flex flex-col items-center justify-center animate-scale-in text-center border-[#00f0ff]/30 shadow-[0_0_50px_rgba(0,240,255,0.1)]">
+          <div className="w-16 h-16 rounded-full bg-[#00f0ff]/10 flex items-center justify-center mb-6">
+            <CheckSquare size={32} className="text-[#00f0ff]" />
+          </div>
+          <h2 className="text-xl font-bold text-white mb-2 uppercase tracking-wide">Leads Enrolled!</h2>
+          <p className="text-[#b9cacb] text-sm mb-8">
+            Successfully enrolled {selectedLeads.size} leads into the <span className="text-white font-medium">{sequenceName}</span> sequence. They will begin receiving automated outreach based on your workflow.
+          </p>
+          <div className="flex flex-col w-full gap-3">
+            <button onClick={() => { onClose(); router.push('/sequences?tab=enrollments') }} className="btn-primary w-full">View Sequence Progress</button>
+            <button onClick={onClose} className="btn-secondary w-full">Close</button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

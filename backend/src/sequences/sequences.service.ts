@@ -32,6 +32,9 @@ export class SequencesService {
         _count: {
           select: { enrollments: true },
         },
+        enrollments: {
+          include: { lead: true },
+        },
       },
     });
   }

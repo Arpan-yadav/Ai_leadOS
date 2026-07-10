@@ -10,11 +10,14 @@ import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TaskQueryDto } from './dto/task-query.dto';
 
+import { AiService } from '../ai/ai.service';
+
 @Injectable()
 export class TasksService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventBus: EventBusService,
+    private readonly aiService: AiService,
   ) {}
 
   async create(dto: CreateTaskDto, userId: string) {
@@ -119,6 +122,10 @@ export class TasksService {
         completedAt: null,
       },
     });
+  }
+
+  async suggest() {
+    return this.aiService.suggestTasks();
   }
 
   async remove(id: string) {

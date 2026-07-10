@@ -1,8 +1,7 @@
-'use client'
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { X, CheckCircle2, XCircle, Clock, Search, Filter } from 'lucide-react'
 
-const dummyHistory = [
+const initialDummyHistory = [
   { id: 'run-001', status: 'SUCCESS', time: '10 mins ago', duration: '1.2s', triggeredBy: 'New Lead: John Doe' },
   { id: 'run-002', status: 'SUCCESS', time: '1 hour ago', duration: '0.8s', triggeredBy: 'Score updated > 80' },
   { id: 'run-003', status: 'FAILED', time: '3 hours ago', duration: '2.4s', triggeredBy: 'API Webhook' },
@@ -10,7 +9,21 @@ const dummyHistory = [
   { id: 'run-005', status: 'SUCCESS', time: 'Yesterday', duration: '1.5s', triggeredBy: 'Score updated > 80' },
 ]
 
-export default function ExecutionHistoryModal({ onClose }: { onClose: () => void }) {
+export default function ExecutionHistoryModal({ onClose, mockNewExecution }: { onClose: () => void, mockNewExecution?: boolean }) {
+  const [history, setHistory] = useState(initialDummyHistory);
+
+  useEffect(() => {
+    if (mockNewExecution) {
+      const newRun = {
+        id: `run-${Math.floor(Math.random() * 1000)}`,
+        status: 'SUCCESS',
+        time: 'Just now',
+        duration: '0.4s',
+        triggeredBy: 'Manual Activation Test'
+      };
+      setHistory([newRun, ...initialDummyHistory]);
+    }
+  }, [mockNewExecution]);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
       <div className="glass-panel w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col animate-fade-in shadow-[0_0_50px_rgba(0,0,0,0.5)]">
@@ -44,7 +57,7 @@ export default function ExecutionHistoryModal({ onClose }: { onClose: () => void
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-6">
           <div className="space-y-3">
-            {dummyHistory.map((run) => (
+            {history.map((run) => (
               <div key={run.id} className="glass-card p-4 flex items-center justify-between hover:border-[#00f0ff]/30 transition-all cursor-pointer group">
                 <div className="flex items-center gap-4">
                   <div className={`p-2 rounded-lg ${run.status === 'SUCCESS' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
