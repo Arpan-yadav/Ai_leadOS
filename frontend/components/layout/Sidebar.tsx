@@ -35,7 +35,8 @@ const navItems = [
   { icon: Bot, label: 'AI Intelligence', path: '/ai-intelligence' },
   { icon: MessageSquare, label: 'Communications', path: '/communications' },
   { icon: TrendingUp, label: 'Analytics', path: '/analytics' },
-  { icon: BarChart3, label: 'Settings', path: '/settings' },
+  { icon: Settings, label: 'Settings', path: '/settings' },
+  { icon: BarChart3, label: 'Admin', path: '/admin' },
 ];
 
 export default function Sidebar() {

@@ -613,4 +613,64 @@ Only return valid JSON.`.trim();
       ]
     };
   }
+
+  // ─── Sprint 7: AI Weekly Performance Summary ──────────────────────────────
+  async generateAnalyticsSummary(metrics: {
+    totalLeads: number;
+    convertedLeads: number;
+    conversionRate: number;
+    totalDeals: number;
+    wonDeals: number;
+    wonRevenue: number;
+    topPerformer: { name: string; score: number; dealsWon: number } | null;
+  }) {
+    const prompt = `
+You are an AI sales analytics assistant. Generate a concise weekly performance report based on these real CRM metrics.
+
+Metrics:
+- Total Leads: ${metrics.totalLeads}
+- Converted Leads: ${metrics.convertedLeads} (${metrics.conversionRate}% conversion rate)
+- Total Deals: ${metrics.totalDeals}
+- Won Deals: ${metrics.wonDeals}
+- Revenue Won: $${metrics.wonRevenue.toLocaleString()}
+- Top Performer: ${metrics.topPerformer ? `${metrics.topPerformer.name} (${metrics.topPerformer.dealsWon} deals won, score: ${metrics.topPerformer.score})` : 'N/A'}
+
+Return a JSON object:
+{
+  "headline": "<one powerful summary sentence>",
+  "summary": "<2-3 sentence narrative of overall performance>",
+  "highlights": ["<positive highlight 1>", "<positive highlight 2>", "<positive highlight 3>"],
+  "warnings": ["<risk or concern 1>", "<risk or concern 2>"],
+  "recommendation": "<single most important action to take this week>"
+}
+
+Only return valid JSON.`.trim();
+
+    const result = await this.generateJSON<{
+      headline: string;
+      summary: string;
+      highlights: string[];
+      warnings: string[];
+      recommendation: string;
+    }>(prompt);
+
+    if (result) return result;
+
+    return {
+      headline: `${metrics.wonDeals} deals won this period with ${metrics.conversionRate}% conversion rate.`,
+      summary: `The team managed ${metrics.totalLeads} leads and closed ${metrics.wonDeals} deals generating $${metrics.wonRevenue.toLocaleString()} in revenue. Conversion rate stands at ${metrics.conversionRate}%.`,
+      highlights: [
+        `${metrics.convertedLeads} leads successfully converted`,
+        `$${metrics.wonRevenue.toLocaleString()} total revenue won`,
+        metrics.topPerformer ? `${metrics.topPerformer.name} leads the team with ${metrics.topPerformer.dealsWon} deals` : 'Team performing consistently',
+      ],
+      warnings: [
+        metrics.conversionRate < 20 ? 'Conversion rate below 20% — review qualification criteria' : 'Monitor pipeline velocity closely',
+        'Ensure all leads have recent activity logged',
+      ],
+      recommendation: metrics.conversionRate < 15
+        ? 'Focus on lead qualification — too many unqualified leads are diluting conversion rate.'
+        : 'Accelerate follow-ups on deals in Negotiation stage to close before end of period.',
+    };
+  }
 }

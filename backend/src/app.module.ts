@@ -28,6 +28,7 @@ import { WorkflowExecutionsModule } from './workflow-executions/workflow-executi
 import { CommunicationsModule } from './communications/communications.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { SettingsModule } from './settings/settings.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { SettingsModule } from './settings/settings.module';
     CommunicationsModule,
     AnalyticsModule,
     SettingsModule,    // Sprint 6 — BYOK tenant settings
+    AdminModule,       // Sprint 7 — Admin user management
   ],
 })
 export class AppModule {}
