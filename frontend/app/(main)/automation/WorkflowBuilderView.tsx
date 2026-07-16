@@ -173,7 +173,7 @@ export default function AutomationPage({ workflow, currentStep, leadId, onBack }
         <div className="flex items-center gap-4">
           {onBack && (
             <button onClick={onBack} className="mr-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors flex items-center gap-1 border border-slate-800 rounded-full px-3 py-1.5 bg-black/20 hover:border-[#bd00ff] hover:shadow-[0_0_10px_rgba(189,0,255,0.2)]">
-              ← Back to Dashboard
+              <- Back to Dashboard
             </button>
           )}
           <div className="w-10 h-10 rounded-xl bg-linear-to-br from-[#00f0ff]/20 to-[#bd00ff]/20 border border-[#bd00ff]/30 flex items-center justify-center shadow-[0_0_15px_rgba(189,0,255,0.15)]">
@@ -192,7 +192,7 @@ export default function AutomationPage({ workflow, currentStep, leadId, onBack }
                   <span className="text-[11px] text-[#b9cacb] light:text-slate-500">Unsaved changes</span>
                 </>
               ) : (
-                <span className="text-[10px] bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">✓ Saved</span>
+                <span className="text-[10px] bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">v Saved</span>
               )}
             </div>
           </div>

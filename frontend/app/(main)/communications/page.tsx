@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, Mail, Phone, Linkedin, Facebook, Send, Clock, X, ArrowLeft, Archive, Edit2, Check } from 'lucide-react';
+import { MessageSquare, Mail, Phone, Linkedin, Facebook, Send, Clock, X, ArrowLeft, Archive, Edit2, Check, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import NewMessageModal from '@/components/communications/NewMessageModal';
 import { getToken } from '@/lib/auth';
@@ -25,6 +25,7 @@ export default function CommunicationsPage() {
   const [isNewMessageModalOpen, setIsNewMessageModalOpen] = useState(false);
   const [editingMsgIndex, setEditingMsgIndex] = useState<number | null>(null);
   const [editContent, setEditContent] = useState('');
+  const [clearConfirm, setClearConfirm] = useState(false);
   const token = getToken();
 
   const fetchLogs = async () => {
@@ -75,6 +76,17 @@ export default function CommunicationsPage() {
   const handleArchive = () => {
     toast.success('Conversation archived');
     setSelected(null);
+  }
+
+  const handleClearChat = () => {
+    if (!clearConfirm) {
+      setClearConfirm(true);
+      setTimeout(() => setClearConfirm(false), 3000); // auto-reset after 3s
+      return;
+    }
+    setSelected((prev: any) => ({ ...prev, thread: [] }));
+    setClearConfirm(false);
+    toast.success('Chat cleared');
   }
 
   const handleEdit = (index: number, content: string) => {
@@ -224,6 +236,17 @@ export default function CommunicationsPage() {
               </div>
               <button onClick={handleArchive} className="p-1.5 rounded-lg text-slate-400 dark:text-[#b9cacb] hover:text-amber-500 hover:bg-amber-500/10 transition-colors ml-2" title="Archive">
                 <Archive size={14} />
+              </button>
+              <button
+                onClick={handleClearChat}
+                title={clearConfirm ? 'Click again to confirm clear' : 'Clear chat history'}
+                className={`p-1.5 rounded-lg transition-colors ${
+                  clearConfirm
+                    ? 'text-rose-400 bg-rose-500/15 border border-rose-500/30 animate-pulse'
+                    : 'text-slate-400 dark:text-[#b9cacb] hover:text-rose-400 hover:bg-rose-500/10'
+                }`}
+              >
+                <Trash2 size={14} />
               </button>
               <button onClick={() => setSelected(null)} className="p-1.5 rounded-lg text-slate-400 dark:text-[#b9cacb] hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
                 <X size={16} />
