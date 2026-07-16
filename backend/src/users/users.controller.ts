@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Body, Request, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -17,4 +17,13 @@ export class UsersController {
   findAll() {
     return this.usersService.findAll();
   }
+
+  @Patch('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Update own profile' })
+  updateMe(@Request() req: any, @Body() body: { name?: string; avatar?: string }) {
+    return this.usersService.updateMe(req.user.id, body);
+  }
 }
+

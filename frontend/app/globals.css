@@ -219,6 +219,14 @@
   .input-field::placeholder {
     color: #52525B;
   }
+  .input-field option {
+    background-color: #111114;
+    color: #fff;
+  }
+  .light .input-field option {
+    background-color: #fff;
+    color: #212529;
+  }
   .input-field:focus {
     border-color: #00f0ff;
     box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);

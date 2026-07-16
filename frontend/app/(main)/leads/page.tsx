@@ -8,6 +8,7 @@ import LeadDetailPanel from '@/components/leads/LeadDetailPanel'
 import LeadsFilterModal from '@/components/leads/LeadsFilterModal'
 import AIInsightsModal from '@/components/leads/AIInsightsModal'
 import NewMessageModal from '@/components/communications/NewMessageModal'
+import ImportLeadsModal from '@/components/leads/ImportLeadsModal'
 import { getToken } from '@/lib/auth'
 import toast from 'react-hot-toast'
 
@@ -50,6 +51,7 @@ const LeadsPage = () => {
   const [search, setSearch]             = useState('')
   const [channel, setChannel]           = useState('All')
   const [showModal, setShowModal]       = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
   const [selectedIds, setSelectedIds]   = useState<string[]>([])
   const [leads, setLeads]               = useState<Lead[]>([])
@@ -57,19 +59,29 @@ const LeadsPage = () => {
   const [showFilters, setShowFilters]   = useState(false)
   const [insightLead, setInsightLead]   = useState<Lead | null>(null)
   const [emailLead, setEmailLead]       = useState<Lead | null>(null)
+  const [page, setPage]                 = useState(1)
+  const [totalPages, setTotalPages]     = useState(1)
+  const [refresh, setRefresh]           = useState(0)
 
   useEffect(() => {
     const fetchLeads = async () => {
       try {
+        setLoading(true)
         const token = getToken()
-        const res = await fetch('http://localhost:3001/api/leads', {
+        const params = new URLSearchParams({ page: page.toString(), limit: '10' })
+        if (search) params.append('search', search)
+        if (channel !== 'All') {
+          const mappedSource = channel === 'Meta' ? 'META_LEADS' : channel.toUpperCase()
+          params.append('source', mappedSource)
+        }
+
+        const res = await fetch(`http://localhost:3001/api/leads?${params.toString()}`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         if (!res.ok) throw new Error('Failed to fetch leads')
         const data = await res.json()
-        // Handle both array response and {data: [...]} envelope
-        const list = Array.isArray(data) ? data : (data.data ?? data.leads ?? [])
-        setLeads(list)
+        setLeads(data.data || data)
+        setTotalPages(data.totalPages || 1)
       } catch (error) {
         console.error('Error fetching leads:', error)
       } finally {
@@ -77,16 +89,9 @@ const LeadsPage = () => {
       }
     }
     fetchLeads()
-  }, [])
+  }, [page, search, channel, refresh])
 
-  const filteredLeads = leads.filter(lead => {
-    const matchesSearch = lead.name.toLowerCase().includes(search.toLowerCase()) ||
-      lead.email.toLowerCase().includes(search.toLowerCase()) ||
-      lead.company.toLowerCase().includes(search.toLowerCase())
-    const matchesChannel = channel === 'All' ||
-      lead.source.toLowerCase().includes(channel.toLowerCase())
-    return matchesSearch && matchesChannel
-  })
+  const filteredLeads = leads
 
   const toggleId = (id: string) =>
     setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
@@ -120,23 +125,38 @@ const LeadsPage = () => {
     if (selectedIds.length === 0) return;
     if (!confirm('Are you sure you want to delete the selected leads?')) return;
 
-    setLoading(true);
+    // Optimistic UI update - instantly remove from screen for ZERO delay
+    setLeads(leads.filter(l => !selectedIds.includes(l.id)));
+    const idsToDelete = [...selectedIds];
+    setSelectedIds([]);
+    toast.success('Leads deleted successfully!');
+
+    // Background server deletion
     const token = getToken();
     try {
-      await Promise.all(selectedIds.map(id => 
+      await Promise.all(idsToDelete.map(id => 
         fetch(`http://localhost:3001/api/leads/${id}`, {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` }
         })
       ));
       
-      setLeads(leads.filter(l => !selectedIds.includes(l.id)));
-      setSelectedIds([]);
-      toast.success('Leads deleted successfully!');
+      // Quietly trigger a background re-fetch so pagination numbers update
+      // without triggering a blocking UI loading spinner.
+      const params = new URLSearchParams({ page: page.toString(), limit: '10' })
+      if (search) params.append('search', search)
+      if (channel !== 'All') {
+        const mappedSource = channel === 'Meta' ? 'META_LEADS' : channel.toUpperCase()
+        params.append('source', mappedSource)
+      }
+      fetch(`http://localhost:3001/api/leads?${params.toString()}`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(res => res.json())
+        .then(data => {
+          setLeads(data.data || data)
+          setTotalPages(data.totalPages || 1)
+        })
     } catch (err) {
-      toast.error('Failed to delete leads');
-    } finally {
-      setLoading(false);
+      toast.error('Failed to sync deletion with server');
     }
   }
 
@@ -155,6 +175,10 @@ const LeadsPage = () => {
               <span className="text-[10px] font-black uppercase tracking-widest leading-none">Delete ({selectedIds.length})</span>
             </button>
           )}
+          <button onClick={() => setShowImportModal(true)} className="btn-secondary h-10 flex items-center gap-2 border-[#bd00ff]/30 text-[#bd00ff] hover:bg-[#bd00ff]/10">
+            <Zap size={14} />
+            <span className="text-[10px] font-black uppercase tracking-widest leading-none">Import / Automate</span>
+          </button>
           <button onClick={exportToCSV} className="btn-secondary h-10 flex items-center gap-2">
             <Download size={14} />
             <span className="text-[10px] font-black uppercase tracking-widest leading-none">Export</span>
@@ -163,7 +187,7 @@ const LeadsPage = () => {
             onClick={() => setShowModal(true)}
             className="btn-primary h-10 flex items-center gap-2"
           >
-            <Plus size={14} />
+            <Plus size={16} />
             <span className="text-[10px] font-black uppercase tracking-widest leading-none">Add Lead</span>
           </button>
         </div>
@@ -301,10 +325,9 @@ const LeadsPage = () => {
         <div className="px-6 py-4 border-t border-white/5 light:border-slate-100 flex items-center justify-between bg-white/5 light:bg-slate-50/30">
           <p className="text-[10px] font-black text-[#b9cacb] light:text-slate-400 uppercase tracking-widest leading-none">Intelligence Hub Synchronized</p>
           <div className="flex items-center gap-2">
-            <button className="btn-secondary py-1 px-3 text-[10px] font-black uppercase tracking-widest disabled:opacity-50" disabled>Prev</button>
-            <button onClick={() => toast('Navigating to page 1')} className="btn-secondary py-1 px-3 text-[10px] font-black uppercase tracking-widest bg-white/10 light:bg-slate-200">1</button>
-            <button onClick={() => toast('Navigating to page 2')} className="btn-secondary py-1 px-3 text-[10px] font-black uppercase tracking-widest">2</button>
-            <button onClick={() => toast('Fetching next page of leads...')} className="btn-secondary py-1 px-3 text-[10px] font-black uppercase tracking-widest">Next</button>
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="btn-secondary py-1 px-3 text-[10px] font-black uppercase tracking-widest disabled:opacity-50">Prev</button>
+            <span className="text-[10px] font-black text-[#b9cacb] light:text-slate-500 uppercase tracking-widest mx-2">Page {page} of {totalPages}</span>
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="btn-secondary py-1 px-3 text-[10px] font-black uppercase tracking-widest disabled:opacity-50">Next</button>
           </div>
         </div>
       </div>
@@ -340,9 +363,13 @@ const LeadsPage = () => {
       )}
 
       {selectedLead && (
-        <LeadDetailPanel
-          lead={selectedLead}
-          onClose={() => setSelectedLead(null)}
+        <LeadDetailPanel 
+          lead={selectedLead} 
+          onClose={() => setSelectedLead(null)} 
+          onUpdate={() => {
+            setSelectedLead(null)
+            setRefresh(r => r + 1)
+          }}
         />
       )}
 
@@ -353,6 +380,17 @@ const LeadsPage = () => {
       {emailLead && (
         <NewMessageModal 
           onClose={() => setEmailLead(null)}
+          lead={emailLead}
+        />
+      )}
+
+      {showImportModal && (
+        <ImportLeadsModal
+          onClose={() => setShowImportModal(false)}
+          onSuccess={(count) => {
+            setShowImportModal(false);
+            setRefresh(prev => prev + 1); // trigger reload to show imported leads
+          }}
         />
       )}
     </div>

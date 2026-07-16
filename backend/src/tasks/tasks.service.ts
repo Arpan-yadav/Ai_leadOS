@@ -125,7 +125,21 @@ export class TasksService {
   }
 
   async suggest() {
-    return this.aiService.suggestTasks();
+    const activeDeals = await this.prisma.deal.findMany({
+      where: { stage: { in: ['PROPOSAL', 'NEGOTIATION'] } },
+      take: 5,
+      include: { lead: { select: { company: true, name: true } } },
+      orderBy: { updatedAt: 'asc' }
+    });
+
+    const newLeads = await this.prisma.lead.findMany({
+      where: { status: 'NEW' },
+      take: 5,
+      orderBy: { createdAt: 'asc' }
+    });
+
+    const contextData = { activeDeals, newLeads };
+    return this.aiService.suggestTasks(contextData);
   }
 
   async remove(id: string) {

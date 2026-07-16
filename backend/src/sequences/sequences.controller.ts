@@ -56,4 +56,19 @@ export class SequencesController {
   enrollLead(@Param('id') id: string, @Param('leadId') leadId: string) {
     return this.sequencesService.enrollLead(id, leadId);
   }
+
+  @Post('enrollments/:enrollmentId/advance')
+  @ApiOperation({ summary: 'Manually advance an active enrollment to the next step' })
+  @ApiParam({ name: 'enrollmentId', description: 'Enrollment ID (cuid)' })
+  advanceEnrollment(@Param('enrollmentId') enrollmentId: string) {
+    return this.sequencesService.advanceEnrollment(enrollmentId);
+  }
+
+  @Post('enrollments/:enrollmentId/undo/:targetStep')
+  @ApiOperation({ summary: 'Manually undo an active enrollment to a specific step' })
+  @ApiParam({ name: 'enrollmentId', description: 'Enrollment ID (cuid)' })
+  @ApiParam({ name: 'targetStep', description: 'Target step number' })
+  undoEnrollment(@Param('enrollmentId') enrollmentId: string, @Param('targetStep') targetStep: string) {
+    return this.sequencesService.undoEnrollment(enrollmentId, parseInt(targetStep, 10));
+  }
 }

@@ -15,6 +15,7 @@ export default function AddLeadModal({ onClose, onAdd }: {
     company: '',
     title: '',
     phone: '',
+    countryCode: '+1',
     source: 'EMAIL'
   })
 
@@ -32,13 +33,18 @@ export default function AddLeadModal({ onClose, onAdd }: {
     try {
       setLoading(true)
       const token = getToken()
+      const payload = {
+        ...form,
+        phone: form.phone ? `${form.countryCode}${form.phone}` : ''
+      }
+      
       const res = await fetch('http://localhost:3001/api/leads', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify(form)
+        body: JSON.stringify(payload)
       })
 
       if (!res.ok) throw new Error('Failed to create lead')
@@ -94,7 +100,27 @@ export default function AddLeadModal({ onClose, onAdd }: {
             </div>
             <div className="space-y-1 md:col-span-2">
               <label className="text-[10px] font-black text-[#b9cacb] light:text-slate-500 uppercase tracking-widest block">Phone Number</label>
-              <input type="text" name="phone" value={form.phone} onChange={handleChange} className="input-field" placeholder="+1 (555) 000-0000" />
+              <div className="flex gap-2">
+                <select 
+                  name="countryCode" 
+                  value={form.countryCode} 
+                  onChange={handleChange} 
+                  className="input-field appearance-none w-24"
+                >
+                  <option value="+1">+1 (US)</option>
+                  <option value="+44">+44 (UK)</option>
+                  <option value="+91">+91 (IN)</option>
+                  <option value="+61">+61 (AU)</option>
+                </select>
+                <input 
+                  type="text" 
+                  name="phone" 
+                  value={form.phone} 
+                  onChange={handleChange} 
+                  className="input-field flex-1" 
+                  placeholder="555 000-0000" 
+                />
+              </div>
             </div>
             <div className="space-y-1 md:col-span-2">
               <label className="text-[10px] font-black text-[#b9cacb] light:text-slate-500 uppercase tracking-widest block">Source</label>

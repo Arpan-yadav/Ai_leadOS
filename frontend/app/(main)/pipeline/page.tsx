@@ -321,9 +321,9 @@ export default function PipelinePage() {
       {isAddDealModalOpen && (
         <AddDealModal 
           onClose={() => setIsAddDealModalOpen(false)}
-          onAdd={() => {
+          onAdd={(newDeal: any) => {
             setIsAddDealModalOpen(false);
-            fetchDeals();
+            setDeals(prev => [...prev, newDeal]);
           }}
         />
       )}

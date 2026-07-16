@@ -69,4 +69,14 @@ export class AuthController {
     const { password, ...user } = req.user;
     return user;
   }
+
+  @Post('change-password')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Change own password' })
+  changePassword(@Request() req: any, @Body() body: { currentPassword: string; newPassword: string }) {
+    return this.authService.changePassword(req.user.id, body.currentPassword, body.newPassword);
+  }
 }
+

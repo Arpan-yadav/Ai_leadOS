@@ -26,6 +26,8 @@ import { WebhooksModule } from './webhooks/webhooks.module';
 import { WorkflowsModule } from './workflows/workflows.module';
 import { WorkflowExecutionsModule } from './workflow-executions/workflow-executions.module';
 import { CommunicationsModule } from './communications/communications.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { SettingsModule } from './settings/settings.module';
 
 @Module({
   imports: [
@@ -56,6 +58,8 @@ import { CommunicationsModule } from './communications/communications.module';
     WorkflowsModule,
     WorkflowExecutionsModule,
     CommunicationsModule,
+    AnalyticsModule,
+    SettingsModule,    // Sprint 6 — BYOK tenant settings
   ],
 })
 export class AppModule {}

@@ -7,11 +7,12 @@
  * logging executions, and updating performance metrics.
  */
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { LeadsService } from '../leads/leads.service';
 import { TasksService } from '../tasks/tasks.service';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 interface WorkflowNode {
   id: string;
@@ -31,7 +32,7 @@ interface NodeExecutionResult {
 }
 
 @Injectable()
-export class WorkflowExecutorService {
+export class WorkflowExecutorService implements OnModuleInit {
   private readonly logger = new Logger(WorkflowExecutorService.name);
 
   constructor(
@@ -40,6 +41,23 @@ export class WorkflowExecutorService {
     private readonly leadsService: LeadsService,
     private readonly tasksService: TasksService,
   ) {}
+
+  onModuleInit() {
+    this.logger.log('Workflow Executor Engine initialized.');
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async processScheduledWorkflows() {
+    // Implement background sweep for any active time-based workflows
+    const activeWorkflows = await this.prisma.workflow.findMany({
+      where: { status: 'ACTIVE' },
+    });
+
+    if (activeWorkflows.length > 0) {
+      this.logger.debug(`[WorkflowCronEngine] Swept ${activeWorkflows.length} active workflows.`);
+      // Future logic: Check if any active workflows have 'Scheduled' triggers and execute them.
+    }
+  }
 
   /**
    * Run a workflow for a specific lead.

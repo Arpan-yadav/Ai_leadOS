@@ -53,6 +53,7 @@ export class WorkflowExecutionsService {
   async findAllForWorkflow(workflowId: string) {
     return this.prisma.workflowExecution.findMany({
       where: { workflowId },
+      include: { lead: { select: { name: true } } },
       orderBy: { startedAt: 'desc' },
       take: 50,
     });

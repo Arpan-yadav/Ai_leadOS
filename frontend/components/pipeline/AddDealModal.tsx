@@ -12,7 +12,7 @@ interface Lead {
 
 export default function AddDealModal({ onClose, onAdd }: {
   onClose: () => void
-  onAdd: () => void
+  onAdd: (deal: any) => void
 }) {
   const [loading, setLoading] = useState(false)
   const [fetchingLeads, setFetchingLeads] = useState(true)
@@ -33,10 +33,11 @@ export default function AddDealModal({ onClose, onAdd }: {
           headers: { Authorization: `Bearer ${token}` }
         })
         if (res.ok) {
-          const data = await res.json()
-          setLeads(data)
-          if (data.length > 0) {
-            setForm(f => ({ ...f, leadId: data[0].id }))
+          const resData = await res.json()
+          const list = resData.data || resData
+          setLeads(list)
+          if (list.length > 0) {
+            setForm(f => ({ ...f, leadId: list[0].id }))
           }
         }
       } catch (err) {
@@ -74,10 +75,13 @@ export default function AddDealModal({ onClose, onAdd }: {
         })
       })
 
-      if (!res.ok) throw new Error('Failed to create deal')
-
-      toast.success('Deal created successfully!')
-      onAdd()
+      if (res.ok) {
+        const createdDeal = await res.json();
+        toast.success('Deal created successfully!')
+        onAdd(createdDeal)
+      } else {
+        throw new Error('Failed to create deal')
+      }
     } catch (err: any) {
       toast.error(err.message || 'Error creating deal')
     } finally {

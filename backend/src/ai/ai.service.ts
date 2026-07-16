@@ -9,6 +9,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GoogleGenAI } from '@google/genai';
+import { PrismaService } from '../prisma/prisma.service';
 
 // ─── Response Types ────────────────────────────────────────────────────────────
 
@@ -68,14 +69,37 @@ export interface AnalyticsInsightResult {
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
-  private readonly model = 'gemini-1.5-flash';
+  private readonly model = 'gemini-flash-latest';
   private client: GoogleGenAI | null = null;
 
-  constructor(private readonly config: ConfigService) {}
+  constructor(
+    private readonly config: ConfigService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   // ─── Private Helpers ──────────────────────────────────────────────────────
 
-  /** Lazily initialize and return the Gemini client, or null in demo mode. */
+  /** 
+   * Returns a Gemini client for the given user.
+   * Priority: user's DB key → system .env key → null (demo mode).
+   */
+  private async getClientForUser(userId?: string): Promise<GoogleGenAI | null> {
+    // 1. Try user-specific key from DB
+    if (userId) {
+      try {
+        const settings = await this.prisma.userSettings.findUnique({ where: { userId } });
+        if (settings?.geminiApiKey) {
+          return new GoogleGenAI({ apiKey: settings.geminiApiKey });
+        }
+      } catch {
+        // If DB lookup fails, fall through to system key
+      }
+    }
+    // 2. Fall back to system .env key
+    return this.getClient();
+  }
+
+  /** Lazily initialize and return the system Gemini client, or null in demo mode. */
   private getClient(): GoogleGenAI | null {
     const apiKey = this.config.get<string>('GEMINI_API_KEY');
     if (!apiKey) {
@@ -101,8 +125,12 @@ export class AiService {
       const raw: string = (result as any).text ?? '';
       const cleaned = raw.replace(/```json|```/g, '').trim();
       return JSON.parse(cleaned) as T;
-    } catch (err) {
-      this.logger.error('generateJSON error:', err);
+    } catch (err: any) {
+      if (err?.message?.includes('429') || err?.message?.includes('quota') || err?.status === 429) {
+        this.logger.warn(`AI Rate limit hit (429). Using fallback JSON data.`);
+      } else {
+        this.logger.error('generateJSON error:', err?.message || err);
+      }
       return null;
     }
   }
@@ -244,6 +272,70 @@ Only return valid JSON.`.trim();
   }
 
   /**
+   * Auto-Pilot: Analyze a lead and generate a custom 14-day sequence.
+   */
+  async generateDynamicStrategy(
+    leadName: string,
+    company: string,
+    title: string | undefined,
+    score: number
+  ): Promise<OutreachPlan & { masterWorkflow: string }> {
+    const prompt = `
+You are an elite B2B sales automation agent.
+Your goal is to evaluate this specific lead and construct the absolute best highly-personalized 14-day outreach sequence.
+You must also categorize this lead into ONE of these 5 Master Workflows:
+1. "High Intent" (Score > 80)
+2. "Warm Nurture" (Score 50-80)
+3. "Cold Re-engagement" (Score < 50)
+4. "Partner Setup" (If they seem like a partner/referral)
+5. "VIP Enterprise Flow" (If they are C-Level at a large enterprise)
+
+Lead Profile:
+- Name: ${leadName}
+- Company: ${company}
+- Title: ${title ?? 'Unknown'}
+- Lead Score: ${score}/100
+
+Return EXACTLY this JSON structure:
+{
+  "leadName": "${leadName}",
+  "company": "${company}",
+  "masterWorkflow": "<exact name from the 5 options above>",
+  "totalDays": 14,
+  "sequences": [
+    { "day": 1, "channel": "email", "subject": "<subject>", "message": "<hyper-personalized email>" },
+    { "day": 3, "channel": "linkedin", "subject": "Connection Request", "message": "<message>" }
+  ]
+}
+
+Only return the raw valid JSON. Do not include markdown formatting.`.trim();
+
+    const result = await this.generateJSON<OutreachPlan & { masterWorkflow: string }>(prompt);
+    if (result) return result;
+
+    // Fallback if API key is missing
+    let workflow = "Warm Nurture";
+    if (score > 80) workflow = "High Intent";
+    else if (score < 50) workflow = "Cold Re-engagement";
+    if (title && title.toLowerCase().includes('ceo')) workflow = "VIP Enterprise Flow";
+
+    return {
+      leadName,
+      company,
+      masterWorkflow: workflow,
+      totalDays: 14,
+      sequences: [
+        { day: 1, channel: 'email', subject: `Strategic initiatives at ${company}`, message: `Hi ${leadName}, noticed your role as ${title ?? 'a leader'} at ${company} and wanted to see if you're exploring AI automation.` },
+        { day: 2, channel: 'linkedin', subject: 'LinkedIn Connection', message: `Connecting to follow your work at ${company}, ${leadName}.` },
+        { day: 4, channel: 'email', subject: `Re: Strategic initiatives at ${company}`, message: `Just bubbling this up, ${leadName}. We've helped companies similar to ${company} save 20 hours/week.` },
+        { day: 7, channel: 'whatsapp', subject: 'Quick follow up', message: `Hi ${leadName}, leaving a quick note here. Let me know if you prefer email.` },
+        { day: 10, channel: 'email', subject: `Relevant case study`, message: `Thought this case study on automation would be relevant for your team at ${company}.` },
+        { day: 14, channel: 'email', subject: `Closing the loop`, message: `I'll stop reaching out for now, ${leadName}. Keep up the great work at ${company}!` },
+      ],
+    };
+  }
+
+  /**
    * Suggest automation workflows based on CRM context.
    */
   async suggestWorkflows(context?: string): Promise<WorkflowSuggestion[]> {
@@ -291,12 +383,67 @@ Only return valid JSON array.`.trim();
   /**
    * Suggest tasks based on generic B2B pipeline activities.
    */
-  async suggestTasks(): Promise<{ title: string; priority: 'low' | 'medium' | 'high' }[]> {
-    return [
-      { title: 'Follow up with stale leads in Proposal stage', priority: 'high' },
-      { title: 'Prepare Q3 performance review for key accounts', priority: 'medium' },
-      { title: 'Review unassigned incoming web leads', priority: 'low' },
-    ];
+  async suggestTasks(contextData?: any): Promise<{ title: string; priority: 'low' | 'medium' | 'high' }[]> {
+    const client = this.getClient();
+    
+    // Deterministic fallback algorithm if no Gemini API key or request fails
+    const fallbackLogic = () => {
+      const suggestions: { title: string; priority: 'low' | 'medium' | 'high' }[] = [];
+      if (contextData?.activeDeals) {
+        contextData.activeDeals.forEach((deal: any) => {
+          if (deal.stage === 'NEGOTIATION') {
+            suggestions.push({ title: `Follow up on $${deal.amount.toLocaleString()} deal with ${deal.lead?.company || deal.lead?.name}`, priority: 'high' });
+          } else if (deal.stage === 'PROPOSAL') {
+            suggestions.push({ title: `Check if ${deal.lead?.company || deal.lead?.name} reviewed the proposal`, priority: 'medium' });
+          }
+        });
+      }
+      if (contextData?.newLeads) {
+        contextData.newLeads.forEach((lead: any) => {
+          suggestions.push({ title: `Initial outreach to new lead: ${lead.name} from ${lead.company}`, priority: 'medium' });
+        });
+      }
+      if (suggestions.length === 0) {
+        suggestions.push({ title: 'Review unassigned incoming web leads', priority: 'low' });
+      }
+      return suggestions.slice(0, 3);
+    };
+
+    if (!client) {
+      return fallbackLogic();
+    }
+
+    try {
+      const prompt = `
+You are an expert sales manager AI. Your job is to analyze the following CRM database extract and suggest 3 highly actionable, specific tasks for a sales representative.
+Prioritize deals in Negotiation or Proposal, and new untouched leads.
+
+Database Context:
+${JSON.stringify(contextData, null, 2)}
+
+Respond ONLY with a valid JSON array of objects. Each object must have exactly two fields:
+1. "title": A short, actionable task description (e.g. "Follow up with TechCorp on $50k proposal").
+2. "priority": Exactly one of "high", "medium", or "low".
+
+Do not include markdown blocks or any other text. Return pure JSON.
+`;
+
+      const response = await client.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+      });
+
+      const rawText: string = (response as any).text ?? '';
+      const text = rawText.trim().replace(/^```json/, '').replace(/```$/, '').trim();
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].title) {
+        return parsed.slice(0, 5); // Return up to 5 tasks
+      }
+      return fallbackLogic();
+    } catch (err) {
+      this.logger.error(`AI Task Suggestion failed: ${(err as Error).message}`);
+      return fallbackLogic();
+    }
   }
 
   /**
@@ -326,9 +473,13 @@ Return only the email subject line and body. No other conversational text or mar
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
       });
       return (result as any).text ?? '';
-    } catch (err) {
-      this.logger.error('generateEmailDraft error:', err);
-      return 'Failed to generate email draft.';
+    } catch (err: any) {
+      if (err?.message?.includes('429') || err?.message?.includes('quota') || err?.status === 429) {
+        this.logger.warn(`AI Rate limit hit (429). Using fallback template for ${leadName}.`);
+        return `Subject: Following up regarding ${company}\n\nHi ${leadName},\n\nI wanted to reach out regarding your current processes at ${company}. Let's chat soon.\n\nBest,\nSales Team`;
+      }
+      this.logger.error('generateEmailDraft error:', err?.message || err);
+      return `Subject: Following up regarding ${company}\n\nHi ${leadName},\n\nI wanted to reach out regarding your current processes at ${company}. Let's chat soon.\n\nBest,\nSales Team`;
     }
   }
 
@@ -337,18 +488,23 @@ Return only the email subject line and body. No other conversational text or mar
    */
   async generatePersonalizedMessage(leadName: string, company: string, context?: string): Promise<{ message: string }> {
     const prompt = `
-You are a top-tier B2B sales copywriter.
-Write a personalized opening email or message.
+You are an elite B2B Sales Development Representative (SDR) known for writing hyper-personalized, high-converting outreach messages.
+Your task is to write a highly unique and personalized opening message for a prospect.
 
-Lead: ${leadName} at ${company}
-Context: ${context ?? 'Standard B2B intro'}
+Lead: ${leadName}
+Company: ${company}
+Context/Channel: ${context ?? 'Standard B2B intro'}
 
-Return JSON:
+Instructions:
+1. Simulate deep research on "${company}". Identify their likely industry, typical business model, and common pain points for a company of their profile.
+2. Weave this "research" seamlessly into the opening line to prove you understand their specific business context. Do NOT use generic phrases like "I noticed your impressive growth".
+3. Propose a highly specific value hypothesis on how AI automation can solve their exact pain points.
+4. Keep the message under 4 sentences. Keep it conversational, not overly formal.
+
+Return exactly this JSON (no markdown):
 {
   "message": "<the generated message>"
-}
-
-Only return valid JSON.`.trim();
+}`.trim();
 
     const result = await this.generateJSON<{ message: string }>(prompt);
     if (result) return result;

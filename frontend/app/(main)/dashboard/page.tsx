@@ -12,41 +12,63 @@ import {
 } from 'recharts';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-
-const stats = [
-  { label: 'Total Revenue', value: '$124,500', change: '+12.5%', trend: 'up', icon: TrendingUp, color: 'text-emerald-400 light:text-emerald-600', bg: 'bg-emerald-500/10 light:bg-emerald-50' },
-  { label: 'Active Leads', value: '842', change: '+3.2%', trend: 'up', icon: Users, color: 'text-[#00f0ff] light:text-blue-600', bg: 'bg-[#00f0ff]/10 light:bg-blue-50' },
-  { label: 'Conversion Rate', value: '24.2%', change: '-1.4%', trend: 'down', icon: Target, color: 'text-[#bd00ff] light:text-brand-600', bg: 'bg-[#bd00ff]/10 light:bg-brand-50' },
-  { label: 'Pipeline Value', value: '$452,000', change: '+22.4%', trend: 'up', icon: BarChart3, color: 'text-[#ff007a] light:text-violet-600', bg: 'bg-[#ff007a]/10 light:bg-violet-50' },
-];
-
-const chartData = [
-  { name: 'Mon', revenue: 4000, leads: 24 },
-  { name: 'Tue', revenue: 3000, leads: 13 },
-  { name: 'Wed', revenue: 5000, leads: 38 },
-  { name: 'Thu', revenue: 2780, leads: 20 },
-  { name: 'Fri', revenue: 6890, leads: 52 },
-  { name: 'Sat', revenue: 2390, leads: 15 },
-  { name: 'Sun', revenue: 3490, leads: 22 },
-];
-
-const sourceData = [
-  { name: 'WhatsApp', value: 45, color: '#10b981' },
-  { name: 'Email', value: 32, color: '#00f0ff' },
-  { name: 'Meta Ads', value: 25, color: '#bd00ff' },
-  { name: 'LinkedIn', value: 18, color: '#00f0ff' },
-  { name: 'Referral', value: 12, color: '#f59e0b' },
-];
-
-const recentLeads = [
-  { name: 'James Wilson', company: 'TechCorp', source: 'LinkedIn', time: 'Recently' },
-  { name: 'Elena Rodriguez', company: 'BrightMedia', source: 'Meta Ads', time: '2h ago' },
-  { name: 'Rahul Sharma', company: 'Digital Agency', source: 'WhatsApp', time: '2h ago' },
-  { name: 'Sarah Jenkins', company: 'Innovate Co', source: 'Email', time: '2h ago' },
-];
+import { useState, useEffect } from 'react';
+import { getToken } from '@/lib/auth';
 
 export default function DashboardPage() {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [data, setData] = useState<any>(null);
+
+  useEffect(() => {
+    fetchDashboardData();
+    const interval = setInterval(() => {
+      fetchDashboardData(true);
+    }, 10000); // Poll every 10 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchDashboardData = async (silent = false, retries = 3) => {
+    if (!silent && !data) setLoading(true);
+    setIsSyncing(true);
+    let shouldRetry = false;
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/dashboard/stats`, {
+        headers: { Authorization: `Bearer ${getToken()}` }
+      });
+      if (res.ok) {
+        const json = await res.json();
+        setData(json);
+      } else if (retries > 0) {
+        shouldRetry = true;
+      }
+    } catch (e) {
+      console.error(e);
+      if (retries > 0) {
+        shouldRetry = true;
+      }
+    } 
+
+    if (shouldRetry) {
+      setTimeout(() => fetchDashboardData(silent, retries - 1), 1500);
+    } else {
+      setLoading(false);
+      setIsSyncing(false);
+    }
+  };
+
+  const stats = [
+    { label: 'Total Revenue', value: data ? `$${data.pipelineValue.toLocaleString()}` : '$0', change: data?.pipelineChange || '+0%', trend: (data?.pipelineChange || '').startsWith('-') ? 'down' : 'up', icon: TrendingUp, color: 'text-emerald-400 light:text-emerald-600', bg: 'bg-emerald-500/10 light:bg-emerald-50' },
+    { label: 'Active Leads', value: data ? data.totalLeads.toString() : '0', change: data?.leadsChange || '+0%', trend: (data?.leadsChange || '').startsWith('-') ? 'down' : 'up', icon: Users, color: 'text-[#00f0ff] light:text-blue-600', bg: 'bg-[#00f0ff]/10 light:bg-blue-50' },
+    { label: 'Conversion Rate', value: data ? `${data.conversionRate}%` : '0%', change: data?.conversionChange || '+0%', trend: (data?.conversionChange || '').startsWith('-') ? 'down' : 'up', icon: Target, color: 'text-[#bd00ff] light:text-brand-600', bg: 'bg-[#bd00ff]/10 light:bg-brand-50' },
+    { label: 'Total Deals', value: data ? data.totalDeals.toString() : '0', change: data?.dealsChange || '+0%', trend: (data?.dealsChange || '').startsWith('-') ? 'down' : 'up', icon: BarChart3, color: 'text-[#ff007a] light:text-violet-600', bg: 'bg-[#ff007a]/10 light:bg-violet-50' },
+  ];
+
+  const chartData = data?.chartData || [];
+  const sourceData = data?.sourceData || [];
+  const recentLeads = data?.recentLeads || [];
 
   return (
     <div className="space-y-6 pb-12 animate-fade-in">
@@ -54,12 +76,18 @@ export default function DashboardPage() {
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <h1 className="text-lg font-black text-white light:text-slate-800 uppercase tracking-widest">Global Intelligence</h1>
-          <span className="text-[10px] bg-[#00f0ff]/10 light:bg-indigo-100 text-[#00f0ff] light:text-indigo-700 font-bold px-2 py-0.5 rounded-full uppercase tracking-[0.2em] animate-pulse">Syncing Sources...</span>
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-[0.2em] transition-all duration-300 ${
+            isSyncing 
+              ? 'bg-[#bd00ff]/20 text-[#bd00ff] animate-pulse shadow-[0_0_10px_rgba(189,0,255,0.3)]' 
+              : 'bg-[#00f0ff]/10 light:bg-indigo-100 text-[#00f0ff] light:text-indigo-700'
+          }`}>
+            {isSyncing ? 'Syncing...' : 'Live'}
+          </span>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => toast.success('Real-time sync initiated', { icon: '🔄' })} className="btn-secondary h-8 flex items-center gap-2">
-            <Clock size={12} />
-            <span className="text-[10px] font-bold uppercase tracking-widest leading-none">Real-time</span>
+          <button onClick={() => { toast.success('Syncing with database...'); fetchDashboardData(); }} className="btn-secondary h-8 flex items-center gap-2">
+            <Clock size={12} className={isSyncing ? "animate-spin text-[#00f0ff]" : ""} />
+            <span className="text-[10px] font-bold uppercase tracking-widest leading-none">{isSyncing ? 'Syncing...' : 'Real-time'}</span>
           </button>
         </div>
       </header>
@@ -124,7 +152,7 @@ export default function DashboardPage() {
         <div className="glass-card p-6 flex flex-col">
           <h3 className="font-bold text-xs uppercase tracking-[0.2em] text-white light:text-slate-800 mb-8">Lead Origin Map</h3>
           <div className="flex-1 space-y-6">
-            {sourceData.map((source, i) => (
+            {sourceData.map((source: any, i: number) => (
               <div key={i} className="space-y-2">
                 <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
                   <span className="text-[#b9cacb] light:text-slate-600">{source.name}</span>
@@ -147,7 +175,7 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
-            <p className="text-[10px] font-bold text-[#b9cacb] light:text-slate-400 italic">8 newly captured today</p>
+            <p className="text-[10px] font-bold text-[#b9cacb] light:text-slate-400 italic">{data?.leadsCapturedToday || 0} newly captured today</p>
           </div>
         </div>
       </div>
@@ -161,10 +189,10 @@ export default function DashboardPage() {
             <button onClick={() => router.push('/communications')} className="text-[10px] font-black uppercase tracking-widest text-[#00f0ff] light:text-brand-600 hover:text-[#bd00ff] light:hover:text-brand-700">View Feed</button>
           </div>
           <div className="space-y-6">
-            {recentLeads.map((lead, i) => (
+            {recentLeads.map((lead: any, i: number) => (
               <div key={i} className="flex items-start gap-4 group">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-[#111114] light:bg-slate-50 border border-[#27272A] light:border-slate-100 shrink-0 group-hover:border-[#00f0ff] light:group-hover:border-brand-200 transition-colors text-[10px] font-bold text-[#00f0ff] light:text-indigo-600 shadow-[0_0_10px_rgba(0,0,0,0.2)] light:shadow-none overflow-hidden">
-                  {lead.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                  {lead.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-white light:text-slate-900 leading-tight">
@@ -187,21 +215,19 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="space-y-4">
-            <div className="p-4 bg-[#111114] light:bg-white border border-[#27272A] light:border-slate-100 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.2)] light:shadow-sm hover:border-[#00f0ff] light:hover:border-brand-500 transition-all cursor-pointer active:scale-[0.98]">
-              <div className="flex justify-between items-start mb-2">
-                <p className="text-[9px] font-black text-[#00f0ff] light:text-indigo-500 uppercase tracking-[0.2em]">High Intent Detected</p>
-                <div className="w-2 h-2 rounded-full bg-emerald-400 light:bg-emerald-500 animate-pulse shadow-[0_0_8px_currentColor]" />
+            {(data?.recommendations?.length > 0 ? data.recommendations : [
+              { type: 'High Intent Detected', title: 'System Monitoring Active', description: 'Waiting for AI insights to generate on new leads.' },
+              { type: 'Strategy Optimized', title: 'Pipeline Healthy', description: 'Engage with AI Automation to drive more deals.' }
+            ]).map((rec: any, i: number) => (
+              <div key={i} className="p-4 bg-[#111114] light:bg-white border border-[#27272A] light:border-slate-100 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.2)] light:shadow-sm hover:border-[#00f0ff] light:hover:border-brand-500 transition-all cursor-pointer active:scale-[0.98]">
+                <div className="flex justify-between items-start mb-2">
+                  <p className={`text-[9px] font-black uppercase tracking-[0.2em] ${rec.type.includes('High') ? 'text-[#00f0ff] light:text-indigo-500' : 'text-emerald-400 light:text-emerald-500'}`}>{rec.type}</p>
+                  {rec.type.includes('High') && <div className="w-2 h-2 rounded-full bg-emerald-400 light:bg-emerald-500 animate-pulse shadow-[0_0_8px_currentColor]" />}
+                </div>
+                <h4 className="text-xs font-black text-white light:text-slate-800 uppercase leading-snug">{rec.title}</h4>
+                <p className="text-[10px] text-[#b9cacb] light:text-slate-500 mt-2 font-medium italic leading-relaxed">{rec.description}</p>
               </div>
-              <h4 className="text-xs font-black text-white light:text-slate-800 uppercase leading-snug">Meta Ad Response: Globus Logistics</h4>
-              <p className="text-[10px] text-[#b9cacb] light:text-slate-500 mt-2 font-medium italic leading-relaxed">System suggests immediate WhatsApp outreach based on urgent logistic inquiry pattern.</p>
-            </div>
-            <div className="p-4 bg-[#111114] light:bg-white border border-[#27272A] light:border-slate-100 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.2)] light:shadow-sm hover:border-[#bd00ff] light:hover:border-brand-500 transition-all cursor-pointer active:scale-[0.98]">
-              <div className="flex justify-between items-start mb-2">
-                <p className="text-[9px] font-black text-emerald-400 light:text-emerald-500 uppercase tracking-[0.2em]">Strategy Optimized</p>
-              </div>
-              <h4 className="text-xs font-black text-white light:text-slate-800 uppercase leading-snug">Email Follow-up: TechCorp</h4>
-              <p className="text-[10px] text-[#b9cacb] light:text-slate-500 mt-2 font-medium italic leading-relaxed">AI has drafted a CTO-personalized proposal. Ready for one-click deployment.</p>
-            </div>
+            ))}
           </div>
           <button onClick={() => router.push('/automation')} className="w-full btn-primary bg-indigo-600 hover:bg-indigo-700 text-[10px] uppercase tracking-[0.2em] font-black mt-8 flex items-center justify-center gap-2 py-3 shadow-[0_0_15px_rgba(0,240,255,0.3)] light:shadow-xl light:shadow-indigo-600/10">
             <Bot size={14} />

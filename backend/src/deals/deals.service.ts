@@ -40,7 +40,17 @@ export class DealsService {
       },
     });
     if (!deal) throw new NotFoundException(`Deal #${id} not found`);
-    return deal;
+
+    const activities = await this.prisma.activity.findMany({
+      where: { leadId: deal.leadId, type: 'pipeline' },
+      orderBy: { timestamp: 'desc' },
+    });
+    
+    const dealActivities = activities.filter(
+      (a) => (a.metadata as any)?.dealId === deal.id
+    );
+
+    return { ...deal, activities: dealActivities };
   }
 
   async update(id: string, dto: UpdateDealDto) {
@@ -56,11 +66,21 @@ export class DealsService {
 
     const updatedDeal = await this.prisma.deal.update({
       where: { id },
-      data: { stage },
+      data: { 
+        stage,
+        ...(stage === 'WON' ? { closedAt: new Date() } : { closedAt: null })
+      },
       include: {
         lead: true,
       },
     });
+
+    if (stage === 'WON' && updatedDeal.leadId) {
+      await this.prisma.lead.update({
+        where: { id: updatedDeal.leadId },
+        data: { status: 'CONVERTED' }
+      });
+    }
 
     if (existingDeal.stage !== updatedDeal.stage) {
       await this.prisma.activity.create({

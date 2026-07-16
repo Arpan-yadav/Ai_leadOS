@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { BarChart3, TrendingUp, Users, Target, ArrowUpRight, ArrowDownRight, Sparkles, Loader2, Database, LayoutTemplate, Search, Filter, ChevronUp, ChevronDown, Plus, X, ArrowUpDown } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, ScatterChart, Scatter, ZAxis, PieChart, Pie, Cell, Legend, LineChart, Line, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
@@ -7,67 +7,20 @@ import { getToken } from '@/lib/auth';
 
 const PIE_COLORS = ['#00f0ff', '#bd00ff', '#10b981', '#f43f5e', '#f59e0b'];
 
-const EXPLORER_DATA = {
-  'Lead Sources': {
-    data: [
-      { name: 'Inbound', value: 45 },
-      { name: 'Outbound', value: 30 },
-      { name: 'Referral', value: 15 },
-      { name: 'Organic', value: 10 },
-    ],
-    config: { key: 'value' }
-  },
-  'Score vs Value': {
-    data: [
-      { score: 85, value: 12000, name: 'TechCorp', size: 400 },
-      { score: 62, value: 5000, name: 'GlobalNet', size: 200 },
-      { score: 91, value: 24000, name: 'Innova', size: 600 },
-      { score: 45, value: 2000, name: 'BetaLLC', size: 100 },
-      { score: 78, value: 15000, name: 'AlphaInc', size: 450 },
-      { score: 95, value: 35000, name: 'Omega', size: 800 },
-      { score: 55, value: 8000, name: 'Zeta', size: 250 },
-    ],
-    config: { x: 'score', y: 'value', z: 'size', label: 'name' }
-  },
-  'Stage Conversion': {
-    data: [
-      { name: 'Lead', count: 500 },
-      { name: 'Contacted', count: 320 },
-      { name: 'Discovery', count: 180 },
-      { name: 'Proposal', count: 90 },
-      { name: 'Negotiation', count: 45 },
-      { name: 'Won', count: 25 },
-    ],
-    config: { key: 'count' }
-  },
-  'Revenue by Channel': {
-    data: [
-      { name: 'Mon', email: 4000, linkedin: 2400, whatsapp: 2400 },
-      { name: 'Tue', email: 3000, linkedin: 1398, whatsapp: 2210 },
-      { name: 'Wed', email: 2000, linkedin: 9800, whatsapp: 2290 },
-      { name: 'Thu', email: 2780, linkedin: 3908, whatsapp: 2000 },
-      { name: 'Fri', email: 1890, linkedin: 4800, whatsapp: 2181 },
-      { name: 'Sat', email: 2390, linkedin: 3800, whatsapp: 2500 },
-      { name: 'Sun', email: 3490, linkedin: 4300, whatsapp: 2100 },
-    ],
-    config: { keys: ['email', 'linkedin', 'whatsapp'] }
-  },
-  'Activity Metrics': {
-    data: [
-      { subject: 'Emails Sent', A: 120, B: 110, fullMark: 150 },
-      { subject: 'Calls Made', A: 98, B: 130, fullMark: 150 },
-      { subject: 'Meetings', A: 86, B: 130, fullMark: 150 },
-      { subject: 'Demos', A: 99, B: 100, fullMark: 150 },
-      { subject: 'Proposals', A: 85, B: 90, fullMark: 150 },
-      { subject: 'Closes', A: 65, B: 85, fullMark: 150 },
-    ],
-    config: { key: 'A', secondaryKey: 'B' }
-  }
+const DEFAULT_EXPLORER_DATA: any = {
+  'Lead Sources': { data: [], config: { key: 'value' } },
+  'Score vs Value': { data: [], config: { x: 'score', y: 'value', z: 'size', label: 'name' } },
+  'Stage Conversion': { data: [], config: { key: 'count' } },
+  'Revenue by Channel': { data: [], config: { keys: ['email', 'linkedin', 'whatsapp', 'website', 'other'] } },
+  'Activity Metrics': { data: [], config: { key: 'A', secondaryKey: 'B' } }
 };
 
 const VISUALIZATIONS = ['Bar Chart', 'Line Chart', 'Donut/Pie', 'Radar/Spider', 'Scatter Plot'];
 
 export default function AnalyticsPage() {
+  const [explorerData, setExplorerData] = useState(DEFAULT_EXPLORER_DATA);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+
   const [activeDataset, setActiveDataset] = useState('Score vs Value');
   const [activeViz, setActiveViz] = useState('Scatter Plot');
   const [filterText, setFilterText] = useState('');
@@ -79,7 +32,33 @@ export default function AnalyticsPage() {
   const [aiInsights, setAiInsights] = useState<any>(null);
   const [loadingInsights, setLoadingInsights] = useState(false);
 
-  const currentDataset = EXPLORER_DATA[activeDataset as keyof typeof EXPLORER_DATA];
+  useEffect(() => {
+    fetchExplorerData();
+    const interval = setInterval(() => {
+      fetchExplorerData(true);
+    }, 10000); // Poll every 10 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchExplorerData = async (silent = false) => {
+    if (!silent) setIsLoadingData(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/analytics/explorer`, {
+        headers: { Authorization: `Bearer ${getToken()}` }
+      });
+      if (res.ok) {
+        const json = await res.json();
+        setExplorerData(json);
+      }
+    } catch (e) {
+      console.error('Failed to fetch explorer data', e);
+    } finally {
+      if (!silent) setIsLoadingData(false);
+    }
+  };
+
+  const currentDataset = explorerData[activeDataset as keyof typeof explorerData] || { data: [], config: {} };
 
   const processedData = React.useMemo(() => {
     let result = [...currentDataset.data];
@@ -304,7 +283,7 @@ export default function AnalyticsPage() {
               <h3 className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Dataset</h3>
             </div>
             <div className="flex flex-wrap gap-2">
-              {Object.keys(EXPLORER_DATA).map(ds => (
+              {Object.keys(explorerData).map(ds => (
                 <button
                   key={ds}
                   onClick={() => setActiveDataset(ds)}

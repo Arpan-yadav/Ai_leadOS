@@ -24,6 +24,10 @@ export class WorkflowsService {
         createdBy: {
           select: { id: true, name: true, avatar: true },
         },
+        executions: {
+          orderBy: { startedAt: 'desc' },
+          include: { lead: true },
+        },
         _count: {
           select: { executions: true },
         },
@@ -40,7 +44,7 @@ export class WorkflowsService {
         },
         executions: {
           orderBy: { startedAt: 'desc' },
-          take: 10,
+          include: { lead: true },
         },
       },
     });

@@ -21,52 +21,54 @@ export default function CommunicationsPage() {
   const [messages, setMessages] = useState<any[]>([]);
   const [selected, setSelected] = useState<any | null>(null);
   const [reply, setReply] = useState('');
+  const [isSendingReply, setIsSendingReply] = useState(false);
   const [isNewMessageModalOpen, setIsNewMessageModalOpen] = useState(false);
   const [editingMsgIndex, setEditingMsgIndex] = useState<number | null>(null);
   const [editContent, setEditContent] = useState('');
+  const token = getToken();
+
+  const fetchLogs = async () => {
+    try {
+      if (!token) return;
+      const res = await fetch('http://localhost:3001/api/communications', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      const grouped: Record<string, any> = {};
+      data.forEach((log: any) => {
+        if (!grouped[log.leadId]) {
+          grouped[log.leadId] = {
+            leadId: log.leadId,
+            name: log.lead.name,
+            email: log.lead.email,
+            company: log.lead.company,
+            channel: log.channel,
+            time: new Date(log.sentAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+            rawTime: new Date(log.sentAt).getTime(),
+            read: log.status === 'read',
+            message: log.content,
+            thread: []
+          };
+        }
+        grouped[log.leadId].thread.unshift({
+          from: log.direction === 'inbound' ? 'them' : 'me',
+          text: log.content,
+          time: new Date(log.sentAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+        });
+        if (new Date(log.sentAt).getTime() > grouped[log.leadId].rawTime) {
+          grouped[log.leadId].message = log.content;
+          grouped[log.leadId].time = new Date(log.sentAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+          grouped[log.leadId].rawTime = new Date(log.sentAt).getTime();
+        }
+      });
+      const sorted = Object.values(grouped).sort((a: any, b: any) => b.rawTime - a.rawTime);
+      setMessages(sorted);
+    } catch (err) {
+      console.error('Failed to fetch communications', err);
+    }
+  };
 
   useEffect(() => {
-    const fetchLogs = async () => {
-      try {
-        const token = getToken();
-        if (!token) return;
-        const res = await fetch('http://localhost:3001/api/communications', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-        
-        // Group by lead to form threads
-        const grouped: Record<string, any> = {};
-        data.forEach((log: any) => {
-          if (!grouped[log.leadId]) {
-            grouped[log.leadId] = {
-              name: log.lead.name,
-              company: log.lead.company,
-              channel: log.channel,
-              time: new Date(log.sentAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-              rawTime: new Date(log.sentAt).getTime(),
-              read: log.status === 'read',
-              message: log.content,
-              thread: []
-            };
-          }
-          grouped[log.leadId].thread.unshift({
-            from: log.direction === 'inbound' ? 'them' : 'me',
-            text: log.content,
-            time: new Date(log.sentAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-          });
-          // update last message
-          if (new Date(log.sentAt).getTime() > grouped[log.leadId].rawTime) {
-            grouped[log.leadId].message = log.content;
-            grouped[log.leadId].time = new Date(log.sentAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            grouped[log.leadId].rawTime = new Date(log.sentAt).getTime();
-          }
-        });
-        setMessages(Object.values(grouped));
-      } catch (err) {
-        console.error('Failed to fetch communications', err);
-      }
-    };
     fetchLogs();
   }, []);
 
@@ -86,6 +88,35 @@ export default function CommunicationsPage() {
     setEditContent('');
   }
 
+  const handleSendReply = async () => {
+    if (!reply.trim() || !selected || isSendingReply) return;
+    const replyText = reply.trim();
+    const now = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    
+    // Optimistic update
+    const newMsg = { from: 'me', text: replyText, time: now };
+    setSelected((prev: any) => ({ ...prev, thread: [...prev.thread, newMsg], message: replyText, time: now }));
+    setReply('');
+    setIsSendingReply(true);
+
+    try {
+      await fetch('http://localhost:3001/api/communications/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          leadId: selected.leadId,
+          channel: selected.channel,
+          content: replyText,
+        })
+      });
+    } catch (err) {
+      console.error('Failed to send reply', err);
+      toast.error('Failed to send message');
+    } finally {
+      setIsSendingReply(false);
+    }
+  }
+
   return (
     <div className="space-y-6 pb-12 animate-fade-in h-full">
       <header className="flex items-center justify-between">
@@ -99,20 +130,20 @@ export default function CommunicationsPage() {
         </button>
       </header>
 
-      {/* Channel Stats */}
+      {/* Channel Stats - Dynamic from real data */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'WhatsApp', count: 24, color: 'text-emerald-400', icon: MessageSquare },
-          { label: 'Email', count: 18, color: 'text-[#00f0ff]', icon: Mail },
-          { label: 'LinkedIn', count: 7, color: 'text-blue-400', icon: Linkedin },
-          { label: 'Meta Ads', count: 12, color: 'text-[#bd00ff]', icon: Facebook },
+          { label: 'WhatsApp', channel: 'WHATSAPP', color: 'text-emerald-400', icon: MessageSquare },
+          { label: 'Email', channel: 'EMAIL', color: 'text-[#00f0ff]', icon: Mail },
+          { label: 'LinkedIn', channel: 'LINKEDIN', color: 'text-blue-400', icon: Linkedin },
+          { label: 'Meta Ads', channel: 'META', color: 'text-[#bd00ff]', icon: Facebook },
         ].map(ch => (
           <div key={ch.label} className="glass-card p-4">
             <div className="flex items-center gap-2 mb-2">
               <ch.icon size={16} className={ch.color} />
               <span className={`text-[10px] font-black uppercase tracking-widest ${ch.color}`}>{ch.label}</span>
             </div>
-            <p className="text-2xl font-bold text-slate-800 dark:text-white">{ch.count}</p>
+            <p className="text-2xl font-bold text-slate-800 dark:text-white">{messages.filter((m: any) => m.channel === ch.channel).length}</p>
             <p className="text-[10px] text-slate-500 dark:text-[#b9cacb] mt-1">active threads</p>
           </div>
         ))}
@@ -249,23 +280,15 @@ export default function CommunicationsPage() {
               <input
                 value={reply}
                 onChange={e => setReply(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' && reply.trim()) {
-                    toast.success('Message sent!');
-                    setReply('');
-                  }
-                }}
+                onKeyDown={e => { if (e.key === 'Enter') handleSendReply(); }}
+                disabled={isSendingReply}
                 placeholder={`Reply via ${selected.channel}...`}
-                className="flex-1 text-sm bg-slate-50 dark:bg-[#0A0A0C] border border-slate-200 dark:border-[#27272A] text-slate-700 dark:text-white rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#00f0ff] focus:ring-1 focus:ring-[#00f0ff]/20 transition-all placeholder:text-slate-400 dark:placeholder:text-[#5a6474]"
+                className="flex-1 text-sm bg-slate-50 dark:bg-[#0A0A0C] border border-slate-200 dark:border-[#27272A] text-slate-700 dark:text-white rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#00f0ff] focus:ring-1 focus:ring-[#00f0ff]/20 transition-all placeholder:text-slate-400 dark:placeholder:text-[#5a6474] disabled:opacity-50"
               />
               <button
-                onClick={() => {
-                  if (reply.trim()) {
-                    toast.success('Message sent!');
-                    setReply('');
-                  }
-                }}
-                className="p-2.5 rounded-xl bg-[#00f0ff]/20 hover:bg-[#00f0ff]/30 border border-[#00f0ff]/30 text-[#00f0ff] transition-all"
+                onClick={handleSendReply}
+                disabled={isSendingReply}
+                className="p-2.5 rounded-xl bg-[#00f0ff]/20 hover:bg-[#00f0ff]/30 border border-[#00f0ff]/30 text-[#00f0ff] transition-all disabled:opacity-50"
               >
                 <Send size={16} />
               </button>
@@ -279,8 +302,7 @@ export default function CommunicationsPage() {
           onClose={() => setIsNewMessageModalOpen(false)} 
           onSent={() => {
             setIsNewMessageModalOpen(false);
-            // Trigger a re-fetch of logs by re-mounting the effect (or we can just reload for simplicity)
-            window.location.reload();
+            fetchLogs(); // re-fetch without reload
           }}
         />
       )}

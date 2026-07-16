@@ -47,6 +47,13 @@ export class LeadsController {
     return this.leadsService.create(dto, req.user.id);
   }
 
+  @Post('bulk')
+  @ApiOperation({ summary: 'Bulk create leads via CSV import (AI scores them in background)' })
+  @ApiResponse({ status: 201, description: 'Leads created successfully.' })
+  createBulk(@Body() dtos: CreateLeadDto[], @Request() req: any) {
+    return this.leadsService.createBulk(dtos, req.user.id);
+  }
+
   @Get()
   @ApiOperation({ summary: 'List all leads with pagination, search, and filters' })
   @ApiResponse({ status: 200, description: 'Paginated lead list with AI scores included.' })

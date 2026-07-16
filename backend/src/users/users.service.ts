@@ -26,4 +26,12 @@ export class UsersService {
       select: { id: true, name: true, email: true, role: true, createdAt: true },
     });
   }
+
+  async updateMe(id: string, data: { name?: string; avatar?: string }) {
+    return this.prisma.user.update({
+      where: { id },
+      data,
+      select: { id: true, name: true, email: true, role: true, avatar: true },
+    });
+  }
 }

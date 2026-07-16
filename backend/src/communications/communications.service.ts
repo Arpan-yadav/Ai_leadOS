@@ -1,10 +1,12 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
+import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class CommunicationsService implements OnModuleInit {
   private readonly logger = new Logger(CommunicationsService.name);
+  private fallbackTransporter: nodemailer.Transporter | null = null;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -12,6 +14,19 @@ export class CommunicationsService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
+    try {
+      // Fallback Ethereal transporter for demo / when no user settings configured
+      const testAccount = await nodemailer.createTestAccount();
+      this.fallbackTransporter = nodemailer.createTransport({
+        host: 'smtp.ethereal.email',
+        port: 587,
+        secure: false,
+        auth: { user: testAccount.user, pass: testAccount.pass },
+      });
+      this.logger.log('Ethereal fallback email initialized.');
+    } catch (e) {
+      this.logger.error('Failed to init fallback email transporter', e);
+    }
     const count = await this.prisma.communicationLog.count();
     if (count === 0) {
       this.logger.log('Seeding initial communication logs...');
@@ -80,10 +95,106 @@ export class CommunicationsService implements OnModuleInit {
       recipientName = lead.name;
     }
     
-    this.logger.log(`Sending ${channel} to lead ${finalLeadId}`);
+    this.logger.log(`Sending ${channel} to lead ${finalLeadId} (${recipient})`);
     
-    // In a real implementation, we would call Nodemailer, Twilio, Resend, etc here.
-    // For now, we simulate success and log to DB.
+    // ─── Email Sending ────────────────────────────────────────────────────────
+    let previewUrl: string | false | null = null;
+    if (channel === 'EMAIL') {
+      try {
+        // 1. Try user's Resend API key
+        const userSettings = finalLeadId 
+          ? await this.prisma.userSettings.findFirst({ where: { user: { leads: { some: { id: finalLeadId } } } } })
+          : null;
+
+        if (userSettings?.emailProvider === 'RESEND' && userSettings?.resendApiKey) {
+          const res = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${userSettings.resendApiKey}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              from: `AI LeadOS <onboarding@resend.dev>`,
+              to: [recipient],
+              subject: subject || 'Message from AI LeadOS',
+              text: content,
+              html: `<p>${content.replace(/\n/g, '<br/>')}</p>`
+            })
+          });
+          const data = await res.json() as any;
+          if (res.ok) {
+            this.logger.log(`📧 Email sent via Resend to ${recipient}`);
+          } else {
+            this.logger.error(`Resend error: ${JSON.stringify(data)}`);
+          }
+        } else if (userSettings?.emailProvider === 'SMTP' && userSettings?.smtpHost && userSettings?.smtpUser) {
+          // 2. User's custom SMTP
+          const userTransporter = nodemailer.createTransport({
+            host: userSettings.smtpHost,
+            port: userSettings.smtpPort || 587,
+            secure: (userSettings.smtpPort || 587) === 465,
+            auth: { user: userSettings.smtpUser, pass: userSettings.smtpPass || '' },
+          });
+          const info = await userTransporter.sendMail({
+            from: `"AI LeadOS" <${userSettings.smtpUser}>`,
+            to: recipient,
+            subject: subject || 'Message from AI LeadOS',
+            text: content,
+            html: `<p>${content.replace(/\n/g, '<br/>')}</p>`
+          });
+          this.logger.log(`📧 Email sent via user SMTP to ${recipient}`);
+        } else {
+          // 3. Fallback to Ethereal (demo)
+          if (this.fallbackTransporter) {
+            const info = await this.fallbackTransporter.sendMail({
+              from: '"AI LeadOS" <system@aileados.com>',
+              to: recipient,
+              subject: subject || 'New Message from AI LeadOS',
+              text: content,
+              html: `<p>${content.replace(/\n/g, '<br/>')}</p>`
+            });
+            previewUrl = nodemailer.getTestMessageUrl(info);
+            this.logger.log(`📧 Email sent via Ethereal (demo). Preview: ${previewUrl}`);
+          }
+        }
+      } catch (err) {
+        this.logger.error('Email sending failed', err);
+      }
+    } else if (channel === 'WHATSAPP') {
+      // ─── WhatsApp via Meta Cloud API ────────────────────────────────────────
+      try {
+        const userSettings = finalLeadId
+          ? await this.prisma.userSettings.findFirst({ where: { user: { leads: { some: { id: finalLeadId } } } } })
+          : null;
+
+        if (userSettings?.waAccessToken && userSettings?.waPhoneNumberId) {
+          const url = `https://graph.facebook.com/v19.0/${userSettings.waPhoneNumberId}/messages`;
+          const cleanPhone = (recipient || '').replace(/\D/g, '');
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${userSettings.waAccessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              messaging_product: 'whatsapp',
+              to: cleanPhone,
+              type: 'text',
+              text: { body: content }
+            }),
+          });
+          const data = await res.json() as any;
+          if (res.ok) {
+            this.logger.log(`💬 WhatsApp sent via Meta Cloud API to ${cleanPhone}`);
+          } else {
+            this.logger.error(`Meta WhatsApp API error: ${JSON.stringify(data)}`);
+          }
+        } else {
+          this.logger.log(`📱 [MOCK WhatsApp] No Meta credentials configured. Message logged only: ${content.substring(0, 50)}`);
+        }
+      } catch (err) {
+        this.logger.error('WhatsApp sending failed', err);
+      }
+    } else {
+      this.logger.log(`📱 [MOCK SEND] ${channel} message to ${recipient}: ${content.substring(0, 60)}`);
+    }
 
     const log = await this.prisma.communicationLog.create({
       data: {
@@ -94,13 +205,14 @@ export class CommunicationsService implements OnModuleInit {
         subject,
         content,
         metadata: {
-          simulated: true,
+          simulated: channel !== 'EMAIL',
+          previewUrl,
           providerResponse: 'success'
         }
       }
     });
 
-    return { success: true, log };
+    return { success: true, log, previewUrl };
   }
 
   async handleEmailWebhook(payload: any) {

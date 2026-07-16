@@ -3,17 +3,54 @@ import React, { useState } from 'react'
 import { X, Loader2, Send } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-export default function NewMessageModal({ onClose, onSent }: { onClose: () => void, onSent?: () => void }) {
+export default function NewMessageModal({ onClose, onSent, lead }: { onClose: () => void, onSent?: () => void, lead?: any }) {
   const [loading, setLoading] = useState(false)
+  const defaultChannel = lead?.email ? 'EMAIL' : lead?.source === 'WHATSAPP' ? 'WHATSAPP' : lead?.source === 'LINKEDIN' ? 'LINKEDIN' : 'EMAIL'
+  
+  const parsePhone = (phone: string) => {
+    if (!phone) return { code: '+1', number: '' }
+    const commonCodes = ['+91', '+44', '+61', '+1']
+    for (const code of commonCodes) {
+      if (phone.startsWith(code)) {
+        return { code, number: phone.slice(code.length) }
+      }
+    }
+    return { code: '+1', number: phone } // fallback
+  }
+
+  const getRecipientData = (channel: string) => {
+    if (!lead) return { recipient: '', countryCode: '+1' }
+    if (channel === 'WHATSAPP') {
+      const parsed = parsePhone(lead.phone || '')
+      return { recipient: parsed.number, countryCode: parsed.code }
+    }
+    if (channel === 'EMAIL') return { recipient: lead.email || '', countryCode: '+1' }
+    if (channel === 'LINKEDIN') return { recipient: lead.name || '', countryCode: '+1' }
+    return { recipient: '', countryCode: '+1' }
+  }
+
+  const initialData = getRecipientData(defaultChannel)
+
   const [form, setForm] = useState({
-    recipient: '',
-    channel: 'EMAIL',
+    recipient: initialData.recipient,
+    channel: defaultChannel,
+    countryCode: initialData.countryCode,
     subject: '',
     message: ''
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
+    const { name, value } = e.target
+    let newForm = { ...form, [name]: value }
+    
+    // Auto-update recipient when channel changes
+    if (name === 'channel' && lead) {
+      const data = getRecipientData(value)
+      newForm.recipient = data.recipient
+      newForm.countryCode = data.countryCode
+    }
+    
+    setForm(newForm)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,7 +70,7 @@ export default function NewMessageModal({ onClose, onSent }: { onClose: () => vo
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          recipient: form.recipient,
+          recipient: (form.channel === 'WHATSAPP' && !form.recipient.startsWith('+')) ? `${form.countryCode}${form.recipient}` : form.recipient,
           channel: form.channel,
           content: form.message,
           subject: form.subject
@@ -41,8 +78,18 @@ export default function NewMessageModal({ onClose, onSent }: { onClose: () => vo
       })
       
       if (!res.ok) throw new Error('Failed to send')
-      
-      toast.success('Message sent successfully!')
+      const responseData = await res.json()
+      if (form.channel === 'LINKEDIN') {
+        navigator.clipboard.writeText(form.message).catch(() => {})
+        toast.success('Message copied! Opening LinkedIn...')
+        window.open(`https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(form.recipient)}`, '_blank')
+      } else if (responseData.previewUrl) {
+        toast.success('Email sent! Check terminal or Ethereal for the preview link.', { duration: 5000 })
+        console.log('Ethereal Email Preview URL:', responseData.previewUrl)
+      } else {
+        toast.success('Message sent successfully!')
+      }
+
       if (onSent) onSent()
       else onClose()
     } catch (err: any) {
@@ -56,8 +103,8 @@ export default function NewMessageModal({ onClose, onSent }: { onClose: () => vo
       setLoading(true)
       const token = localStorage.getItem('token')
       // Determine dummy company/lead name based on recipient or use defaults
-      const leadName = form.recipient || 'Prospect'
-      const company = 'Their Company'
+      const leadName = lead?.name || form.recipient || 'Prospect'
+      const company = lead?.company || 'Their Company'
 
       const res = await fetch('http://localhost:3001/api/communications/generate-message', {
         method: 'POST',
@@ -113,7 +160,23 @@ export default function NewMessageModal({ onClose, onSent }: { onClose: () => vo
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-black text-[#b9cacb] light:text-slate-500 uppercase tracking-widest block">Recipient *</label>
-                <input type="text" name="recipient" value={form.recipient} onChange={handleChange} required className="input-field" placeholder="Email, Phone, or ID" />
+                {form.channel === 'WHATSAPP' ? (
+                  <div className="flex gap-2">
+                    <select 
+                      className="input-field appearance-none w-[100px] shrink-0"
+                      value={form.countryCode}
+                      onChange={(e) => setForm({...form, countryCode: e.target.value})}
+                    >
+                      <option value="+91">+91 (IN)</option>
+                      <option value="+1">+1 (US)</option>
+                      <option value="+44">+44 (UK)</option>
+                      <option value="+61">+61 (AU)</option>
+                    </select>
+                    <input type="text" name="recipient" value={form.recipient} onChange={handleChange} required className="input-field flex-1" placeholder="Phone Number" />
+                  </div>
+                ) : (
+                  <input type="text" name="recipient" value={form.recipient} onChange={handleChange} required className="input-field" placeholder="Email, Phone, or ID" />
+                )}
               </div>
             </div>
 
@@ -142,7 +205,7 @@ export default function NewMessageModal({ onClose, onSent }: { onClose: () => vo
                 onChange={handleChange} 
                 required 
                 rows={5}
-                className="input-field resize-none" 
+                className="input-field resize-y min-h-[100px] max-h-[400px]" 
                 placeholder="Type your message here..." 
               />
             </div>

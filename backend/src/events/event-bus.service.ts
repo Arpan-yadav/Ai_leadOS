@@ -19,9 +19,12 @@ export interface LeadCreatedPayload {
   leadId: string;
   leadName: string;
   company: string;
+  title?: string;
   source: string;
   score: number;
   priority: 'high' | 'medium' | 'low';
+  interactions?: number;
+  userId?: string;
   timestamp: Date;
 }
 

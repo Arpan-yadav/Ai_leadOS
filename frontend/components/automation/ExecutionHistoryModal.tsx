@@ -1,19 +1,43 @@
 import React, { useState, useEffect } from 'react'
-import { X, CheckCircle2, XCircle, Clock, Search, Filter } from 'lucide-react'
+import { X, CheckCircle2, XCircle, Clock, Search, Filter, Loader2 } from 'lucide-react'
+import { getToken } from '@/lib/auth'
 
-const initialDummyHistory = [
-  { id: 'run-001', status: 'SUCCESS', time: '10 mins ago', duration: '1.2s', triggeredBy: 'New Lead: John Doe' },
-  { id: 'run-002', status: 'SUCCESS', time: '1 hour ago', duration: '0.8s', triggeredBy: 'Score updated > 80' },
-  { id: 'run-003', status: 'FAILED', time: '3 hours ago', duration: '2.4s', triggeredBy: 'API Webhook' },
-  { id: 'run-004', status: 'SUCCESS', time: 'Yesterday', duration: '1.1s', triggeredBy: 'New Lead: Sarah Jenkins' },
-  { id: 'run-005', status: 'SUCCESS', time: 'Yesterday', duration: '1.5s', triggeredBy: 'Score updated > 80' },
-]
-
-export default function ExecutionHistoryModal({ onClose, mockNewExecution }: { onClose: () => void, mockNewExecution?: boolean }) {
-  const [history, setHistory] = useState(initialDummyHistory);
+export default function ExecutionHistoryModal({ workflowId, onClose, mockNewExecution }: { workflowId?: string, onClose: () => void, mockNewExecution?: boolean }) {
+  const [history, setHistory] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (mockNewExecution) {
+    const fetchHistory = async () => {
+      try {
+        if (!workflowId) {
+          setLoading(false);
+          return;
+        }
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/workflow-executions/workflow/${workflowId}`, {
+          headers: { Authorization: `Bearer ${getToken()}` }
+        });
+        const data = await res.json();
+        
+        // Map to ui format
+        const mapped = data.map((exec: any) => ({
+          id: exec.id,
+          status: exec.status === 'completed' || exec.status === 'SUCCESS' ? 'SUCCESS' : exec.status === 'failed' ? 'FAILED' : 'PENDING',
+          time: new Date(exec.startedAt).toLocaleString(),
+          duration: exec.completedAt ? `${((new Date(exec.completedAt).getTime() - new Date(exec.startedAt).getTime()) / 1000).toFixed(1)}s` : '-',
+          triggeredBy: exec.lead ? `Lead: ${exec.lead.name}` : `Run for ${exec.leadId}`
+        }));
+        setHistory(mapped);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHistory();
+  }, [workflowId]);
+
+  useEffect(() => {
+    if (mockNewExecution && !loading) {
       const newRun = {
         id: `run-${Math.floor(Math.random() * 1000)}`,
         status: 'SUCCESS',
@@ -21,9 +45,9 @@ export default function ExecutionHistoryModal({ onClose, mockNewExecution }: { o
         duration: '0.4s',
         triggeredBy: 'Manual Activation Test'
       };
-      setHistory([newRun, ...initialDummyHistory]);
+      setHistory(prev => [newRun, ...prev]);
     }
-  }, [mockNewExecution]);
+  }, [mockNewExecution, loading]);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
       <div className="glass-panel w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col animate-fade-in shadow-[0_0_50px_rgba(0,0,0,0.5)]">
@@ -54,9 +78,16 @@ export default function ExecutionHistoryModal({ onClose, mockNewExecution }: { o
           </button>
         </div>
 
-        {/* Body */}
         <div className="flex-1 overflow-y-auto p-6">
-          <div className="space-y-3">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+              <Loader2 className="animate-spin mb-4" size={24} />
+              <p className="text-xs uppercase tracking-widest font-bold">Loading History...</p>
+            </div>
+          ) : history.length === 0 ? (
+            <div className="text-center py-12 text-slate-400 text-sm">No execution history found.</div>
+          ) : (
+            <div className="space-y-3">
             {history.map((run) => (
               <div key={run.id} className="glass-card p-4 flex items-center justify-between hover:border-[#00f0ff]/30 transition-all cursor-pointer group">
                 <div className="flex items-center gap-4">
@@ -79,6 +110,7 @@ export default function ExecutionHistoryModal({ onClose, mockNewExecution }: { o
               </div>
             ))}
           </div>
+          )}
         </div>
 
       </div>

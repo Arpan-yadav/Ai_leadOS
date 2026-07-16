@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Plus, Workflow, Trash2, Users, Calendar, Play, Mail, Linkedin, MessageSquare, Loader2 } from 'lucide-react'
+import { Plus, Workflow, Trash2, Users, Calendar, Play, Mail, Linkedin, MessageSquare, Loader2, CheckCircle2 } from 'lucide-react'
 import { getToken } from '@/lib/auth'
 import { useTheme } from 'next-themes'
 import toast from 'react-hot-toast'
@@ -9,7 +9,7 @@ import AddSequenceModal from '@/components/sequences/AddSequenceModal'
 import EnrollLeadsModal from '@/components/sequences/EnrollLeadsModal'
 import { useSearchParams } from 'next/navigation'
 
-export default function SequencesPage() {
+function SequencesPageContent() {
   const searchParams = useSearchParams()
   const initialTab = searchParams.get('tab') === 'enrollments' ? 'enrollments' : 'sequences'
   
@@ -19,16 +19,24 @@ export default function SequencesPage() {
   const [isAddSequenceModalOpen, setIsAddSequenceModalOpen] = useState(false)
   const [enrollingSequence, setEnrollingSequence] = useState<{id: string, name: string} | null>(null)
   const [activeTab, setActiveTab] = useState<'sequences' | 'enrollments'>(initialTab)
+  const [expandedEnrollmentId, setExpandedEnrollmentId] = useState<string | null>(null)
   const { resolvedTheme } = useTheme()
   const token = getToken()
 
   useEffect(() => { setMounted(true) }, [])
-  useEffect(() => { fetchSequences() }, [])
+  useEffect(() => { 
+    fetchSequences(true);
+    const interval = setInterval(() => {
+      fetchSequences(false);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [])
 
   const isDark = !mounted || resolvedTheme === 'dark'
 
-  const fetchSequences = async () => {
+  const fetchSequences = async (showLoading = true) => {
     try {
+      if (showLoading) setLoading(true)
       const res = await fetch('http://localhost:3001/api/sequences', {
         headers: { Authorization: `Bearer ${token}` }
       })
@@ -40,7 +48,7 @@ export default function SequencesPage() {
     } catch (err) {
       console.error('Failed to fetch sequences', err)
     } finally {
-      setLoading(false)
+      if (showLoading) setLoading(false)
     }
   }
 
@@ -57,6 +65,56 @@ export default function SequencesPage() {
       fetchSequences()
     } catch (err) {
       console.error('Failed to delete', err)
+    }
+  }
+
+  const advanceStep = async (enrollmentId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    
+    setSequences(prev => prev.map(seq => ({
+      ...seq,
+      enrollments: seq.enrollments?.map((enr: any) => 
+        enr.id === enrollmentId ? { ...enr, currentStepNumber: enr.currentStepNumber + 1 } : enr
+      )
+    })))
+
+    try {
+      const res = await fetch(`http://localhost:3001/api/sequences/enrollments/${enrollmentId}/advance`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (!res.ok) {
+        toast.error('Failed to advance step.')
+        fetchSequences()
+      }
+    } catch (err) {
+      console.error('Failed to advance', err)
+      fetchSequences()
+    }
+  }
+
+  const undoStep = async (enrollmentId: string, targetStep: number, e: React.MouseEvent) => {
+    e.stopPropagation()
+    
+    setSequences(prev => prev.map(seq => ({
+      ...seq,
+      enrollments: seq.enrollments?.map((enr: any) => 
+        enr.id === enrollmentId ? { ...enr, currentStepNumber: targetStep } : enr
+      )
+    })))
+
+    try {
+      const res = await fetch(`http://localhost:3001/api/sequences/enrollments/${enrollmentId}/undo/${targetStep}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (!res.ok) {
+        toast.error('Failed to undo step.')
+        fetchSequences()
+      }
+    } catch (err) {
+      console.error('Failed to undo', err)
+      fetchSequences()
     }
   }
 
@@ -176,23 +234,76 @@ export default function SequencesPage() {
           <h2 className={`text-lg font-bold mb-4 uppercase tracking-wider ${t.heading}`}>Currently Enrolled Leads</h2>
           <div className="space-y-4">
             {sequences.flatMap(seq => 
-              (seq.enrollments || []).map((enr: any) => (
-                <div key={enr.id} className="flex items-center justify-between p-4 rounded-xl border border-[#27272A] light:border-slate-200 bg-[#111114] light:bg-white hover:border-[#00f0ff]/50 transition-colors">
-                  <div className="flex flex-col">
-                    <span className="font-bold text-white light:text-slate-800">{enr.lead?.name || 'Unknown Lead'}</span>
-                    <span className="text-[11px] text-[#b9cacb] uppercase tracking-wider">{enr.lead?.company || 'Company'}</span>
+              (seq.enrollments || []).map((enr: any) => {
+                const isExpanded = expandedEnrollmentId === enr.id
+                return (
+                  <div key={enr.id} className="flex flex-col rounded-xl border border-[#27272A] light:border-slate-200 bg-[#111114] light:bg-white hover:border-[#00f0ff]/50 transition-colors overflow-hidden">
+                    <div 
+                      className="flex items-center justify-between p-4 cursor-pointer" 
+                      onClick={() => setExpandedEnrollmentId(isExpanded ? null : enr.id)}
+                    >
+                      <div className="flex flex-col">
+                        <span className="font-bold text-white light:text-slate-800">{enr.lead?.name || 'Unknown Lead'}</span>
+                        <span className="text-[11px] text-[#b9cacb] uppercase tracking-wider">{enr.lead?.company || 'Company'}</span>
+                      </div>
+                      <div className="flex flex-col items-center">
+                        <span className="text-[10px] text-slate-500 uppercase font-bold mb-1">Sequence</span>
+                        <span className="text-xs font-medium text-[#bd00ff]">{seq.name}</span>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="text-[10px] text-slate-500 uppercase font-bold mb-1">Progress</span>
+                        <span className="text-xs font-bold text-[#00f0ff]">Step {enr.currentStepNumber} / {seq.steps?.length || 0}</span>
+                      </div>
+                    </div>
+
+                    {isExpanded && (
+                      <div className={`p-5 border-t ${t.divider} bg-[#1a1a1f] light:bg-slate-50`}>
+                        <h5 className="text-[10px] font-black uppercase tracking-widest text-[#00f0ff] mb-4">Cadence Tracking</h5>
+                        <div className={`space-y-3 relative before:absolute before:inset-y-2 before:left-[9px] before:w-0.5 ${t.connector}`}>
+                          {seq.steps?.map((step: any, idx: number) => {
+                            const isCompleted = (idx + 1) < enr.currentStepNumber
+                            const isCurrent = (idx + 1) === enr.currentStepNumber
+                            const stepTitle = step.title ?? step.subject ?? 'Touchpoint'
+                            const badge = channelBadge(step.channel)
+                            
+                            return (
+                              <div key={idx} className="flex items-start gap-4 relative z-10">
+                                <div 
+                                  onClick={(e) => isCurrent ? advanceStep(enr.id, e) : (isCompleted ? undoStep(enr.id, idx + 1, e) : undefined)}
+                                  className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 border-2 ${
+                                    isCompleted ? 'bg-emerald-500 border-emerald-500 text-black cursor-pointer hover:bg-emerald-600 transition-colors' : 
+                                    isCurrent ? 'bg-transparent border-[#00f0ff] cursor-pointer hover:bg-[#00f0ff]/20 transition-colors' : 
+                                    'bg-transparent border-slate-600'
+                                  }`}
+                                  title={isCurrent ? "Click to manually complete this step" : (isCompleted ? "Click to undo to this step" : undefined)}
+                                >
+                                  {isCompleted && <CheckCircle2 size={12} />}
+                                </div>
+                                <div className="flex-1">
+                                  <div className={`text-[13px] font-bold ${isCompleted ? 'text-slate-500 line-through' : isDark ? 'text-white' : 'text-slate-800'}`}>
+                                    Day {step.day ?? step.dayOffset ?? (idx + 1)}: {stepTitle}
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider ${badge.wrap}`}>
+                                      {badge.icon} {step.channel}
+                                    </span>
+                                    <span className="text-[10px] text-slate-500 uppercase tracking-widest">
+                                      {isCompleted ? 'Completed' : isCurrent ? 'Pending Next' : 'Queued'}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex flex-col items-center">
-                    <span className="text-[10px] text-slate-500 uppercase font-bold mb-1">Sequence</span>
-                    <span className="text-xs font-medium text-[#bd00ff]">{seq.name}</span>
-                  </div>
-                  <div className="flex flex-col items-end">
-                    <span className="text-[10px] text-slate-500 uppercase font-bold mb-1">Progress</span>
-                    <span className="text-xs font-bold text-[#00f0ff]">Step {enr.currentStepNumber}</span>
-                  </div>
-                </div>
-              ))
-            ).length === 0 && (
+                )
+              })
+            )}
+            
+            {sequences.flatMap(seq => seq.enrollments || []).length === 0 && (
               <div className="text-center text-slate-500 py-8 italic font-mono text-sm">
                 No active enrollments found.
               </div>
@@ -268,16 +379,18 @@ export default function SequencesPage() {
                   <div className={`space-y-2 relative before:absolute before:inset-y-2 before:left-[11px] before:w-0.5 ${t.connector}`}>
                     {seq.steps?.map((step: any, idx: number) => {
                       const badge = channelBadge(step.channel)
+                      const dayNumber = step.day ?? step.dayOffset ?? (idx + 1)
+                      const stepTitle = step.title ?? step.subject ?? 'Touchpoint'
                       return (
                         <div key={idx} className="flex items-center gap-3 relative z-10">
                           {/* Day bubble */}
                           <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 ${t.dayBubble}`}>
-                            D{step.day}
+                            D{dayNumber}
                           </div>
                           {/* Step row */}
                           <div className={`flex-1 rounded-xl p-2.5 flex items-center justify-between cursor-pointer group transition-all ${t.stepRow}`}>
                             <span className={`text-[12px] font-semibold transition-colors ${t.stepTitle}`}>
-                              {step.title}
+                              {stepTitle}
                             </span>
                             <span className={`flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${badge.wrap}`}>
                               {badge.icon}
@@ -327,5 +440,13 @@ export default function SequencesPage() {
         />
       )}
     </div>
+  )
+}
+
+export default function SequencesPage() {
+  return (
+    <React.Suspense fallback={<div className="p-8 flex items-center justify-center"><Loader2 className="animate-spin" /></div>}>
+      <SequencesPageContent />
+    </React.Suspense>
   )
 }

@@ -24,6 +24,7 @@ model User {
   sequences         Sequence[]
   tasks             Task[]
   workflows         Workflow[]
+  settings          UserSettings?
 
   @@map("users")
 }
@@ -51,6 +52,7 @@ model Lead {
   assignedTo        User?                @relation(fields: [assignedToId], references: [id])
   enrollments       SequenceEnrollment[]
   tasks             Task[]
+  workflowExecutions WorkflowExecution[]
 
   @@map("leads")
 }
@@ -147,8 +149,10 @@ model WorkflowExecution {
   id          String    @id @default(cuid())
   status      String
   leadId      String?
+  lead        Lead?     @relation(fields: [leadId], references: [id])
   context     Json?
   nodeResults Json?
+  currentStep Int       @default(1)
   startedAt   DateTime  @default(now())
   completedAt DateTime?
   workflowId  String
@@ -288,4 +292,36 @@ enum EventCategory {
   AI
   AUTOMATION
   SYSTEM
+}
+
+// ─── SaaS Tenant Settings (BYOK — Bring Your Own Key) ─────────────────────
+model UserSettings {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+
+  // AI Configuration
+  geminiApiKey          String?  // User's own Google Gemini API key
+
+  // WhatsApp (Meta Cloud API)
+  waPhoneNumberId       String?  // Meta Business Phone Number ID
+  waAccessToken         String?  // Meta permanent access token
+  waBusinessAccountId   String?  // Meta Business Account ID
+  waConnectionStatus    String   @default("DISCONNECTED")
+
+  // Email Provider
+  emailProvider         String   @default("SMTP")  // SMTP | RESEND | GMAIL_OAUTH
+  resendApiKey          String?  // Resend.com API key
+  smtpHost              String?  // e.g. smtp.gmail.com
+  smtpPort              Int?     // e.g. 587
+  smtpUser              String?
+  smtpPass              String?
+  gmailClientId         String?
+  gmailClientSecret     String?
+  gmailRefreshToken     String?
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  user                  User     @relation(fields: [userId], references: [id])
+
+  @@map("user_settings")
 }
