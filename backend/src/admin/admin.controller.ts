@@ -14,10 +14,17 @@ import * as bcrypt from 'bcryptjs';
 export class AdminController {
   constructor(private readonly prisma: PrismaService) {}
 
-  // Guard: only ADMIN role can access these endpoints
-  private checkAdmin(req: any) {
+  // Read allowed: ADMIN + MANAGER. Write (role change, delete, reset pwd): ADMIN only.
+  private checkReadAccess(req: any) {
+    const role = req.user?.role;
+    if (role !== 'ADMIN' && role !== 'MANAGER') {
+      throw new ForbiddenException('Admin or Manager access required to view admin panel');
+    }
+  }
+
+  private checkAdminOnly(req: any) {
     if (req.user?.role !== 'ADMIN') {
-      throw new ForbiddenException('Admin access required');
+      throw new ForbiddenException('Only Admins can perform this action');
     }
   }
 
@@ -25,7 +32,7 @@ export class AdminController {
   @Get('stats')
   @ApiOperation({ summary: 'System-wide stats for admin dashboard' })
   async getStats(@Request() req: any) {
-    this.checkAdmin(req);
+    this.checkReadAccess(req);
     const [users, leads, deals, workflows, sequences] = await Promise.all([
       this.prisma.user.count(),
       this.prisma.lead.count(),
@@ -43,7 +50,7 @@ export class AdminController {
       deals,
       workflows,
       sequences,
-      wonRevenue: wonRevenue._sum.amount || 0,
+      wonRevenue: wonRevenue._sum?.amount ?? 0,
     };
   }
 
@@ -51,7 +58,7 @@ export class AdminController {
   @Get('users')
   @ApiOperation({ summary: 'List all users with activity stats' })
   async listUsers(@Request() req: any) {
-    this.checkAdmin(req);
+    this.checkReadAccess(req);
     const users = await this.prisma.user.findMany({
       select: {
         id: true,
@@ -60,8 +67,13 @@ export class AdminController {
         role: true,
         createdAt: true,
         _count: {
-          select: { leads: true, deals: true, activities: true, tasks: true }
-        }
+          select: {
+            leads: true,
+            deals: true,
+            activities: true,
+            tasks: true,
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -70,13 +82,13 @@ export class AdminController {
 
   // ─── PATCH /admin/users/:id/role ──────────────────────────────────────────
   @Patch('users/:id/role')
-  @ApiOperation({ summary: 'Update a user role' })
+  @ApiOperation({ summary: 'Update a user role (Admin only)' })
   async updateRole(
     @Request() req: any,
     @Param('id') id: string,
-    @Body() body: { role: string }
+    @Body() body: { role: string },
   ) {
-    this.checkAdmin(req);
+    this.checkAdminOnly(req);
     const validRoles = ['ADMIN', 'MANAGER', 'EXECUTIVE'];
     if (!validRoles.includes(body.role)) {
       throw new ForbiddenException(`Invalid role. Must be one of: ${validRoles.join(', ')}`);
@@ -91,13 +103,13 @@ export class AdminController {
 
   // ─── PATCH /admin/users/:id/reset-password ────────────────────────────────
   @Patch('users/:id/reset-password')
-  @ApiOperation({ summary: 'Reset a user password (admin)' })
+  @ApiOperation({ summary: 'Reset a user password (Admin only)' })
   async resetPassword(
     @Request() req: any,
     @Param('id') id: string,
-    @Body() body: { newPassword: string }
+    @Body() body: { newPassword: string },
   ) {
-    this.checkAdmin(req);
+    this.checkAdminOnly(req);
     if (!body.newPassword || body.newPassword.length < 8) {
       throw new ForbiddenException('Password must be at least 8 characters');
     }
@@ -108,9 +120,9 @@ export class AdminController {
 
   // ─── DELETE /admin/users/:id ───────────────────────────────────────────────
   @Delete('users/:id')
-  @ApiOperation({ summary: 'Delete a user (admin only, cannot delete self)' })
+  @ApiOperation({ summary: 'Delete a user (Admin only, cannot delete self)' })
   async deleteUser(@Request() req: any, @Param('id') id: string) {
-    this.checkAdmin(req);
+    this.checkAdminOnly(req);
     if (req.user.id === id) {
       throw new ForbiddenException('You cannot delete your own account');
     }

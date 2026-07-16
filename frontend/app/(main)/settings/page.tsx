@@ -494,18 +494,29 @@ export default function SettingsPage() {
               <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">Current Password</label>
-                  <input type="password" value={currentPwd} onChange={e => setCurrentPwd(e.target.value)} className="input-field w-full" />
+                  <SecretInput value={currentPwd} onChange={setCurrentPwd} placeholder="Enter current password..." />
+                  <p className="text-[10px] text-[#b9cacb] mt-1">Click the eye icon to show/hide your password as you type</p>
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">New Password</label>
-                  <input type="password" value={newPwd} onChange={e => setNewPwd(e.target.value)} className="input-field w-full" />
+                  <SecretInput value={newPwd} onChange={setNewPwd} placeholder="Min 8 characters..." />
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">Confirm New Password</label>
-                  <input type="password" value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)} className="input-field w-full" />
+                  <SecretInput value={confirmPwd} onChange={setConfirmPwd} placeholder="Repeat new password..." />
+                  {confirmPwd && newPwd && confirmPwd !== newPwd && (
+                    <p className="text-[10px] text-rose-400 mt-1 flex items-center gap-1">
+                      <XCircle size={10} /> Passwords do not match
+                    </p>
+                  )}
+                  {confirmPwd && newPwd && confirmPwd === newPwd && (
+                    <p className="text-[10px] text-emerald-400 mt-1 flex items-center gap-1">
+                      <CheckCircle2 size={10} /> Passwords match
+                    </p>
+                  )}
                 </div>
               </div>
-              <button onClick={changePassword} disabled={saving || !currentPwd || !newPwd || !confirmPwd} className="btn-primary flex items-center gap-2">
+              <button onClick={changePassword} disabled={saving || !currentPwd || !newPwd || !confirmPwd || newPwd !== confirmPwd} className="btn-primary flex items-center gap-2">
                 {saving ? <Loader2 size={14} className="animate-spin" /> : <Shield size={14} />}
                 Change Password
               </button>

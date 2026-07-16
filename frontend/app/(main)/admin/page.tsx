@@ -34,6 +34,7 @@ export default function AdminPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [search, setSearch] = useState('');
   const [roleMenuOpen, setRoleMenuOpen] = useState<string | null>(null);
   const [resetPwd, setResetPwd] = useState<{ userId: string; name: string } | null>(null);
@@ -43,15 +44,20 @@ export default function AdminPage() {
 
   const fetchAll = async () => {
     setLoading(true);
+    setAccessDenied(false);
     try {
       const [usersRes, statsRes] = await Promise.all([
         fetch(`${API}/admin/users`, { headers: { Authorization: `Bearer ${token}` } }),
         fetch(`${API}/admin/stats`, { headers: { Authorization: `Bearer ${token}` } }),
       ]);
+      if (usersRes.status === 403 || statsRes.status === 403) {
+        setAccessDenied(true);
+        return;
+      }
       if (usersRes.ok) setUsers(await usersRes.json());
       if (statsRes.ok) setStats(await statsRes.json());
     } catch (e) {
-      toast.error('Failed to load admin data. Make sure you have Admin role.');
+      toast.error('Failed to load admin data.');
     } finally {
       setLoading(false);
     }
@@ -101,6 +107,26 @@ export default function AdminPage() {
   const filtered = users.filter(u =>
     `${u.name} ${u.email}`.toLowerCase().includes(search.toLowerCase())
   );
+
+  if (accessDenied) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4 animate-fade-in">
+        <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
+          <Shield size={24} className="text-rose-400" />
+        </div>
+        <div className="text-center">
+          <h2 className="text-lg font-black text-white uppercase tracking-widest">Access Denied</h2>
+          <p className="text-[12px] text-[#b9cacb] mt-2 max-w-sm">
+            Your current role is <span className="text-[#00f0ff] font-bold">EXECUTIVE</span>. The Admin Panel requires <span className="text-[#ff007a] font-bold">ADMIN</span> or <span className="text-[#bd00ff] font-bold">MANAGER</span> role.
+          </p>
+          <p className="text-[11px] text-[#b9cacb] mt-2">Ask an admin to update your role via this same panel, or run this in your backend to promote yourself:</p>
+          <code className="block mt-2 p-2 bg-[#0A0A0C] border border-[#27272A] rounded-lg text-[10px] text-[#00f0ff] font-mono text-left">
+            npx prisma studio → User → change role to ADMIN
+          </code>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-12 animate-fade-in">
