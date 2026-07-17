@@ -2,6 +2,8 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+RUN apk add --no-cache openssl
+
 # Force development mode to ensure devDependencies are installed
 ENV NODE_ENV=development
 
@@ -23,6 +25,8 @@ RUN npm run build
 FROM node:20-alpine
 
 WORKDIR /app
+
+RUN apk add --no-cache openssl
 
 # Copy necessary files from builder
 COPY --from=builder /app/node_modules ./node_modules
