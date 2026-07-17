@@ -11,10 +11,10 @@ export class SettingsService {
 
   // ─── Get settings (keys masked) ───────────────────────────────────────────
   async getSettings(userId: string) {
-    const s = await this.prisma.userSettings.findUnique({ where: { userId } });
+    const s = await this.prisma.tenantSettings.findUnique({ where: { tenantId: userId } });
     if (!s) {
       // Auto-create empty settings on first access
-      await this.prisma.userSettings.create({ data: { userId } });
+      await this.prisma.tenantSettings.create({ data: { tenantId: userId } });
       return this.buildMasked({} as any);
     }
     return this.buildMasked(s);
@@ -63,7 +63,7 @@ export class SettingsService {
   }
 
   async testWhatsApp(userId: string, testPhone: string) {
-    const s = await this.prisma.userSettings.findUnique({ where: { userId } });
+    const s = await this.prisma.tenantSettings.findUnique({ where: { tenantId: userId } });
     if (!s?.waPhoneNumberId || !s?.waAccessToken) {
       return { success: false, message: 'WhatsApp credentials not configured. Please save them first.' };
     }
@@ -119,7 +119,7 @@ export class SettingsService {
   }
 
   async testEmail(userId: string, testEmail: string) {
-    const s = await this.prisma.userSettings.findUnique({ where: { userId } });
+    const s = await this.prisma.tenantSettings.findUnique({ where: { tenantId: userId } });
     const provider = s?.emailProvider || 'SMTP';
 
     try {
@@ -164,15 +164,15 @@ export class SettingsService {
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
   async getRawSettings(userId: string) {
-    return this.prisma.userSettings.findUnique({ where: { userId } });
+    return this.prisma.tenantSettings.findUnique({ where: { tenantId: userId } });
   }
 
   private async upsert(userId: string, data: any) {
     // Remove undefined keys so we don't accidentally null out existing values
     const clean = Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined));
-    return this.prisma.userSettings.upsert({
-      where: { userId },
-      create: { userId, ...clean },
+    return this.prisma.tenantSettings.upsert({
+      where: { tenantId: userId },
+      create: { tenantId: userId, ...clean },
       update: clean,
     });
   }

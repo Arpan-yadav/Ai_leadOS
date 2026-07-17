@@ -102,14 +102,14 @@ export class CommunicationsService implements OnModuleInit {
     if (channel === 'EMAIL') {
       try {
         // 1. Try user's Resend API key
-        const userSettings = finalLeadId 
-          ? await this.prisma.userSettings.findFirst({ where: { user: { leads: { some: { id: finalLeadId } } } } })
+        const tenantSettings = finalLeadId 
+          ? await this.prisma.tenantSettings.findFirst({ where: { tenant: { leads: { some: { id: finalLeadId } } } } })
           : null;
 
-        if (userSettings?.emailProvider === 'RESEND' && userSettings?.resendApiKey) {
+        if (tenantSettings?.emailProvider === 'RESEND' && tenantSettings?.resendApiKey) {
           const res = await fetch('https://api.resend.com/emails', {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${userSettings.resendApiKey}`, 'Content-Type': 'application/json' },
+            headers: { 'Authorization': `Bearer ${tenantSettings.resendApiKey}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
               from: `AI LeadOS <onboarding@resend.dev>`,
               to: [recipient],
@@ -124,16 +124,16 @@ export class CommunicationsService implements OnModuleInit {
           } else {
             this.logger.error(`Resend error: ${JSON.stringify(data)}`);
           }
-        } else if (userSettings?.emailProvider === 'SMTP' && userSettings?.smtpHost && userSettings?.smtpUser) {
+        } else if (tenantSettings?.emailProvider === 'SMTP' && tenantSettings?.smtpHost && tenantSettings?.smtpUser) {
           // 2. User's custom SMTP
           const userTransporter = nodemailer.createTransport({
-            host: userSettings.smtpHost,
-            port: userSettings.smtpPort || 587,
-            secure: (userSettings.smtpPort || 587) === 465,
-            auth: { user: userSettings.smtpUser, pass: userSettings.smtpPass || '' },
+            host: tenantSettings.smtpHost,
+            port: tenantSettings.smtpPort || 587,
+            secure: (tenantSettings.smtpPort || 587) === 465,
+            auth: { user: tenantSettings.smtpUser, pass: tenantSettings.smtpPass || '' },
           });
           const info = await userTransporter.sendMail({
-            from: `"AI LeadOS" <${userSettings.smtpUser}>`,
+            from: `"AI LeadOS" <${tenantSettings.smtpUser}>`,
             to: recipient,
             subject: subject || 'Message from AI LeadOS',
             text: content,
@@ -160,17 +160,17 @@ export class CommunicationsService implements OnModuleInit {
     } else if (channel === 'WHATSAPP') {
       // ─── WhatsApp via Meta Cloud API ────────────────────────────────────────
       try {
-        const userSettings = finalLeadId
-          ? await this.prisma.userSettings.findFirst({ where: { user: { leads: { some: { id: finalLeadId } } } } })
+        const tenantSettings = finalLeadId
+          ? await this.prisma.tenantSettings.findFirst({ where: { tenant: { leads: { some: { id: finalLeadId } } } } })
           : null;
 
-        if (userSettings?.waAccessToken && userSettings?.waPhoneNumberId) {
-          const url = `https://graph.facebook.com/v19.0/${userSettings.waPhoneNumberId}/messages`;
+        if (tenantSettings?.waAccessToken && tenantSettings?.waPhoneNumberId) {
+          const url = `https://graph.facebook.com/v19.0/${tenantSettings.waPhoneNumberId}/messages`;
           const cleanPhone = (recipient || '').replace(/\D/g, '');
           const res = await fetch(url, {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${userSettings.waAccessToken}`,
+              'Authorization': `Bearer ${tenantSettings.waAccessToken}`,
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({

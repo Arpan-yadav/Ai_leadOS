@@ -114,11 +114,35 @@ Built by the **ProyoTech** internship team.
 - **Backend:** Dushyant, Saransh, Ujjwal
 - **Frontend:** Arav, Harshwardhan
 
+## 🚀 Deployment
+
+The system is fully production-ready and configured for modern hosting platforms.
+
+### Frontend (Vercel)
+The Next.js 14 frontend is optimized for zero-config Vercel deployment.
+1. Add the GitHub repo to Vercel.
+2. Set the Framework Preset to **Next.js**.
+3. Set the Root Directory to `frontend`.
+4. Add the `NEXT_PUBLIC_API_URL` environment variable (e.g., your Render backend URL).
+
+### Backend (Render & Docker)
+The backend uses a robust `Dockerfile` and includes advanced security (Helmet, Rate Limiting).
+1. Add the GitHub repo to Render as a **Web Service**.
+2. Set the Root Directory to `backend`.
+3. Select **Docker** as the runtime.
+4. Add the required environment variables: `DATABASE_URL`, `JWT_SECRET`, `FRONTEND_URL`, and `GEMINI_API_KEY`.
+
+**Note:** The backend Docker container will automatically run database migrations on boot via `npx prisma migrate deploy`.
+
 ---
+
+## 🤝 Contributing
+
+We welcome contributions! Please follow our `git` workflow outlined in the roadmap.
 
 ## 📄 License
 
-Apache 2.0 — See [LICENSE](LICENSE)
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ---
 

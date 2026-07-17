@@ -87,7 +87,7 @@ export class AiService {
     // 1. Try user-specific key from DB
     if (userId) {
       try {
-        const settings = await this.prisma.userSettings.findUnique({ where: { userId } });
+        const settings = await this.prisma.tenantSettings.findUnique({ where: { tenantId: userId } });
         if (settings?.geminiApiKey) {
           return new GoogleGenAI({ apiKey: settings.geminiApiKey });
         }

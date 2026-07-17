@@ -9,6 +9,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import * as compression from 'compression';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -16,10 +17,17 @@ async function bootstrap() {
   // ─── Compression ─────────────────────────────────────────────────
   app.use(compression());
 
+  // ─── Security Headers (Helmet) ─────────────────────────────────
+  app.use(helmet());
+
   // ─── CORS ──────────────────────────────────────────────────────
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: process.env.NODE_ENV === 'production' 
+      ? [process.env.FRONTEND_URL || '']
+      : ['http://localhost:3000'],
     credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: 'Content-Type, Accept, Authorization',
   });
 
   // ─── Global Validation Pipe ────────────────────────────────────

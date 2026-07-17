@@ -6,7 +6,7 @@ async function main() {
   console.log('🌱 Seeding 20 dummy leads...');
 
   const admin = await prisma.user.findFirst({
-    where: { role: 'ADMIN' }
+    where: { roleId: null }
   });
 
   if (!admin) {

@@ -4,7 +4,7 @@
  * Sprint 1 — Backend Team Deliverable
  */
 
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsString, MinLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class LoginDto {
@@ -12,7 +12,7 @@ export class LoginDto {
     example: 'sarah@aileados.com',
     description: 'User email address',
   })
-  @IsEmail({}, { message: 'Please provide a valid email address' })
+  @IsString({ message: 'Please provide a valid email or username' })
   email: string;
 
   @ApiProperty({

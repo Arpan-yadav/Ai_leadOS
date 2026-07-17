@@ -25,7 +25,6 @@ export class AuthService {
   // ─── Register ──────────────────────────────────────────────────
 
   async register(dto: RegisterDto) {
-    // Check if email already exists
     const existing = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
@@ -33,31 +32,46 @@ export class AuthService {
       throw new ConflictException('A user with this email already exists');
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-    // Create user
+    // For new registrations without an invite, we create a new Tenant
+    // In a real app, you might have a separate flow for joining a tenant.
+    const tenant = await this.prisma.tenant.create({
+      data: { name: `${dto.name}'s Company` }
+    });
+
+    const adminRole = await this.prisma.customRole.create({
+      data: {
+        name: 'Admin',
+        tenantId: tenant.id,
+        permissions: { manageUsers: true, manageSettings: true, viewAllLeads: true, deleteData: true },
+        isDefault: true
+      }
+    });
+
     const user = await this.prisma.user.create({
       data: {
         name: dto.name,
         email: dto.email,
         password: hashedPassword,
-        role: (dto.role as any) || 'EXECUTIVE',
+        tenantId: tenant.id,
+        roleId: adminRole.id,
+        isSuperAdmin: false,
       },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        createdAt: true,
-      },
+      include: { role: true },
     });
 
-    // Issue JWT
-    const token = this.signToken(user.id, user.email, user.role);
+    const token = this.signToken(user.id, user.email, user.role?.name || 'User', user.tenantId ?? "", user.isSuperAdmin);
 
     return {
-      user,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role?.name || 'User',
+        tenantId: user.tenantId ?? "",
+        isSuperAdmin: user.isSuperAdmin,
+      },
       accessToken: token,
     };
   }
@@ -67,6 +81,7 @@ export class AuthService {
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
+      include: { role: true }
     });
 
     if (!user) {
@@ -78,14 +93,16 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    const token = this.signToken(user.id, user.email, user.role);
+    const token = this.signToken(user.id, user.email, user.role?.name || 'User', user.tenantId ?? "", user.isSuperAdmin);
 
     return {
       user: {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        role: user.role?.name || 'User',
+        tenantId: user.tenantId ?? "",
+        isSuperAdmin: user.isSuperAdmin,
       },
       accessToken: token,
     };
@@ -93,13 +110,16 @@ export class AuthService {
 
   // ─── Helper ────────────────────────────────────────────────────
 
-  private signToken(userId: string, email: string, role: string): string {
+  private signToken(userId: string, email: string, role: string, tenantId: string, isSuperAdmin: boolean): string {
     return this.jwtService.sign({
       sub: userId,
       email,
       role,
+      tenantId,
+      isSuperAdmin,
     });
   }
+
 
   async changePassword(userId: string, currentPassword: string, newPassword: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });

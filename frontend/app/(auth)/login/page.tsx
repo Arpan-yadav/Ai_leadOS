@@ -6,13 +6,13 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { TrendingUp, ArrowRight, Mail, Lock, ShieldCheck, Zap, Globe, AlertCircle } from 'lucide-react';
+import { TrendingUp, ArrowRight, Mail, Lock, ShieldCheck, Zap, Globe, AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 import { saveToken } from '@/lib/auth';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 
 const loginSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
+  email: z.string().min(1, 'Please enter a valid email address or username'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
 });
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -20,6 +20,10 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const router = useRouter();
   const [serverError, setServerError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotStatus, setForgotStatus] = useState<'idle' | 'loading' | 'success'>('idle');
 
   const { register, handleSubmit, formState: { isSubmitting } } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -112,9 +116,9 @@ export default function LoginPage() {
               <div className="relative group">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-hover:text-brand-500 transition-colors" size={20} />
                 <input 
-                  type="email" 
+                  type="text" 
                   {...register('email')}
-                  placeholder="name@company.com"
+                  placeholder="name@company.com or username"
                   className="w-full bg-slate-50/50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 dark:text-white rounded-xl py-4 pl-12 pr-4 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 dark:focus:border-brand-500 font-medium transition-all"
                   required 
                 />
@@ -124,17 +128,24 @@ export default function LoginPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between px-1">
                 <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Password</label>
-                <button type="button" className="text-[10px] font-black text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 uppercase tracking-widest">Forgot?</button>
+                <button type="button" onClick={() => setShowForgotModal(true)} className="text-[10px] font-black text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 uppercase tracking-widest">Forgot?</button>
               </div>
               <div className="relative group">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-hover:text-brand-500 transition-colors" size={20} />
                 <input 
-                  type="password" 
+                  type={showPassword ? "text" : "password"} 
                   {...register('password')}
                   placeholder="••••••••"
-                  className="w-full bg-slate-50/50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 dark:text-white rounded-xl py-4 pl-12 pr-4 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 dark:focus:border-brand-500 font-medium transition-all"
+                  className="w-full bg-slate-50/50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 dark:text-white rounded-xl py-4 pl-12 pr-12 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 dark:focus:border-brand-500 font-medium transition-all"
                   required 
                 />
+                <button 
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             </div>
 
@@ -155,6 +166,57 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-2xl w-full max-w-md shadow-2xl relative">
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight uppercase mb-2">Reset Password</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 font-medium">
+              Enter your email address and we'll send you a link to reset your password.
+            </p>
+            
+            {forgotStatus === 'success' ? (
+              <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 p-4 rounded-xl text-sm font-medium">
+                Check your email for a link to reset your password. If it doesn't appear within a few minutes, check your spam folder.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  value={forgotEmail}
+                  onChange={e => setForgotEmail(e.target.value)}
+                  placeholder="name@company.com"
+                  className="w-full bg-slate-50/50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 dark:text-white rounded-xl py-3 px-4 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 dark:focus:border-brand-500 font-medium transition-all"
+                />
+                <button
+                  onClick={() => {
+                    setForgotStatus('loading');
+                    setTimeout(() => setForgotStatus('success'), 1500); // Mock API call
+                  }}
+                  disabled={!forgotEmail || forgotStatus === 'loading'}
+                  className="w-full btn-primary py-3 rounded-xl font-bold flex items-center justify-center gap-2"
+                >
+                  {forgotStatus === 'loading' ? <Loader2 size={18} className="animate-spin" /> : 'Send Reset Link'}
+                </button>
+              </div>
+            )}
+            
+            <div className="mt-6 text-center">
+              <button 
+                onClick={() => {
+                  setShowForgotModal(false);
+                  setForgotStatus('idle');
+                  setForgotEmail('');
+                }} 
+                className="text-xs font-black text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 uppercase tracking-widest transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

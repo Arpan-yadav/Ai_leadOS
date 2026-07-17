@@ -9,6 +9,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -40,6 +42,10 @@ import { AdminModule } from './admin/admin.module';
 
     // ─── Core Modules ─────────────────────────────────────────────
     ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot([{
+      ttl: 60000, // 60 seconds
+      limit: 100, // 100 requests per IP per minute
+    }]),
     PrismaModule,
     UsersModule,
     AuthModule,
@@ -62,6 +68,12 @@ import { AdminModule } from './admin/admin.module';
     AnalyticsModule,
     SettingsModule,    // Sprint 6 — BYOK tenant settings
     AdminModule,       // Sprint 7 — Admin user management
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}

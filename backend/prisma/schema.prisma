@@ -8,12 +8,52 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+model Tenant {
+  id                 String               @id @default(cuid())
+  name               String
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  users              User[]
+  leads              Lead[]
+  customRoles        CustomRole[]
+  tenantSettingsId   String?
+  Deal               Deal[]
+  Task               Task[]
+  Activity           Activity[]
+  AIInsight          AIInsight[]
+  Workflow           Workflow[]
+  WorkflowExecution  WorkflowExecution[]
+  Sequence           Sequence[]
+  SequenceEnrollment SequenceEnrollment[]
+  CommunicationLog   CommunicationLog[]
+  TenantSettings     TenantSettings?
+
+  @@map("tenants")
+}
+
+model CustomRole {
+  id          String  @id @default(cuid())
+  name        String
+  permissions Json // stores granular permissions e.g. { viewAllLeads: true }
+  isDefault   Boolean @default(false)
+  tenantId    String?
+  tenant      Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  users       User[]
+
+  @@map("custom_roles")
+}
+
 model User {
-  id                String             @id @default(cuid())
-  email             String             @unique
-  name              String
-  password          String
-  role              Role               @default(EXECUTIVE)
+  id           String  @id @default(cuid())
+  email        String  @unique
+  name         String
+  password     String
+  isSuperAdmin Boolean @default(false)
+  tenantId     String?
+  tenant       Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  roleId            String?
+  role              CustomRole?        @relation(fields: [roleId], references: [id], onDelete: SetNull)
   avatar            String?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
@@ -24,34 +64,36 @@ model User {
   sequences         Sequence[]
   tasks             Task[]
   workflows         Workflow[]
-  settings          UserSettings?
 
   @@map("users")
 }
 
 model Lead {
-  id                String               @id @default(cuid())
-  name              String
-  email             String
-  company           String
-  title             String?
-  phone             String?
-  website           String?
-  linkedin          String?
-  status            LeadStatus           @default(NEW)
-  source            LeadSource           @default(WEBSITE)
-  score             Int                  @default(0)
-  lastContacted     DateTime?
-  createdAt         DateTime             @default(now())
-  updatedAt         DateTime             @updatedAt
-  assignedToId      String?
-  activities        Activity[]
-  aiInsights        AIInsight[]
-  communicationLogs CommunicationLog[]
-  deals             Deal[]
-  assignedTo        User?                @relation(fields: [assignedToId], references: [id])
-  enrollments       SequenceEnrollment[]
-  tasks             Task[]
+  id            String     @id @default(cuid())
+  name          String
+  email         String
+  company       String
+  title         String?
+  phone         String?
+  website       String?
+  linkedin      String?
+  status        LeadStatus @default(NEW)
+  source        LeadSource @default(WEBSITE)
+  score         Int        @default(0)
+  lastContacted DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  tenantId      String?
+  tenant        Tenant?    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  assignedToId       String?
+  activities         Activity[]
+  aiInsights         AIInsight[]
+  communicationLogs  CommunicationLog[]
+  deals              Deal[]
+  assignedTo         User?                @relation(fields: [assignedToId], references: [id])
+  enrollments        SequenceEnrollment[]
+  tasks              Task[]
   workflowExecutions WorkflowExecution[]
 
   @@map("leads")
@@ -72,6 +114,9 @@ model Deal {
   lead              Lead      @relation(fields: [leadId], references: [id])
   owner             User      @relation(fields: [ownerId], references: [id])
 
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   @@map("deals")
 }
 
@@ -90,6 +135,9 @@ model Task {
   assignedTo   User      @relation(fields: [assignedToId], references: [id])
   lead         Lead?     @relation(fields: [leadId], references: [id])
 
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   @@map("tasks")
 }
 
@@ -103,6 +151,9 @@ model Activity {
   userId    String
   leadId    String
   lead      Lead     @relation(fields: [leadId], references: [id])
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id])
 
   @@map("activities")
@@ -124,6 +175,9 @@ model AIInsight {
   leadId        String
   lead          Lead     @relation(fields: [leadId], references: [id])
 
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   @@map("ai_insights")
 }
 
@@ -142,6 +196,9 @@ model Workflow {
   executions  WorkflowExecution[]
   createdBy   User                @relation(fields: [createdById], references: [id])
 
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   @@map("workflows")
 }
 
@@ -157,6 +214,9 @@ model WorkflowExecution {
   completedAt DateTime?
   workflowId  String
   workflow    Workflow  @relation(fields: [workflowId], references: [id])
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@map("workflow_executions")
 }
@@ -179,6 +239,9 @@ model Sequence {
   enrollments  SequenceEnrollment[]
   createdBy    User                 @relation(fields: [createdById], references: [id])
 
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   @@map("sequences")
 }
 
@@ -195,6 +258,9 @@ model SequenceEnrollment {
   leadId            String
   lead              Lead      @relation(fields: [leadId], references: [id])
   sequence          Sequence  @relation(fields: [sequenceId], references: [id])
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@map("sequence_enrollments")
 }
@@ -233,6 +299,8 @@ model CommunicationLog {
   userId      String?
   lead        Lead      @relation(fields: [leadId], references: [id])
   user        User?     @relation(fields: [userId], references: [id])
+  tenantId    String?
+  tenant      Tenant?   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([leadId])
   @@map("communication_logs")
@@ -295,33 +363,33 @@ enum EventCategory {
 }
 
 // ─── SaaS Tenant Settings (BYOK — Bring Your Own Key) ─────────────────────
-model UserSettings {
-  id                    String   @id @default(cuid())
-  userId                String   @unique
+model TenantSettings {
+  id       String @id @default(cuid())
+  tenantId String @unique
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   // AI Configuration
-  geminiApiKey          String?  // User's own Google Gemini API key
+  geminiApiKey String? // User's own Google Gemini API key
 
   // WhatsApp (Meta Cloud API)
-  waPhoneNumberId       String?  // Meta Business Phone Number ID
-  waAccessToken         String?  // Meta permanent access token
-  waBusinessAccountId   String?  // Meta Business Account ID
-  waConnectionStatus    String   @default("DISCONNECTED")
+  waPhoneNumberId     String? // Meta Business Phone Number ID
+  waAccessToken       String? // Meta permanent access token
+  waBusinessAccountId String? // Meta Business Account ID
+  waConnectionStatus  String  @default("DISCONNECTED")
 
   // Email Provider
-  emailProvider         String   @default("SMTP")  // SMTP | RESEND | GMAIL_OAUTH
-  resendApiKey          String?  // Resend.com API key
-  smtpHost              String?  // e.g. smtp.gmail.com
-  smtpPort              Int?     // e.g. 587
-  smtpUser              String?
-  smtpPass              String?
-  gmailClientId         String?
-  gmailClientSecret     String?
-  gmailRefreshToken     String?
+  emailProvider     String  @default("SMTP") // SMTP | RESEND | GMAIL_OAUTH
+  resendApiKey      String? // Resend.com API key
+  smtpHost          String? // e.g. smtp.gmail.com
+  smtpPort          Int? // e.g. 587
+  smtpUser          String?
+  smtpPass          String?
+  gmailClientId     String?
+  gmailClientSecret String?
+  gmailRefreshToken String?
 
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-  user                  User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  @@map("user_settings")
+  @@map("tenant_settings")
 }

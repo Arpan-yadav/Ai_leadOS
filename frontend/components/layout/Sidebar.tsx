@@ -19,7 +19,8 @@ import {
   Moon,
   Sun,
   CheckSquare,
-  Zap
+  Zap,
+  HelpCircle
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
@@ -36,6 +37,7 @@ const navItems = [
   { icon: MessageSquare, label: 'Communications', path: '/communications' },
   { icon: TrendingUp, label: 'Analytics', path: '/analytics' },
   { icon: Settings, label: 'Settings', path: '/settings' },
+  { icon: HelpCircle, label: 'Help Center', path: '/help' },
   { icon: BarChart3, label: 'Admin', path: '/admin' },
 ];
 
@@ -56,7 +58,7 @@ export default function Sidebar() {
     <motion.div 
       initial={false}
       animate={{ width: collapsed ? 80 : 260 }}
-      className={`h-screen flex flex-col shrink-0 relative transition-all duration-300 border-r bg-white dark:bg-[#0A0A0C] border-slate-200 dark:border-[#27272A]`}
+      className={`hidden md:flex h-screen flex-col shrink-0 relative transition-all duration-300 border-r bg-white dark:bg-[#0A0A0C] border-slate-200 dark:border-[#27272A]`}
     >
       <div className="flex items-center gap-3 px-6 h-[72px] border-b border-slate-100 dark:border-[#27272A]">
         <div className="w-8 h-8 rounded-[12px] bg-linear-to-br from-[#00f0ff] to-[#bd00ff] flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(0,240,255,0.4)]">

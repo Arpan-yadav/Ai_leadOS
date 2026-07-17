@@ -18,7 +18,7 @@ async function main() {
 
   // Find the admin user
   const admin = await prisma.user.findFirst({
-    where: { role: 'ADMIN' }
+    where: { roleId: null }
   });
 
   // Create a won deal for today
