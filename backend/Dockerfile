@@ -2,6 +2,9 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Force development mode to ensure devDependencies are installed
+ENV NODE_ENV=development
+
 # Copy package files
 COPY package*.json ./
 COPY prisma ./prisma/
