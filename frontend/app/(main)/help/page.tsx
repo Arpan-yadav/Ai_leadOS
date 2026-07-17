@@ -7,24 +7,8 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const FAQS = [
-  {
-    q: "How do I configure my own API keys?",
-    a: "You can configure your personal Gemini, WhatsApp, and SMTP keys by navigating to Settings -> Integrations. Once saved, your workspace will utilize these keys for all automated outreach."
-  },
-  {
-    q: "What does the Supreme Admin role do?",
-    a: "The Supreme Admin is the workspace owner. They are the only user with access to the Admin Panel, where they can manage system-wide settings, create custom granular roles, and manage all users."
-  },
-  {
-    q: "How does Lead Generation AI work?",
-    a: "The AI agent scrapes specified URLs (e.g. LinkedIn profiles) and automatically qualifies them based on your predefined criteria. Qualified leads are then pushed to the 'New Leads' stage in your pipeline."
-  },
-  {
-    q: "Can I create custom roles for my team?",
-    a: "Yes! As a Supreme Admin, go to the Admin Panel > Roles tab. You can create custom roles (e.g. 'Content Writer', 'Sales Rep') and selectively assign permissions like Manage Users or View All Leads."
-  }
-];
+import useSWR from 'swr';
+import apiClient from '@/lib/apiClient';
 
 const GUIDES = [
   {
@@ -54,27 +38,37 @@ export default function HelpCenterPage() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   
-  // Support Ticket Form State
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
 
-  const filteredFaqs = FAQS.filter(f => 
-    f.q.toLowerCase().includes(search.toLowerCase()) || 
-    f.a.toLowerCase().includes(search.toLowerCase())
+  const fetchFaqs = async () => {
+    const res = await apiClient.get('/support/faqs');
+    return res.data;
+  };
+
+  const { data: faqs = [], isLoading: isLoadingFaqs } = useSWR('/support/faqs', fetchFaqs);
+
+  const filteredFaqs = faqs.filter((f: any) => 
+    f.question.toLowerCase().includes(search.toLowerCase()) || 
+    f.answer.toLowerCase().includes(search.toLowerCase())
   );
 
-  const submitTicket = (e: React.FormEvent) => {
+  const handleTicketSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!subject || !message) return toast.error("Please fill in all fields");
+    if (!subject || !message) return toast.error('Please fill in all fields');
+    
     setSending(true);
-    // Simulate API call
-    setTimeout(() => {
-      setSending(false);
+    try {
+      await apiClient.post('/support/ticket', { subject, message });
+      toast.success('Ticket submitted successfully! We will get back to you soon.');
       setSubject('');
       setMessage('');
-      toast.success("Support ticket submitted! We'll get back to you shortly.");
-    }, 1000);
+    } catch (error) {
+      toast.error('Failed to submit ticket. Please try again later.');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -105,33 +99,45 @@ export default function HelpCenterPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          {/* FAQs Section */}
-          <div className="glass-card p-6">
-            <h2 className="text-sm font-black text-white uppercase tracking-widest mb-6 flex items-center gap-2">
-              <MessageSquare size={16} className="text-[#00f0ff]" />
-              Frequently Asked Questions
-            </h2>
-            
-            <div className="space-y-3">
-              {filteredFaqs.length === 0 ? (
-                <p className="text-[#b9cacb] text-sm text-center py-4">No FAQs match your search.</p>
+          <div className="flex-1 min-w-[300px]">
+            <div className="glass-card rounded-[24px] border border-slate-200 dark:border-[#27272A] p-6 lg:p-8">
+              <div className="flex items-center gap-2 mb-6 text-sm font-bold uppercase tracking-wider font-display text-[#00f0ff]">
+                <MessageSquare size={16} />
+                Frequently Asked Questions
+              </div>
+
+              {isLoadingFaqs ? (
+                <div className="animate-pulse space-y-4">
+                  {[1,2,3].map(i => (
+                    <div key={i} className="h-16 bg-slate-100 dark:bg-[#16161D] rounded-xl" />
+                  ))}
+                </div>
               ) : (
-                filteredFaqs.map((faq, i) => (
-                  <div key={i} className="border border-[#27272A] rounded-xl bg-black/40 overflow-hidden transition-all">
-                    <button 
-                      onClick={() => setActiveFaq(activeFaq === i ? null : i)}
-                      className="w-full flex items-center justify-between p-4 text-left hover:bg-white/5 transition-colors"
-                    >
-                      <span className="text-sm font-bold text-white">{faq.q}</span>
-                      {activeFaq === i ? <ChevronUp size={16} className="text-[#00f0ff]" /> : <ChevronDown size={16} className="text-[#b9cacb]" />}
-                    </button>
-                    {activeFaq === i && (
-                      <div className="p-4 pt-0 text-xs text-[#b9cacb] leading-relaxed border-t border-[#27272A] mt-1 bg-white/2">
-                        {faq.a}
+                <div className="space-y-4">
+                  {filteredFaqs.map((faq: any, i: number) => {
+                    const isOpen = activeFaq === i;
+                    return (
+                      <div 
+                        key={i} 
+                        className={`border rounded-xl transition-colors duration-300 ${isOpen ? 'bg-slate-50 dark:bg-[#16161D] border-[#00f0ff]/30' : 'border-slate-100 dark:border-[#27272A] hover:border-slate-200 dark:hover:border-[#3f3f46]'}`}
+                      >
+                        <button 
+                          onClick={() => setActiveFaq(isOpen ? null : i)}
+                          className="w-full flex items-center justify-between p-4 text-left"
+                        >
+                          <span className="font-bold text-slate-800 dark:text-[#e5e1e4] pr-4">{faq.question}</span>
+                          {isOpen ? <ChevronUp size={18} className="text-slate-400 shrink-0" /> : <ChevronDown size={18} className="text-slate-400 shrink-0" />}
+                        </button>
+                        
+                        {isOpen && (
+                          <div className="px-4 pb-4 text-sm text-slate-500 dark:text-[#b9cacb] leading-relaxed">
+                            {faq.answer}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                ))
+                    );
+                  })}
+                </div>
               )}
             </div>
           </div>
@@ -171,7 +177,7 @@ export default function HelpCenterPage() {
             </h2>
             <p className="text-[10px] text-[#b9cacb] mb-6">Need technical help? Our support team typically responds within 2 hours.</p>
             
-            <form onSubmit={submitTicket} className="space-y-4">
+            <form onSubmit={handleTicketSubmit} className="space-y-4">
               <div>
                 <label className="block text-[10px] font-black text-[#b9cacb] uppercase tracking-widest mb-1">Subject</label>
                 <input

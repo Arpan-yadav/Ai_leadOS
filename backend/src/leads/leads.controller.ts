@@ -61,6 +61,13 @@ export class LeadsController {
     return this.leadsService.findAll(query);
   }
 
+  @Get('high-intent-count')
+  @ApiOperation({ summary: 'Get count of high intent leads (score >= 80)' })
+  async getHighIntentCount() {
+    const count = await this.leadsService.getHighIntentCount();
+    return { count };
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get full lead detail (includes AI insights, deals, tasks, activities)' })
   @ApiParam({ name: 'id', description: 'Lead ID (cuid)' })

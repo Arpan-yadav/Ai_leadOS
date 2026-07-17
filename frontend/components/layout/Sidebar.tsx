@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
@@ -25,6 +25,8 @@ import {
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
 import { useTheme } from 'next-themes';
+import useSWR from 'swr';
+import apiClient from '@/lib/apiClient';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -48,7 +50,17 @@ export default function Sidebar() {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  React.useEffect(() => {
+  const fetchHighIntentCount = async () => {
+    const res = await apiClient.get('/leads/high-intent-count');
+    return res.data.count;
+  };
+
+  const { data: highIntentCount } = useSWR('/leads/high-intent-count', fetchHighIntentCount, {
+    fallbackData: 0,
+    revalidateOnFocus: false,
+  });
+
+  useEffect(() => {
     setMounted(true);
   }, []);
 
@@ -103,7 +115,9 @@ export default function Sidebar() {
           <div className="mt-6 mx-2 p-4 rounded-[16px] glass-card border border-[#ff007a]/20 shadow-[0_0_15px_rgba(255,0,122,0.1)] relative overflow-visible">
             <div className="absolute top-0 right-0 w-16 h-16 bg-[#ff007a]/10 rounded-full blur-xl pointer-events-none" />
             <h4 className="text-[12px] font-bold text-[#ff007a] mb-1 font-display">AI Copilot Focus</h4>
-            <p className="text-[12px] mb-4 leading-relaxed text-slate-600 dark:text-[#e5e1e4]">3 <span className="text-[#ff007a] font-bold">High-intent</span> opportunities detected.</p>
+            <p className="text-[12px] mb-4 leading-relaxed text-slate-600 dark:text-[#e5e1e4]">
+              {highIntentCount} <span className="text-[#ff007a] font-bold">High-intent</span> {highIntentCount === 1 ? 'opportunity' : 'opportunities'} detected.
+            </p>
             <button onClick={() => router.push('/ai-intelligence')} className="w-full bg-[#ff007a]/10 hover:bg-[#ff007a]/20 border border-[#ff007a]/30 text-[#ff007a] hover:shadow-[0_0_15px_rgba(255,0,122,0.3)] text-[10px] font-bold uppercase tracking-wider py-2.5 rounded-[12px] transition-all duration-300">
               View Insights
             </button>

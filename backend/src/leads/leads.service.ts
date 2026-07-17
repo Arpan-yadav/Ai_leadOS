@@ -344,5 +344,12 @@ export class LeadsService implements OnModuleInit {
       this.prisma.lead.delete({ where: { id } })
     ]);
   }
-}
 
+  async getHighIntentCount() {
+    return this.prisma.lead.count({
+      where: {
+        score: { gte: 80 }
+      }
+    });
+  }
+}

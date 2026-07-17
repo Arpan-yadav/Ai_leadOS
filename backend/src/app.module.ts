@@ -31,6 +31,7 @@ import { CommunicationsModule } from './communications/communications.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { SettingsModule } from './settings/settings.module';
 import { AdminModule } from './admin/admin.module';
+import { SupportModule } from './support/support.module';
 
 @Module({
   imports: [
@@ -68,6 +69,7 @@ import { AdminModule } from './admin/admin.module';
     AnalyticsModule,
     SettingsModule,    // Sprint 6 — BYOK tenant settings
     AdminModule,       // Sprint 7 — Admin user management
+    SupportModule,
   ],
   providers: [
     {
