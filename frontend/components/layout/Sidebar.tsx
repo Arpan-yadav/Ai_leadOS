@@ -26,7 +26,7 @@ import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
 import { useTheme } from 'next-themes';
 import useSWR from 'swr';
-import apiClient from '@/lib/apiClient';
+import { apiClient } from '@/lib/api';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },

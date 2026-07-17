@@ -8,7 +8,7 @@ import {
 import toast from 'react-hot-toast';
 
 import useSWR from 'swr';
-import apiClient from '@/lib/apiClient';
+import { apiClient } from '@/lib/api';
 
 const GUIDES = [
   {
