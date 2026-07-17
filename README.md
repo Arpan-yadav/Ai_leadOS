@@ -6,44 +6,55 @@
 
 > An intelligent Lead Management, Sales Automation, and CRM platform powered by Google Gemini AI.
 
-[![Sprint](https://img.shields.io/badge/Sprint-3%20Active-blue)](https://github.com/proyotech/AI_LeadOS)
+[![Sprint](https://img.shields.io/badge/Sprint-8%20Complete-success)](https://github.com/proyotech/AI_LeadOS)
+[![Deployment](https://img.shields.io/badge/Status-Live%20on%20Vercel%20%26%20Render-success)](https://ai-lead-os-eight.vercel.app)
 [![Stack](https://img.shields.io/badge/Stack-NestJS%20%2B%20Next.js%20%2B%20Prisma%20%2B%20Gemini-blue)](https://github.com/proyotech/AI_LeadOS)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green)](LICENSE)
 
 ---
 
-## ✨ Features (Sprint 1 & 2)
+## 🌍 Live Deployment (Production)
+
+- **Frontend Application (Vercel):** [https://ai-lead-os-eight.vercel.app](https://ai-lead-os-eight.vercel.app)
+- **Backend API Docs (Render):** [https://ai-leados.onrender.com/api/docs](https://ai-leados.onrender.com/api/docs)
+
+---
+
+## ✨ Full-Stack Features (Sprint 1 to 8)
 
 | Module | Description |
 |--------|-------------|
-| 🤖 **AI Lead Scoring** | Auto-scores leads (0-100) on creation using Gemini AI, with priority and ICP fit |
-| ⚡ **Event Bus** | Typed, in-process automation event bus (`lead.created`, `lead.scored`) |
-| 🎯 **Lead Management** | Full REST API (CRUD) for Leads with pagination, search, and filtering |
-| 💼 **Deals & Dashboard** | Deals pipeline API and real-time aggregated CRM stats |
-| 🗄️ **Backend Core** | NestJS + PostgreSQL + Prisma with JWT RBAC Auth and Swagger docs |
-| 🎨 **Frontend Shell** | Next.js 14 layout, Sidebar, Auth pages, and Leads CRM UI components |
+| 🤖 **AI Lead Scoring** | Auto-scores leads (0-100) using Gemini AI, assigning ICP fit & priorities. |
+| ⚡ **Event-Driven Core** | `EventBusService` triggers automations instantly on CRM events. |
+| 🎯 **Lead Management** | REST API (CRUD) for Leads with pagination, search, and dynamic filtering. |
+| 💼 **Deals & Pipeline** | Kanban deals pipeline API and real-time aggregated dashboard stats. |
+| ✉️ **Multi-Channel Outbox** | Twilio (WhatsApp/SMS) and Nodemailer (SMTP Email) integration. |
+| 🔀 **Automation Builder** | React Flow drag-and-drop workflow sequence builder. |
+| 🗄️ **Backend Engine** | NestJS + PostgreSQL + Prisma + Docker + CI/CD. |
+| 🛡️ **Security** | JWT Authentication, CORS protection, and Role-Based Access Control (RBAC). |
 
 ---
 
 ## 🏗️ Architecture
 
-```
+```text
 backend/src/
-├── ai/               ← NestJS AiModule (Gemini wrapper)
-├── automation/       ← AutoScore listeners and rules
-├── events/           ← Typed EventBusService
-├── leads/            ← Leads CRUD API
-├── auth/             ← JWT + RolesGuard
-└── prisma/           ← Schema with 11 core models
+├── ai/               ← Google Gemini AI wrapper
+├── automation/       ← Drag-and-drop workflow executor
+├── communications/   ← Twilio & SMTP Email integrations
+├── events/           ← Asynchronous EventBus pattern
+├── leads/            ← Leads & Deals APIs
+├── auth/             ← JWT strategies & roles
+└── prisma/           ← 11-table PostgreSQL Schema
 
-frontend/             ← Next.js 14 App Router
+frontend/             ← Next.js 14 App Router on Vercel
 ```
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Local Development Quick Start
 
-**Prerequisites:** Node.js 18+, Docker (for PostgreSQL)
+**Prerequisites:** Node.js 20+, Docker (for PostgreSQL)
 
 ```bash
 # 1. Clone the repository
@@ -79,7 +90,7 @@ npm run dev             # UI: http://localhost:3000
 
 ## 🌐 API Reference (Swagger)
 
-All endpoints are documented at `http://localhost:3001/api/docs`
+All endpoints are documented at `http://localhost:3001/api/docs` (local) or via the Render deployment link.
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -97,12 +108,12 @@ All endpoints are documented at `http://localhost:3001/api/docs`
 |--------|-------|--------|
 | **Sprint 1** | Foundation, Auth, DB Schema, Scaffold | ✅ Done |
 | **Sprint 2** | Core CRM (Leads, Deals) + AI Auto-Scoring + UI | ✅ Done |
-| **Sprint 3** | Live Automation Engine, Activity Feed & Task Mgmt | 🔵 Active |
-| **Sprint 4** | AI Intelligence Module & Outreach Sequences | 🟠 Upcoming |
-| **Sprint 5** | Automation Builder (Visual Workflow Editor) | 🔴 Upcoming |
-| **Sprint 6** | Communications Hub (Email, WhatsApp, LinkedIn) | 🟣 Upcoming |
-| **Sprint 7** | Analytics, Reporting & Admin Panel | 🟢 Upcoming |
-| **Sprint 8** | Polish, Production Readiness & Launch | 🏁 Upcoming |
+| **Sprint 3** | Live Automation Engine, Activity Feed & Task Mgmt | ✅ Done |
+| **Sprint 4** | AI Intelligence Module & Outreach Sequences | ✅ Done |
+| **Sprint 5** | Automation Builder (Visual Workflow Editor) | ✅ Done |
+| **Sprint 6** | Communications Hub (Email, WhatsApp, LinkedIn) | ✅ Done |
+| **Sprint 7** | Analytics, Reporting & Admin Panel | ✅ Done |
+| **Sprint 8** | Polish, Production Readiness & Launch | ✅ Done |
 
 ---
 
@@ -123,29 +134,11 @@ The Next.js 14 frontend is optimized for zero-config Vercel deployment.
 1. Add the GitHub repo to Vercel.
 2. Set the Framework Preset to **Next.js**.
 3. Set the Root Directory to `frontend`.
-4. Add the `NEXT_PUBLIC_API_URL` environment variable (e.g., your Render backend URL).
+4. Provide `NEXT_PUBLIC_API_URL` environment variable pointing to the backend.
 
-### Backend (Render & Docker)
-The backend uses a robust `Dockerfile` and includes advanced security (Helmet, Rate Limiting).
-1. Add the GitHub repo to Render as a **Web Service**.
-2. Set the Root Directory to `backend`.
-3. Select **Docker** as the runtime.
-4. Add the required environment variables: `DATABASE_URL`, `JWT_SECRET`, `FRONTEND_URL`, and `GEMINI_API_KEY`.
-
-**Note:** The backend Docker container will automatically run database migrations on boot via `npx prisma migrate deploy`.
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Please follow our `git` workflow outlined in the roadmap.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
----
-
-<div align="center">
-  <sub>Built with ❤️ using Google Gemini AI • ProyoTech Internship 2026</sub>
-</div>
+### Backend (Render / Docker)
+The NestJS backend includes a multi-stage Dockerfile designed for Alpine Linux.
+1. Add the GitHub repo to Render as a Web Service.
+2. Select **Docker** as the Runtime environment.
+3. Set the Root Directory to `backend`.
+4. Provide the `.env` variables required (Database, JWT, Gemini API, Twilio, SMTP).
