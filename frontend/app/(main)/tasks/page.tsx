@@ -14,6 +14,9 @@ import {
   Sparkles
 } from 'lucide-react';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
+
 interface Task {
   id: string;
   title: string;
@@ -41,7 +44,7 @@ export default function TasksPage() {
     try {
       setLoading(true);
       const token = getToken();
-      const res = await fetch('http://localhost:3001/api/tasks', {
+      const res = await fetch(`${API_URL}/tasks`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to fetch tasks');
@@ -65,7 +68,7 @@ export default function TasksPage() {
     
     try {
       const token = getToken();
-      const res = await fetch('http://localhost:3001/api/tasks', {
+      const res = await fetch(`${API_URL}/tasks`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -93,8 +96,8 @@ export default function TasksPage() {
     try {
       const token = getToken();
       const endpoint = task.status === 'pending' 
-        ? `http://localhost:3001/api/tasks/${task.id}/complete`
-        : `http://localhost:3001/api/tasks/${task.id}/undo`;
+        ? `${API_URL}/tasks/${task.id}/complete`
+        : `${API_URL}/tasks/${task.id}/undo`;
 
       const res = await fetch(endpoint, {
         method: 'PATCH',
@@ -113,7 +116,7 @@ export default function TasksPage() {
   const handleDelete = async (id: string) => {
     try {
       const token = getToken();
-      const res = await fetch(`http://localhost:3001/api/tasks/${id}`, {
+      const res = await fetch(`${API_URL}/tasks/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -130,7 +133,7 @@ export default function TasksPage() {
     try {
       setSuggestingTasks(true);
       const token = getToken();
-      const res = await fetch('http://localhost:3001/api/tasks/suggest', {
+      const res = await fetch(`${API_URL}/tasks/suggest`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to fetch AI suggestions');

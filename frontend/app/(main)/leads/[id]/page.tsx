@@ -13,6 +13,9 @@ import {
 } from 'lucide-react';
 import { getToken } from '@/lib/auth';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
+
 // ─── Types ─────────────────────────────────────────────────────────────────
 interface Activity {
   id: string;
@@ -115,7 +118,7 @@ export default function LeadDetailPage() {
 
   const fetchLead = async () => {
     try {
-      const res = await fetch(`http://localhost:3001/api/leads/${id}`, {
+      const res = await fetch(`${API_URL}/leads/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error('Lead not found');
@@ -132,7 +135,7 @@ export default function LeadDetailPage() {
 
   const handleCompleteTask = async (taskId: string) => {
     try {
-      await fetch(`http://localhost:3001/api/tasks/${taskId}/complete`, {
+      await fetch(`${API_URL}/tasks/${taskId}/complete`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -144,7 +147,7 @@ export default function LeadDetailPage() {
 
   const handleUndoTask = async (taskId: string) => {
     try {
-      await fetch(`http://localhost:3001/api/tasks/${taskId}/undo`, {
+      await fetch(`${API_URL}/tasks/${taskId}/undo`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -157,7 +160,7 @@ export default function LeadDetailPage() {
   const handleUpdateTask = async (taskId: string) => {
     if (!editingTaskTitle.trim()) return;
     try {
-      await fetch(`http://localhost:3001/api/tasks/${taskId}`, {
+      await fetch(`${API_URL}/tasks/${taskId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ title: editingTaskTitle }),
@@ -173,7 +176,7 @@ export default function LeadDetailPage() {
     if (!newTaskTitle.trim()) return;
     setAddingTask(true);
     try {
-      await fetch('http://localhost:3001/api/tasks', {
+      await fetch(`${API_URL}/tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ title: newTaskTitle, leadId: id, priority: 'medium' }),

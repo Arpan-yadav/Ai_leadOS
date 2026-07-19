@@ -5,6 +5,9 @@ import { Search, Loader2, Sparkles, TrendingUp, AlertTriangle, Crosshair, Chevro
 import { getToken } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
+
 interface AIInsight {
   id: string
   analysis: string
@@ -38,7 +41,7 @@ export default function AIIntelligencePage() {
     // Fetch leads to populate the dropdown
     const fetchLeads = async () => {
       try {
-        const res = await fetch('http://localhost:3001/api/leads', {
+        const res = await fetch(`${API_URL}/leads`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         if (res.ok) {
@@ -60,7 +63,7 @@ export default function AIIntelligencePage() {
     setInsight(null)
 
     try {
-      const res = await fetch(`http://localhost:3001/api/leads/${selectedLeadId}/analyze`, {
+      const res = await fetch(`${API_URL}/leads/${selectedLeadId}/analyze`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       })

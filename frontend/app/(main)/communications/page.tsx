@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import NewMessageModal from '@/components/communications/NewMessageModal';
 import { getToken } from '@/lib/auth';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 
 const channelIcon = (channel: string, size = 14) => {
@@ -31,7 +32,7 @@ export default function CommunicationsPage() {
   const fetchLogs = async () => {
     try {
       if (!token) return;
-      const res = await fetch('http://localhost:3001/api/communications', {
+      const res = await fetch(`${API_URL}/communications`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -112,7 +113,7 @@ export default function CommunicationsPage() {
     setIsSendingReply(true);
 
     try {
-      await fetch('http://localhost:3001/api/communications/send', {
+      await fetch(`${API_URL}/communications/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({

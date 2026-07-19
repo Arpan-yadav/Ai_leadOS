@@ -9,6 +9,9 @@ import AddSequenceModal from '@/components/sequences/AddSequenceModal'
 import EnrollLeadsModal from '@/components/sequences/EnrollLeadsModal'
 import { useSearchParams } from 'next/navigation'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
+
 function SequencesPageContent() {
   const searchParams = useSearchParams()
   const initialTab = searchParams.get('tab') === 'enrollments' ? 'enrollments' : 'sequences'
@@ -37,7 +40,7 @@ function SequencesPageContent() {
   const fetchSequences = async (showLoading = true) => {
     try {
       if (showLoading) setLoading(true)
-      const res = await fetch('http://localhost:3001/api/sequences', {
+      const res = await fetch(`${API_URL}/sequences`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       if (res.ok) {
@@ -58,7 +61,7 @@ function SequencesPageContent() {
 
   const deleteSequence = async (id: string) => {
     try {
-      await fetch(`http://localhost:3001/api/sequences/${id}`, {
+      await fetch(`${API_URL}/sequences/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       })
@@ -79,7 +82,7 @@ function SequencesPageContent() {
     })))
 
     try {
-      const res = await fetch(`http://localhost:3001/api/sequences/enrollments/${enrollmentId}/advance`, {
+      const res = await fetch(`${API_URL}/sequences/enrollments/${enrollmentId}/advance`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       })
@@ -104,7 +107,7 @@ function SequencesPageContent() {
     })))
 
     try {
-      const res = await fetch(`http://localhost:3001/api/sequences/enrollments/${enrollmentId}/undo/${targetStep}`, {
+      const res = await fetch(`${API_URL}/sequences/enrollments/${enrollmentId}/undo/${targetStep}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       })

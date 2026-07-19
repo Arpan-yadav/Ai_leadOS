@@ -12,6 +12,9 @@ import ImportLeadsModal from '@/components/leads/ImportLeadsModal'
 import { getToken } from '@/lib/auth'
 import toast from 'react-hot-toast'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
+
 type LeadStatus = 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'UNQUALIFIED' | 'CONVERTED'
 type LeadSource = 'LINKEDIN' | 'EMAIL' | 'WHATSAPP' | 'META' | 'REFERRAL'
 
@@ -75,7 +78,7 @@ const LeadsPage = () => {
           params.append('source', mappedSource)
         }
 
-        const res = await fetch(`http://localhost:3001/api/leads?${params.toString()}`, {
+        const res = await fetch(`${API_URL}/leads?${params.toString()}`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         if (!res.ok) throw new Error('Failed to fetch leads')
@@ -135,7 +138,7 @@ const LeadsPage = () => {
     const token = getToken();
     try {
       await Promise.all(idsToDelete.map(id => 
-        fetch(`http://localhost:3001/api/leads/${id}`, {
+        fetch(`${API_URL}/leads/${id}`, {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` }
         })
@@ -149,7 +152,7 @@ const LeadsPage = () => {
         const mappedSource = channel === 'Meta' ? 'META_LEADS' : channel.toUpperCase()
         params.append('source', mappedSource)
       }
-      fetch(`http://localhost:3001/api/leads?${params.toString()}`, { headers: { Authorization: `Bearer ${token}` } })
+      fetch(`${API_URL}/leads?${params.toString()}`, { headers: { Authorization: `Bearer ${token}` } })
         .then(res => res.json())
         .then(data => {
           setLeads(data.data || data)

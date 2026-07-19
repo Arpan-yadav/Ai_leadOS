@@ -13,6 +13,9 @@ import toast from 'react-hot-toast';
 import AddDealModal from '@/components/pipeline/AddDealModal';
 import DealDetailModal from '@/components/pipeline/DealDetailModal';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 type DealStage = 'DISCOVERY' | 'PROPOSAL' | 'NEGOTIATION' | 'CLOSING' | 'WON' | 'LOST';
 
@@ -109,7 +112,7 @@ export default function PipelinePage() {
     setError(null);
     try {
       const token = getToken();
-      const res = await fetch('http://localhost:3001/api/deals', {
+      const res = await fetch(`${API_URL}/deals`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error('Failed to fetch deals');
@@ -152,7 +155,7 @@ export default function PipelinePage() {
 
     try {
       const token = getToken();
-      const res = await fetch(`http://localhost:3001/api/deals/${draggableId}/stage`, {
+      const res = await fetch(`${API_URL}/deals/${draggableId}/stage`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ stage: newStage }),
