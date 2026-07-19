@@ -10,9 +10,9 @@
 | Property | Value |
 |----------|-------|
 | **Total Sprints** | 8 |
-| **Completed** | Sprint 1 ✅ |
-| **Remaining** | Sprints 2 – 8 |
-| **Team Size** | 8 members |
+| **Completed** | All 8 Sprints ✅ |
+| **Remaining** | None — Deployed to Production 🚀 |
+| **Team Size** | 9 members (Arshjot joined Sprint 6) |
 | **Stack** | NestJS · Next.js 14 · PostgreSQL · Prisma · Google Gemini AI |
 | **Repo** | `github.com/proyotech/AI_LeadOS` |
 | **Base Branch** | `main` (always production-ready) |
@@ -21,15 +21,16 @@
 
 ## 👥 Team Structure & Roles
 
-| Name | Team | Role |
-|------|------|------|
-| **Arpan** | AI + Automation | Tech Lead · AI Engineer · Automation Engineer |
-| **Soumya** | AI + Automation | AI Engineer · Automation Engineer |
-| **Dushyant** | Backend | Backend Developer |
-| **Saransh** | Backend | Backend Developer |
-| **Ujjwal** | Backend | Backend Developer |
-| **Arav** | Frontend | Frontend Developer |
-| **Harshwardhan** | Frontend | Frontend Developer |
+| Name | Team | Role | Joined |
+|------|------|------|--------|
+| **Arpan** | AI + Automation | Tech Lead · AI Engineer · Automation Engineer · DevOps | Sprint 1 |
+| **Soumya** | AI + Automation | AI Engineer · Automation Engineer | Sprint 1 |
+| **Dushyant** | Backend | Backend Developer | Sprint 1 |
+| **Saransh** | Backend | Backend Developer | Sprint 1 |
+| **Ujjwal** | Backend | Backend Developer | Sprint 1 |
+| **Arav** | Frontend | Frontend Developer | Sprint 1 |
+| **Harshwardhan** | Frontend | Frontend Developer | Sprint 1 |
+| **Arshjot** | Frontend | Frontend Developer | Sprint 6 🆕 |
 
 ---
 
@@ -37,16 +38,18 @@
 
 To keep the codebase conflict-free, **only one member per team is active in each sprint**. The inactive member reviews PRs, studies the codebase, and prepares for their upcoming sprint.
 
-| Sprint | Backend (rotates: D → S → U → D…) | Frontend (rotates: Arav → Harsh → …) | AI + Automation (rotates: Arpan → Soumya → …) |
-|--------|------------------------------------|---------------------------------------|------------------------------------------------|
+> **Note:** **Arshjot** joined the Frontend team from **Sprint 6** onwards, adding capacity to the Frontend rotation from that point.
+
+| Sprint | Backend (rotates: D → S → U → D…) | Frontend | AI + Automation (rotates: Arpan → Soumya → …) |
+|--------|------------------------------------|----------|------------------------------------------------|
 | Sprint 1 ✅ | — *(Arpan solo bootstrap)* | — | **Arpan** |
-| Sprint 2 🔵 | **Dushyant** | **Arav** | **Arpan** |
-| Sprint 3 🟡 | **Saransh** | **Harshwardhan** | **Soumya** |
-| Sprint 4 🟠 | **Ujjwal** | **Arav** | **Arpan** |
-| Sprint 5 🔴 | **Dushyant** | **Harshwardhan** | **Soumya** |
-| Sprint 6 🟣 | **Saransh** | **Arav** | **Arpan** |
-| Sprint 7 🟢 | **Ujjwal** | **Harshwardhan** | **Soumya** |
-| Sprint 8 🏁 | **Dushyant** | **Arav** | **Arpan** |
+| Sprint 2 ✅ | **Dushyant** | **Arav** | **Arpan** |
+| Sprint 3 ✅ | **Saransh** | **Harshwardhan** | **Soumya** |
+| Sprint 4 ✅ | **Ujjwal** | **Arav** | **Arpan** |
+| Sprint 5 ✅ | **Dushyant** | **Harshwardhan** | **Soumya** |
+| Sprint 6 ✅ | **Saransh** | **Arav** + **Arshjot** 🆕 | **Arpan** |
+| Sprint 7 ✅ | **Ujjwal** | **Harshwardhan** + **Arshjot** | **Soumya** |
+| Sprint 8 ✅ | **Dushyant** | **Arav** + **Arshjot** | **Arpan** |
 
 > **Inactive members:** Review the active member's PR, read the new code, and use the sprint to prepare questions, set up your local dev environment, and study the relevant docs.
 
@@ -260,14 +263,16 @@ refactor: extract lead validation to guard
 ---
 
 ### 🟣 Sprint 6 — Communications Hub (Email, WhatsApp, LinkedIn)
-**Status:** Upcoming  
+**Status:** ✅ Complete  
 **Goal:** Outbound communication channels connected to the CRM.
 
 | Team | Active Member | Branch |
 |------|--------------|--------|
 | Backend | **Saransh** | `sprint-6/backend` |
-| Frontend | **Arav** | `sprint-6/frontend` |
+| Frontend | **Arav** + **Arshjot** 🆕 | `sprint-6/frontend` |
 | AI + Automation | **Arpan** | `sprint-6/ai-automation` |
+
+> 🆕 **Arshjot joined the team this sprint** as a Frontend Developer.
 
 #### Saransh — Backend
 | Task |
@@ -284,6 +289,13 @@ refactor: extract lead validation to guard
 | Conversation thread view per lead (WhatsApp-style) |
 | Email composer with template variables |
 
+#### Arshjot — Frontend 🆕
+| Task |
+|------|
+| Onboarding: codebase walkthrough, local dev setup, code review of Sprints 1–5 |
+| UI support for Communications Hub — channel icons, status badges, message cards |
+| PR review participation for Sprint 6 frontend deliverables |
+
 #### Arpan — AI + Automation
 | Task |
 |------|
@@ -299,13 +311,13 @@ refactor: extract lead validation to guard
 ---
 
 ### 🟢 Sprint 7 — Analytics, Reporting & Admin Panel
-**Status:** Upcoming  
+**Status:** ✅ Complete  
 **Goal:** Charts dashboard, team performance metrics, admin user management.
 
 | Team | Active Member | Branch |
 |------|--------------|--------|
 | Backend | **Ujjwal** | `sprint-7/backend` |
-| Frontend | **Harshwardhan** | `sprint-7/frontend` |
+| Frontend | **Harshwardhan** + **Arshjot** | `sprint-7/frontend` |
 | AI + Automation | **Soumya** | `sprint-7/ai-automation` |
 
 #### Ujjwal — Backend
@@ -324,6 +336,13 @@ refactor: extract lead validation to guard
 | Team leaderboard panel |
 | Admin panel (`/admin`) — manage users, roles, settings |
 
+#### Arshjot — Frontend
+| Task |
+|------|
+| Settings page UI (`/settings`) — SMTP, Twilio, Gemini API key forms |
+| Dark / Light theme toggle integration across settings components |
+| UI polish — responsive fixes and accessibility improvements |
+
 #### Soumya — AI + Automation
 | Task |
 |------|
@@ -334,21 +353,21 @@ refactor: extract lead validation to guard
 ---
 
 ### 🏁 Sprint 8 — Polish, Production Readiness & Launch
-**Status:** Upcoming  
+**Status:** ✅ Complete — Deployed to Production  
 **Goal:** Deployment, security hardening, final demo.
 
 | Team | Active Member | Branch |
 |------|--------------|--------|
-| Backend | **Dushyant** | `sprint-8/backend` |
-| Frontend | **Arav** | `sprint-8/frontend` |
-| AI + Automation | **Arpan** | `sprint-8/ai-automation` |
+| Backend | **Dushyant** | `sprint-8/polish-deployment` |
+| Frontend | **Arav** + **Arshjot** | `sprint-8/polish-deployment` |
+| AI + Automation + DevOps | **Arpan** | `sprint-8/polish-deployment` |
 
 #### Dushyant — Backend + DevOps
 | Task |
 |------|
 | `docker-compose.prod.yml` — production-ready multi-container setup |
 | CI/CD pipeline (GitHub Actions) — lint, build, test on every PR |
-| Environment secret management (Railway / Render / VPS) |
+| Environment secret management (Render) |
 | Rate limiting, helmet, CORS hardening |
 
 #### Arav — Frontend
@@ -358,14 +377,23 @@ refactor: extract lead validation to guard
 | Mobile responsiveness pass on all pages |
 | Loading skeletons, error boundaries, toast notifications |
 
-#### Arpan — AI + Automation + Final Docs
+#### Arshjot — Frontend
 | Task |
 |------|
+| Help Centre page (`/help`) — FAQ accordion and support ticket form |
+| Replace all hardcoded `localhost:3001` URLs with `NEXT_PUBLIC_API_URL` env variable |
+| Final cross-browser UI testing and bug fixes |
+
+#### Arpan — AI + Automation + DevOps + Final Docs
+| Task |
+|------|
+| Docker multi-stage Dockerfile (Alpine Linux + OpenSSL fix for Prisma) |
+| Backend deployed to **Render** via Docker |
+| Frontend deployed to **Vercel** (Next.js framework preset) |
+| CORS locked to production Vercel URL |
 | Final AI prompt review — accuracy, latency, token cost |
 | Full regression test: all AI + automation user flows |
-| Final `README.md` production setup guide |
-| Record demo video of the platform |
-| Sprint 8 review presentation |
+| Final `README.md` and sprint documentation |
 
 ---
 
@@ -373,14 +401,18 @@ refactor: extract lead validation to guard
 
 ```
 Sprint 1  ✅  Foundation & Setup                  19 June
-Sprint 2  🔵  Core CRM — Leads, Deals, Dashboard  26 June
-Sprint 3  🟡  Pipeline, Activities, Tasks          3 July
-Sprint 4  🟠  AI Intelligence & Sequences          8 July
-Sprint 5  🔴  Automation Builder (Visual)          11 July
-Sprint 6  🟣  Communications Hub                  15 July
-Sprint 7  🟢  Analytics & Admin                   18 July
-Sprint 8  🏁  Polish, Deploy & Launch              22 July
+Sprint 2  ✅  Core CRM — Leads, Deals, Dashboard  26 June
+Sprint 3  ✅  Pipeline, Activities, Tasks          3 July
+Sprint 4  ✅  AI Intelligence & Sequences          8 July
+Sprint 5  ✅  Automation Builder (Visual)          11 July
+Sprint 6  ✅  Communications Hub                  15 July  ← Arshjot joins 🆕
+Sprint 7  ✅  Analytics & Admin                   18 July
+Sprint 8  ✅  Polish, Deploy & Launch              19 July  ← DEPLOYED TO PRODUCTION 🚀
 ```
+
+**Production URLs:**
+- 🌍 Frontend: https://ai-lead-os-eight.vercel.app
+- ⚙️ Backend API: https://ai-leados.onrender.com/api/docs
 
 ---
 
@@ -416,12 +448,14 @@ Before any branch is merged to `main`:
 
 | Resource | Link |
 |----------|------|
-| GitHub Repo | `github.com/proyotech/AI_LeadOS` |
+| GitHub Repo (ProyoTech) | `github.com/proyotech/AI_LeadOS` |
+| GitHub Repo (Personal/Deploy) | `github.com/Arpan-yadav/Ai_leadOS` |
 | Notion Board | _(link shared by Arpan)_ |
-| Swagger API Docs | `http://localhost:3001/api/docs` |
+| **Live App (Frontend)** | https://ai-lead-os-eight.vercel.app |
+| **Live Swagger API Docs** | https://ai-leados.onrender.com/api/docs |
+| Local Swagger API Docs | `http://localhost:3001/api/docs` |
 | Architecture Doc | `docs/SPRINT_1_ARCHITECTURE.md` |
 | PR Template | `docs/PR_Description_Sprint1.md` |
-| Sprint 2 Task Sheet | `docs/SPRINT_2_TASKS.md` |
 | Env Template | `backend/.env.example` |
 
 ---
@@ -465,5 +499,6 @@ git push origin sprint-2/backend
 
 ---
 
-*Last updated: Sprint 2 planning — ProyoTech Internship 2026*
+*Last updated: Sprint 8 Complete — ProyoTech Internship 2026*
 *Maintained by: Arpan (Tech Lead)*
+*Team (9 members): Arpan, Soumya, Dushyant, Saransh, Ujjwal, Arav, Harshwardhan, Arshjot (joined Sprint 6)*
