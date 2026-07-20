@@ -6,6 +6,8 @@ import ScoreBadge from '../ui/ScoreBadge'
 import { getToken } from '@/lib/auth'
 import toast from 'react-hot-toast'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+
 const LeadDetailPanel = ({ lead, onClose, onUpdate }: {
   lead: any
   onClose: () => void
@@ -25,7 +27,7 @@ const LeadDetailPanel = ({ lead, onClose, onUpdate }: {
   const handleSave = async () => {
     try {
       setLoading(true)
-      const res = await fetch(`http://localhost:3001/api/leads/${lead.id}`, {
+      const res = await fetch(`${API_URL}/leads/${lead.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

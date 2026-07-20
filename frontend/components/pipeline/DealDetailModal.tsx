@@ -4,6 +4,8 @@ import { X, DollarSign, Building2, User, Calendar, Bot, Mail, MessageSquare } fr
 
 import { getToken } from '@/lib/auth'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+
 export default function DealDetailModal({ deal: initialDeal, onClose }: { deal: any, onClose: () => void }) {
   const [deal, setDeal] = React.useState(initialDeal)
   const [loading, setLoading] = React.useState(true)
@@ -12,7 +14,7 @@ export default function DealDetailModal({ deal: initialDeal, onClose }: { deal: 
     const fetchDeal = async () => {
       try {
         const token = getToken()
-        const res = await fetch(`http://localhost:3001/api/deals/${initialDeal.id}`, {
+        const res = await fetch(`${API_URL}/deals/${initialDeal.id}`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         if (res.ok) {

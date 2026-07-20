@@ -273,7 +273,7 @@ export default function AnalyticsPage() {
                     </div>
                   </td>
                   <td className="px-5 py-4">
-                    <span className="text-[10px] font-bold text-[#b9cacb] uppercase">{member.role}</span>
+                    <span className="text-[10px] font-bold text-[#b9cacb] uppercase">{typeof member.role === 'object' ? (member.role?.name ?? 'User') : (member.role || 'User')}</span>
                   </td>
                   <td className="px-5 py-4 text-sm text-white font-mono">{member.leadsOwned}</td>
                   <td className="px-5 py-4 text-sm font-mono text-emerald-400 font-bold">{member.dealsWon}</td>

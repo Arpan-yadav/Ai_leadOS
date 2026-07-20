@@ -4,6 +4,8 @@ import { X, Loader2 } from 'lucide-react'
 import { getToken } from '@/lib/auth'
 import toast from 'react-hot-toast'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+
 export default function AddLeadModal({ onClose, onAdd }: {
   onClose: () => void
   onAdd?: (lead: any) => void
@@ -38,7 +40,7 @@ export default function AddLeadModal({ onClose, onAdd }: {
         phone: form.phone ? `${form.countryCode}${form.phone}` : ''
       }
       
-      const res = await fetch('http://localhost:3001/api/leads', {
+      const res = await fetch(`${API_URL}/leads`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

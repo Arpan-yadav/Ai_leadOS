@@ -3,6 +3,8 @@ import React, { useState } from 'react'
 import { X, Loader2, Send } from 'lucide-react'
 import toast from 'react-hot-toast'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+
 export default function NewMessageModal({ onClose, onSent, lead }: { onClose: () => void, onSent?: () => void, lead?: any }) {
   const [loading, setLoading] = useState(false)
   const defaultChannel = lead?.email ? 'EMAIL' : lead?.source === 'WHATSAPP' ? 'WHATSAPP' : lead?.source === 'LINKEDIN' ? 'LINKEDIN' : 'EMAIL'
@@ -63,7 +65,7 @@ export default function NewMessageModal({ onClose, onSent, lead }: { onClose: ()
     try {
       setLoading(true)
       const token = localStorage.getItem('token')
-      const res = await fetch('http://localhost:3001/api/communications/send', {
+      const res = await fetch(`${API_URL}/communications/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -106,7 +108,7 @@ export default function NewMessageModal({ onClose, onSent, lead }: { onClose: ()
       const leadName = lead?.name || form.recipient || 'Prospect'
       const company = lead?.company || 'Their Company'
 
-      const res = await fetch('http://localhost:3001/api/communications/generate-message', {
+      const res = await fetch(`${API_URL}/communications/generate-message`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -4,6 +4,8 @@ import { X, Loader2, Plus, Trash2 } from 'lucide-react'
 import { getToken } from '@/lib/auth'
 import toast from 'react-hot-toast'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+
 interface Step {
   day: number
   channel: string
@@ -57,7 +59,7 @@ export default function AddSequenceModal({ onClose, onAdd }: {
     try {
       setLoading(true)
       const token = getToken()
-      const res = await fetch('http://localhost:3001/api/sequences', {
+      const res = await fetch(`${API_URL}/sequences`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
