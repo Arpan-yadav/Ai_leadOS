@@ -187,10 +187,10 @@ Return exactly this JSON (no markdown, no extra text):
    * Deep company intelligence from a URL.
    * Used by: POST /leads/:id/analyze (Sprint 4)
    */
-  async analyzeCompany(url: string, tenantId?: string | null): Promise<CompanyAnalysisResult> {
+  async analyzeCompany(companyName: string, url: string, tenantId?: string | null): Promise<CompanyAnalysisResult> {
     const prompt = `
 You are an expert B2B sales intelligence analyst.
-Analyze the company at: ${url}
+Analyze the company: ${companyName} (Website hint: ${url})
 
 Return exactly this JSON (no markdown):
 {

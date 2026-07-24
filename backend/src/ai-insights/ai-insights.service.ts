@@ -17,7 +17,8 @@ export class AiInsightsService {
     const url = `https://${domain}`;
 
     const effectiveTenantId = lead.tenantId || userTenantId || null;
-    const analysis = await this.aiService.analyzeCompany(url, effectiveTenantId);
+    const companyName = lead.company || 'Unknown Company';
+    const analysis = await this.aiService.analyzeCompany(companyName, url, effectiveTenantId);
 
     return this.prisma.aIInsight.create({
       data: {
