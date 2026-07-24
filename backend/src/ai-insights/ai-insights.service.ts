@@ -28,7 +28,7 @@ export class AiInsightsService {
         qualityScore: analysis.score,
         qualityReason: `AI Analysis based on ${url}`,
         websiteAudit: url,
-        model: 'gemini-1.5-flash',
+        model: 'gemini-flash-latest',
         rawResponse: analysis as any,
       },
     });
