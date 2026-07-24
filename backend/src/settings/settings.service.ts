@@ -2,12 +2,16 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateAiSettingsDto, UpdateWhatsAppSettingsDto, UpdateEmailSettingsDto } from './dto/settings.dto';
 import * as nodemailer from 'nodemailer';
+import { AiInsightsService } from '../ai-insights/ai-insights.service';
 
 @Injectable()
 export class SettingsService {
   private readonly logger = new Logger(SettingsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly aiInsightsService: AiInsightsService,
+  ) {}
 
   // ─── Get settings (keys masked) ───────────────────────────────────────────
   async getSettings(tenantId: string) {
@@ -48,7 +52,33 @@ export class SettingsService {
   async updateAiSettings(tenantId: string, dto: UpdateAiSettingsDto) {
     await this.upsert(tenantId, { geminiApiKey: dto.geminiApiKey });
     this.logger.log(`[Settings] Gemini API key updated for tenant ${tenantId}`);
+    
+    // Automatically re-analyze any leads that have [Demo] insights
+    this.reanalyzeDemoLeads(tenantId).catch(err => this.logger.error('Failed to re-analyze demo leads', err));
+
     return { success: true, message: 'Gemini API key saved.' };
+  }
+
+  private async reanalyzeDemoLeads(tenantId: string) {
+    const demoInsights = await this.prisma.aIInsight.findMany({
+      where: {
+        analysis: { startsWith: '[Demo]' },
+        lead: { tenantId }
+      }
+    });
+
+    if (demoInsights.length > 0) {
+      this.logger.log(`[Settings] Found ${demoInsights.length} [Demo] insights to re-analyze for tenant ${tenantId}`);
+      for (const insight of demoInsights) {
+        try {
+          await this.prisma.aIInsight.delete({ where: { id: insight.id } });
+          await this.aiInsightsService.analyzeLead(insight.leadId);
+          this.logger.log(`[Settings] Successfully re-analyzed lead ${insight.leadId}`);
+        } catch (err: any) {
+          this.logger.error(`[Settings] Failed to re-analyze lead ${insight.leadId}: ${err?.message || err}`);
+        }
+      }
+    }
   }
 
   // ─── WhatsApp Settings ────────────────────────────────────────────────────
