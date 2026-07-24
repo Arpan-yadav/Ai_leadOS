@@ -343,10 +343,10 @@ Built with ❤️ by the **ProyoTech** internship team.
 
 | Role | Members |
 |------|---------|
-| Product Management & AI Automation | Arpan |
+| Product Management | Arpan |
+| AI + Automation + DevOps | Arpan, Soumya |
 | Backend Engineering | Dushyant, Saransh, Ujjwal |
 | Frontend Engineering | Arav, Harshwardhan |
-| Product Management & AI Automation | Soumya |
 
 ---
 
