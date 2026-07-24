@@ -113,8 +113,8 @@ export class AiService {
   }
 
   /** Call Gemini and parse JSON safely. Returns null on any failure. */
-  private async generateJSON<T>(prompt: string): Promise<T | null> {
-    const client = this.getClient();
+  private async generateJSON<T>(prompt: string, tenantId?: string): Promise<T | null> {
+    const client = await this.getClientForUser(tenantId);
     if (!client) return null;
 
     try {
@@ -141,7 +141,7 @@ export class AiService {
    * Score a lead from 0–100 based on their profile.
    * Called automatically on every POST /leads.
    */
-  async scoreLead(input: LeadScoreInput): Promise<LeadScoreResult> {
+  async scoreLead(input: LeadScoreInput & { tenantId?: string }): Promise<LeadScoreResult> {
     const prompt = `
 You are a B2B lead qualification expert.
 Score this lead and return a structured assessment.
@@ -161,7 +161,7 @@ Return exactly this JSON (no markdown, no extra text):
   "icpFit": <integer 0-100 representing Ideal Customer Profile fit>
 }`.trim();
 
-    const result = await this.generateJSON<LeadScoreResult>(prompt);
+    const result = await this.generateJSON<LeadScoreResult>(prompt, input.tenantId);
     if (result) return result;
 
     // Demo fallback — deterministic per source for predictable UI
@@ -187,7 +187,7 @@ Return exactly this JSON (no markdown, no extra text):
    * Deep company intelligence from a URL.
    * Used by: POST /leads/:id/analyze (Sprint 4)
    */
-  async analyzeCompany(url: string): Promise<CompanyAnalysisResult> {
+  async analyzeCompany(url: string, tenantId?: string): Promise<CompanyAnalysisResult> {
     const prompt = `
 You are an expert B2B sales intelligence analyst.
 Analyze the company at: ${url}
@@ -202,7 +202,7 @@ Return exactly this JSON (no markdown):
   "sentiment": "<'positive' | 'neutral' | 'negative'>"
 }`.trim();
 
-    const result = await this.generateJSON<CompanyAnalysisResult>(prompt);
+    const result = await this.generateJSON<CompanyAnalysisResult>(prompt, tenantId);
     if (result) return result;
 
     return {

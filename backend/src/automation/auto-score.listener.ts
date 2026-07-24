@@ -91,6 +91,7 @@ export class AutoScoreListener implements OnModuleInit {
         title: lead.title ?? undefined,
         source: lead.source,
         interactions: 1, // At least 1 interaction since they progressed
+        tenantId: lead.tenantId,
       });
 
       const previousScore = lead.score ?? 0;

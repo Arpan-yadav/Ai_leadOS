@@ -334,6 +334,7 @@ export class WorkflowExecutorService implements OnModuleInit {
               title: lead.title || undefined,
               source: lead.source,
               interactions: 1,
+              tenantId: lead.tenantId,
             });
             await this.prisma.lead.update({
               where: { id: leadId },

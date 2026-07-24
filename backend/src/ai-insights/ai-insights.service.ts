@@ -16,7 +16,7 @@ export class AiInsightsService {
     const domain = lead.email.split('@')[1] || 'example.com';
     const url = `https://${domain}`;
 
-    const analysis = await this.aiService.analyzeCompany(url);
+    const analysis = await this.aiService.analyzeCompany(url, lead.tenantId);
 
     return this.prisma.aIInsight.create({
       data: {
