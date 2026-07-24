@@ -38,6 +38,7 @@ function SecretInput({ value, onChange, placeholder }: { value: string; onChange
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder || 'Enter key...'}
         className="input-field w-full pr-10"
+        autoComplete="new-password"
       />
       <button
         type="button"
@@ -368,7 +369,7 @@ export default function SettingsPage() {
               <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">Phone Number ID</label>
-                  <input value={waPhoneNumberId} onChange={e => setWaPhoneNumberId(e.target.value)} placeholder="123456789012345" className="input-field w-full" />
+                  <input value={waPhoneNumberId} onChange={e => setWaPhoneNumberId(e.target.value)} placeholder="123456789012345" className="input-field w-full" autoComplete="off" />
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">Permanent Access Token</label>
@@ -376,7 +377,7 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">Business Account ID (optional)</label>
-                  <input value={waBusinessAccountId} onChange={e => setWaBusinessAccountId(e.target.value)} placeholder="987654321" className="input-field w-full" />
+                  <input value={waBusinessAccountId} onChange={e => setWaBusinessAccountId(e.target.value)} placeholder="987654321" className="input-field w-full" autoComplete="off" />
                 </div>
               </div>
               <button onClick={saveWhatsApp} disabled={saving} className="btn-primary flex items-center gap-2">
@@ -434,7 +435,7 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2 sm:col-span-1">
                     <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">SMTP Host</label>
-                    <input value={smtpHost} onChange={e => setSmtpHost(e.target.value)} placeholder="smtp.gmail.com" className="input-field w-full" />
+                    <input value={smtpHost} onChange={e => setSmtpHost(e.target.value)} placeholder="smtp.gmail.com" className="input-field w-full" autoComplete="off" />
                   </div>
                   <div>
                     <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">Port</label>
@@ -442,7 +443,7 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">Username / Email</label>
-                    <input value={smtpUser} onChange={e => setSmtpUser(e.target.value)} placeholder="you@gmail.com" className="input-field w-full" />
+                    <input value={smtpUser} onChange={e => setSmtpUser(e.target.value)} placeholder="you@gmail.com" className="input-field w-full" autoComplete="off" />
                   </div>
                   <div>
                     <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">Password / App Password</label>
@@ -460,7 +461,7 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">Client ID</label>
-                    <input value={gmailClientId} onChange={e => setGmailClientId(e.target.value)} placeholder="123456789-abc.apps.googleusercontent.com" className="input-field w-full" />
+                    <input value={gmailClientId} onChange={e => setGmailClientId(e.target.value)} placeholder="123456789-abc.apps.googleusercontent.com" className="input-field w-full" autoComplete="off" />
                   </div>
                   <div>
                     <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">Client Secret</label>

@@ -165,19 +165,50 @@ export default function NewMessageModal({ onClose, onSent, lead }: { onClose: ()
                 {form.channel === 'WHATSAPP' ? (
                   <div className="flex gap-2">
                     <select 
-                      className="input-field appearance-none w-25 shrink-0"
+                      className="input-field w-[100px] shrink-0 bg-[#111114] light:bg-slate-50 border border-white/10 light:border-slate-200 rounded-lg text-white light:text-slate-900 focus:outline-none focus:border-[#00f0ff]"
                       value={form.countryCode}
                       onChange={(e) => setForm({...form, countryCode: e.target.value})}
                     >
-                      <option value="+91">+91 (IN)</option>
-                      <option value="+1">+1 (US)</option>
+                      <option value="+1">+1 (US/CA)</option>
                       <option value="+44">+44 (UK)</option>
                       <option value="+61">+61 (AU)</option>
+                      <option value="+91">+91 (IN)</option>
+                      <option value="+49">+49 (DE)</option>
+                      <option value="+33">+33 (FR)</option>
+                      <option value="+81">+81 (JP)</option>
+                      <option value="+86">+86 (CN)</option>
+                      <option value="+55">+55 (BR)</option>
+                      <option value="+52">+52 (MX)</option>
+                      <option value="+7">+7 (RU)</option>
+                      <option value="+27">+27 (ZA)</option>
+                      <option value="+82">+82 (KR)</option>
+                      <option value="+34">+34 (ES)</option>
+                      <option value="+39">+39 (IT)</option>
+                      <option value="+971">+971 (AE)</option>
+                      <option value="+966">+966 (SA)</option>
+                      <option value="+65">+65 (SG)</option>
+                      <option value="+60">+60 (MY)</option>
+                      <option value="+62">+62 (ID)</option>
+                      <option value="+66">+66 (TH)</option>
+                      <option value="+64">+64 (NZ)</option>
+                      <option value="+46">+46 (SE)</option>
+                      <option value="+47">+47 (NO)</option>
+                      <option value="+45">+45 (DK)</option>
+                      <option value="+31">+31 (NL)</option>
+                      <option value="+32">+32 (BE)</option>
+                      <option value="+41">+41 (CH)</option>
+                      <option value="+43">+43 (AT)</option>
+                      <option value="+353">+353 (IE)</option>
+                      <option value="+48">+48 (PL)</option>
+                      <option value="+90">+90 (TR)</option>
+                      <option value="+20">+20 (EG)</option>
+                      <option value="+234">+234 (NG)</option>
+                      <option value="+254">+254 (KE)</option>
                     </select>
-                    <input type="text" name="recipient" value={form.recipient} onChange={handleChange} required className="input-field flex-1" placeholder="Phone Number" />
+                    <input type="text" name="recipient" value={form.recipient} onChange={handleChange} required className="input-field flex-1" placeholder="Phone Number" autoComplete="off" />
                   </div>
                 ) : (
-                  <input type="text" name="recipient" value={form.recipient} onChange={handleChange} required className="input-field" placeholder="Email, Phone, or ID" />
+                  <input type="text" name="recipient" value={form.recipient} onChange={handleChange} required className="input-field" placeholder="Email, Phone, or ID" autoComplete="off" />
                 )}
               </div>
             </div>
