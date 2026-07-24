@@ -32,7 +32,8 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     setServerError('');
     try {
-      const res = await apiClient.post('/auth/login', data);
+      const payload = { ...data, email: data.email.trim() };
+      const res = await apiClient.post('/auth/login', payload);
       saveToken(res.data.accessToken);
       if (res.data.user) {
         import('@/lib/auth').then(({ saveUser }) => saveUser(res.data.user));
