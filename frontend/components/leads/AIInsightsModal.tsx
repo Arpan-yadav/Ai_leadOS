@@ -2,6 +2,8 @@
 import React from 'react'
 import { X, Zap, Target, TrendingUp, AlertCircle, Bot } from 'lucide-react'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+
 export default function AIInsightsModal({ lead, onClose }: { lead: any, onClose: () => void }) {
   const [insight, setInsight] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(false);
@@ -10,7 +12,7 @@ export default function AIInsightsModal({ lead, onClose }: { lead: any, onClose:
     if (!lead) return;
     setLoading(true);
     const token = localStorage.getItem('token');
-    fetch(`http://localhost:3001/api/leads/${lead.id}/analyze`, {
+    fetch(`${API_URL}/leads/${lead.id}/analyze`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${token}` }
     })

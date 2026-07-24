@@ -23,6 +23,3 @@ backend/dist/
 backend/node_modules/
 frontend/node_modules/
 
-# Lock files — each dev runs npm install locally
-backend/package-lock.json
-frontend/package-lock.json

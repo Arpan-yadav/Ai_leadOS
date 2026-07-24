@@ -5,6 +5,8 @@ import { getToken } from '@/lib/auth'
 import toast from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+
 interface Lead {
   id: string
   name: string
@@ -22,7 +24,7 @@ export default function EnrollLeadsModal({ sequenceId, sequenceName, onClose }: 
     const fetchLeads = async () => {
       try {
         const token = getToken()
-        const res = await fetch('http://localhost:3001/api/leads', {
+        const res = await fetch(`${API_URL}/leads`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         if (res.ok) {
@@ -65,7 +67,7 @@ export default function EnrollLeadsModal({ sequenceId, sequenceName, onClose }: 
       
       // Call backend to enroll leads one by one or in bulk (assuming sequenceId exists)
       const enrollPromises = Array.from(selectedLeads).map(leadId => 
-        fetch(`http://localhost:3001/api/sequences/${sequenceId}/enroll/${leadId}`, {
+        fetch(`${API_URL}/sequences/${sequenceId}/enroll/${leadId}`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` }
         })

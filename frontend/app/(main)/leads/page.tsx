@@ -103,7 +103,7 @@ const LeadsPage = () => {
     setSelectedIds(selectedIds.length === filteredLeads.length ? [] : filteredLeads.map(l => l.id))
 
   const handleAddLead = (newLead: any) => {
-    setLeads([newLead, ...leads])
+    setRefresh(r => r + 1)
     setShowModal(false)
   }
 

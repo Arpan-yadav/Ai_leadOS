@@ -9,14 +9,16 @@ export class AiInsightsService {
     private readonly aiService: AiService,
   ) {}
 
-  async analyzeLead(leadId: string) {
+  async analyzeLead(leadId: string, userTenantId?: string) {
     const lead = await this.prisma.lead.findUnique({ where: { id: leadId } });
     if (!lead) throw new NotFoundException('Lead not found');
 
     const domain = lead.email.split('@')[1] || 'example.com';
     const url = `https://${domain}`;
 
-    const analysis = await this.aiService.analyzeCompany(url);
+    const effectiveTenantId = lead.tenantId || userTenantId || null;
+    const companyName = lead.company || 'Unknown Company';
+    const analysis = await this.aiService.analyzeCompany(companyName, url, effectiveTenantId);
 
     return this.prisma.aIInsight.create({
       data: {
@@ -28,7 +30,7 @@ export class AiInsightsService {
         qualityScore: analysis.score,
         qualityReason: `AI Analysis based on ${url}`,
         websiteAudit: url,
-        model: 'gemini-1.5-flash',
+        model: 'gemini-flash-latest',
         rawResponse: analysis as any,
       },
     });

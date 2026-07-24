@@ -19,36 +19,36 @@ export class SettingsController {
   @Get()
   @ApiOperation({ summary: 'Get current user settings (keys masked)' })
   getSettings(@Request() req: any) {
-    return this.settingsService.getSettings(req.user.id);
+    return this.settingsService.getSettings(req.user.tenantId);
   }
 
   @Patch('ai')
   @ApiOperation({ summary: 'Save Gemini API key' })
   updateAi(@Request() req: any, @Body() dto: UpdateAiSettingsDto) {
-    return this.settingsService.updateAiSettings(req.user.id, dto);
+    return this.settingsService.updateAiSettings(req.user.tenantId, dto);
   }
 
   @Patch('whatsapp')
   @ApiOperation({ summary: 'Save Meta Cloud API WhatsApp credentials' })
   updateWhatsApp(@Request() req: any, @Body() dto: UpdateWhatsAppSettingsDto) {
-    return this.settingsService.updateWhatsAppSettings(req.user.id, dto);
+    return this.settingsService.updateWhatsAppSettings(req.user.tenantId, dto);
   }
 
   @Post('whatsapp/test')
   @ApiOperation({ summary: 'Send a test WhatsApp message to verify credentials' })
   testWhatsApp(@Request() req: any, @Body() dto: TestWhatsAppDto) {
-    return this.settingsService.testWhatsApp(req.user.id, dto.testPhone);
+    return this.settingsService.testWhatsApp(req.user.tenantId, dto.testPhone);
   }
 
   @Patch('email')
   @ApiOperation({ summary: 'Save email provider configuration' })
   updateEmail(@Request() req: any, @Body() dto: UpdateEmailSettingsDto) {
-    return this.settingsService.updateEmailSettings(req.user.id, dto);
+    return this.settingsService.updateEmailSettings(req.user.tenantId, dto);
   }
 
   @Post('email/test')
   @ApiOperation({ summary: 'Send a test email to verify configuration' })
   testEmail(@Request() req: any, @Body() dto: TestEmailDto) {
-    return this.settingsService.testEmail(req.user.id, dto.testEmail);
+    return this.settingsService.testEmail(req.user.tenantId, dto.testEmail);
   }
 }

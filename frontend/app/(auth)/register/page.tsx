@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { TrendingUp, ArrowRight, Mail, Lock, ShieldCheck, Zap, Globe, AlertCircle, User } from 'lucide-react';
+import { TrendingUp, ArrowRight, Mail, Lock, ShieldCheck, Zap, Globe, AlertCircle, Eye, EyeOff, User } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 import { saveToken } from '@/lib/auth';
 import ThemeToggle from '@/components/ui/ThemeToggle';
@@ -21,6 +21,7 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 export default function RegisterPage() {
   const router = useRouter();
   const [serverError, setServerError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const { register, handleSubmit, formState: { isSubmitting } } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -45,7 +46,7 @@ export default function RegisterPage() {
       {/* Left: Branding & Value Prop — always dark */}
       <div className="hidden lg:flex flex-col justify-between p-12 bg-slate-900 relative overflow-hidden">
         <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-500/20 blur-[120px] -translate-y-1/2 translate-x-1/4" />
+        <div className="absolute top-0 right-0 w-125 h-125 bg-brand-500/20 blur-[120px] -translate-y-1/2 translate-x-1/4" />
         
         <div className="relative z-10 flex items-center gap-3">
           <div className="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center text-white shadow-2xl shadow-brand-500/20">
@@ -119,6 +120,7 @@ export default function RegisterPage() {
                   placeholder="Sarah Chen"
                   className="w-full bg-slate-50/50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 dark:text-white rounded-xl py-4 pl-12 pr-4 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 font-medium transition-all"
                   required 
+                  autoComplete="off"
                 />
               </div>
             </div>
@@ -133,6 +135,7 @@ export default function RegisterPage() {
                   placeholder="name@company.com"
                   className="w-full bg-slate-50/50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 dark:text-white rounded-xl py-4 pl-12 pr-4 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 font-medium transition-all"
                   required 
+                  autoComplete="off"
                 />
               </div>
             </div>
@@ -142,12 +145,20 @@ export default function RegisterPage() {
               <div className="relative group">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-hover:text-brand-500 transition-colors" size={20} />
                 <input 
-                  type="password" 
+                  type={showPassword ? "text" : "password"} 
                   {...register('password')}
                   placeholder="••••••••"
-                  className="w-full bg-slate-50/50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 dark:text-white rounded-xl py-4 pl-12 pr-4 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 font-medium transition-all"
+                  className="w-full bg-slate-50/50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 dark:text-white rounded-xl py-4 pl-12 pr-12 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 font-medium transition-all"
                   required 
+                  autoComplete="new-password"
                 />
+                <button 
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             </div>
 

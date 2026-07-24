@@ -4,6 +4,8 @@ import { X, Loader2 } from 'lucide-react'
 import { getToken } from '@/lib/auth'
 import toast from 'react-hot-toast'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+
 interface Lead {
   id: string
   name: string
@@ -29,7 +31,7 @@ export default function AddDealModal({ onClose, onAdd }: {
     const fetchLeads = async () => {
       try {
         const token = getToken()
-        const res = await fetch('http://localhost:3001/api/leads', {
+        const res = await fetch(`${API_URL}/leads`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         if (res.ok) {
@@ -63,7 +65,7 @@ export default function AddDealModal({ onClose, onAdd }: {
     try {
       setLoading(true)
       const token = getToken()
-      const res = await fetch('http://localhost:3001/api/deals', {
+      const res = await fetch(`${API_URL}/deals`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

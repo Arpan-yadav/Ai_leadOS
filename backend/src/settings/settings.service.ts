@@ -2,19 +2,23 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateAiSettingsDto, UpdateWhatsAppSettingsDto, UpdateEmailSettingsDto } from './dto/settings.dto';
 import * as nodemailer from 'nodemailer';
+import { AiInsightsService } from '../ai-insights/ai-insights.service';
 
 @Injectable()
 export class SettingsService {
   private readonly logger = new Logger(SettingsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly aiInsightsService: AiInsightsService,
+  ) {}
 
   // ─── Get settings (keys masked) ───────────────────────────────────────────
-  async getSettings(userId: string) {
-    const s = await this.prisma.tenantSettings.findUnique({ where: { tenantId: userId } });
+  async getSettings(tenantId: string) {
+    const s = await this.prisma.tenantSettings.findUnique({ where: { tenantId } });
     if (!s) {
       // Auto-create empty settings on first access
-      await this.prisma.tenantSettings.create({ data: { tenantId: userId } });
+      await this.prisma.tenantSettings.create({ data: { tenantId } });
       return this.buildMasked({} as any);
     }
     return this.buildMasked(s);
@@ -45,25 +49,51 @@ export class SettingsService {
   }
 
   // ─── AI Settings ──────────────────────────────────────────────────────────
-  async updateAiSettings(userId: string, dto: UpdateAiSettingsDto) {
-    await this.upsert(userId, { geminiApiKey: dto.geminiApiKey });
-    this.logger.log(`[Settings] Gemini API key updated for user ${userId}`);
+  async updateAiSettings(tenantId: string, dto: UpdateAiSettingsDto) {
+    await this.upsert(tenantId, { geminiApiKey: dto.geminiApiKey });
+    this.logger.log(`[Settings] Gemini API key updated for tenant ${tenantId}`);
+    
+    // Automatically re-analyze any leads that have [Demo] insights
+    this.reanalyzeDemoLeads(tenantId).catch(err => this.logger.error('Failed to re-analyze demo leads', err));
+
     return { success: true, message: 'Gemini API key saved.' };
   }
 
+  private async reanalyzeDemoLeads(tenantId: string) {
+    const demoInsights = await this.prisma.aIInsight.findMany({
+      where: {
+        analysis: { startsWith: '[Demo]' },
+        lead: { tenantId }
+      }
+    });
+
+    if (demoInsights.length > 0) {
+      this.logger.log(`[Settings] Found ${demoInsights.length} [Demo] insights to re-analyze for tenant ${tenantId}`);
+      for (const insight of demoInsights) {
+        try {
+          await this.prisma.aIInsight.delete({ where: { id: insight.id } });
+          await this.aiInsightsService.analyzeLead(insight.leadId, tenantId);
+          this.logger.log(`[Settings] Successfully re-analyzed lead ${insight.leadId}`);
+        } catch (err: any) {
+          this.logger.error(`[Settings] Failed to re-analyze lead ${insight.leadId}: ${err?.message || err}`);
+        }
+      }
+    }
+  }
+
   // ─── WhatsApp Settings ────────────────────────────────────────────────────
-  async updateWhatsAppSettings(userId: string, dto: UpdateWhatsAppSettingsDto) {
-    await this.upsert(userId, {
+  async updateWhatsAppSettings(tenantId: string, dto: UpdateWhatsAppSettingsDto) {
+    await this.upsert(tenantId, {
       waPhoneNumberId: dto.waPhoneNumberId,
       waAccessToken: dto.waAccessToken,
       waBusinessAccountId: dto.waBusinessAccountId,
     });
-    this.logger.log(`[Settings] WhatsApp credentials updated for user ${userId}`);
+    this.logger.log(`[Settings] WhatsApp credentials updated for tenant ${tenantId}`);
     return { success: true, message: 'WhatsApp credentials saved.' };
   }
 
-  async testWhatsApp(userId: string, testPhone: string) {
-    const s = await this.prisma.tenantSettings.findUnique({ where: { tenantId: userId } });
+  async testWhatsApp(tenantId: string, testPhone: string) {
+    const s = await this.prisma.tenantSettings.findUnique({ where: { tenantId } });
     if (!s?.waPhoneNumberId || !s?.waAccessToken) {
       return { success: false, message: 'WhatsApp credentials not configured. Please save them first.' };
     }
@@ -88,8 +118,8 @@ export class SettingsService {
 
       const data = await res.json() as any;
       if (res.ok && data.messages) {
-        await this.upsert(userId, { waConnectionStatus: 'CONNECTED' });
-        this.logger.log(`[Settings] WhatsApp test succeeded for user ${userId}`);
+        await this.upsert(tenantId, { waConnectionStatus: 'CONNECTED' });
+        this.logger.log(`[Settings] WhatsApp test succeeded for tenant ${tenantId}`);
         return { success: true, message: 'Test message sent! Check your WhatsApp.' };
       } else {
         this.logger.error(`[Settings] WhatsApp test failed: ${JSON.stringify(data)}`);
@@ -102,8 +132,8 @@ export class SettingsService {
   }
 
   // ─── Email Settings ───────────────────────────────────────────────────────
-  async updateEmailSettings(userId: string, dto: UpdateEmailSettingsDto) {
-    await this.upsert(userId, {
+  async updateEmailSettings(tenantId: string, dto: UpdateEmailSettingsDto) {
+    await this.upsert(tenantId, {
       emailProvider: dto.emailProvider,
       resendApiKey: dto.resendApiKey,
       smtpHost: dto.smtpHost,
@@ -114,12 +144,12 @@ export class SettingsService {
       gmailClientSecret: dto.gmailClientSecret,
       gmailRefreshToken: dto.gmailRefreshToken,
     });
-    this.logger.log(`[Settings] Email settings updated for user ${userId}`);
+    this.logger.log(`[Settings] Email settings updated for tenant ${tenantId}`);
     return { success: true, message: 'Email configuration saved.' };
   }
 
-  async testEmail(userId: string, testEmail: string) {
-    const s = await this.prisma.tenantSettings.findUnique({ where: { tenantId: userId } });
+  async testEmail(tenantId: string, testEmail: string) {
+    const s = await this.prisma.tenantSettings.findUnique({ where: { tenantId } });
     const provider = s?.emailProvider || 'SMTP';
 
     try {
@@ -163,16 +193,16 @@ export class SettingsService {
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
-  async getRawSettings(userId: string) {
-    return this.prisma.tenantSettings.findUnique({ where: { tenantId: userId } });
+  async getRawSettings(tenantId: string) {
+    return this.prisma.tenantSettings.findUnique({ where: { tenantId } });
   }
 
-  private async upsert(userId: string, data: any) {
+  private async upsert(tenantId: string, data: any) {
     // Remove undefined keys so we don't accidentally null out existing values
     const clean = Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined));
     return this.prisma.tenantSettings.upsert({
-      where: { tenantId: userId },
-      create: { tenantId: userId, ...clean },
+      where: { tenantId },
+      create: { tenantId, ...clean },
       update: clean,
     });
   }

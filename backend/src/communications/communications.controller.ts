@@ -23,9 +23,9 @@ export class CommunicationsController {
     return this.communicationsService.handleEmailWebhook(payload);
   }
 
-  @Post('webhook/twilio')
-  async handleTwilioWebhook(@Body() payload: any) {
-    return this.communicationsService.handleTwilioWebhook(payload);
+  @Post('webhook/whatsapp')
+  async handleWhatsAppWebhook(@Body() payload: any) {
+    return this.communicationsService.handleWhatsAppWebhook(payload);
   }
 
   @Post('generate-message')

@@ -121,6 +121,7 @@ export class LeadsService implements OnModuleInit {
         title: title,
         source: source,
         interactions: interactions ?? 0,
+        tenantId: userId,
       });
 
       // 3. Update Lead.score with the AI result

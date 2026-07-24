@@ -221,8 +221,8 @@ export class CommunicationsService implements OnModuleInit {
     return { received: true };
   }
 
-  async handleTwilioWebhook(payload: any) {
-    this.logger.log('Received WhatsApp webhook', payload);
+  async handleWhatsAppWebhook(payload: any) {
+    this.logger.log('Received WhatsApp webhook (Meta Cloud API)', payload);
     
     // Extract info from a typical webhook payload (or fallback for our manual testing)
     const sender = payload.From || payload.sender || 'Unknown Sender';

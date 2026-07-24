@@ -7,6 +7,7 @@ import { AiModule } from '../ai/ai.module';
 @Module({
   imports: [PrismaModule, AiModule],
   controllers: [AiInsightsController],
-  providers: [AiInsightsService]
+  providers: [AiInsightsService],
+  exports: [AiInsightsService]
 })
 export class AiInsightsModule {}

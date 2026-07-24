@@ -1,4 +1,4 @@
-import { Controller, Post, Param, UseGuards } from '@nestjs/common';
+import { Controller, Post, Param, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { AiInsightsService } from './ai-insights.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -14,7 +14,7 @@ export class AiInsightsController {
   @ApiOperation({ summary: 'Analyze a lead using Google Gemini AI' })
   @ApiParam({ name: 'id', description: 'Lead ID (cuid)' })
   @ApiResponse({ status: 201, description: 'AI insight generated successfully.' })
-  analyzeLead(@Param('id') id: string) {
-    return this.aiInsightsService.analyzeLead(id);
+  analyzeLead(@Request() req: any, @Param('id') id: string) {
+    return this.aiInsightsService.analyzeLead(id, req.user.tenantId);
   }
 }

@@ -2,11 +2,11 @@
 /**
  * @file app/(main)/pipeline/page.tsx
  * @description Kanban Pipeline Page — Sprint 3, Frontend Team
- * Features: react-beautiful-dnd drag-and-drop, live API data, stage transitions
+ * Features: @hello-pangea/dnd drag-and-drop, live API data, stage transitions
  */
 
 import React, { useState, useEffect } from 'react';
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Plus, Filter, LayoutGrid, DollarSign, Loader2, RefreshCw } from 'lucide-react';
 import { getToken } from '@/lib/auth';
 import toast from 'react-hot-toast';
@@ -222,7 +222,7 @@ export default function PipelinePage() {
       {/* Filters Panel */}
       {showFilters && (
         <div className="glass-card p-4 rounded-lg border border-[#27272A] light:border-slate-200 shrink-0 animate-slide-down flex flex-wrap gap-4 items-end">
-          <div className="flex-1 min-w-[200px]">
+          <div className="flex-1 min-w-50">
             <label className="block text-[10px] font-bold text-[#b9cacb] uppercase tracking-wider mb-1">Search</label>
             <input
               type="text"
@@ -292,7 +292,7 @@ export default function PipelinePage() {
                       <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
-                        className={`flex-1 space-y-2.5 p-2 rounded-xl min-h-[200px] transition-colors border
+                        className={`flex-1 space-y-2.5 p-2 rounded-xl min-h-50 transition-colors border
                           ${snapshot.isDraggingOver ? 'bg-[#111114]/80 border-2 border-dashed border-[#00f0ff] light:bg-indigo-50/80 light:border-indigo-300' : 'bg-[#111114]/40 border-transparent light:bg-slate-50/50'}`}
                       >
                         {stageDeals.map((deal, index) => (
