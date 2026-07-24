@@ -47,7 +47,7 @@ const LeadDetailPanel = ({ lead, onClose, onUpdate }: {
   }
 
   return (
-    <div className="fixed inset-y-0 right-0 w-[400px] bg-white dark:bg-[#0A0A0C] border-l border-slate-200 dark:border-[#27272A] shadow-2xl dark:shadow-none z-50 p-6 overflow-y-auto transform transition-transform duration-300">
+    <div className="fixed inset-y-0 right-0 w-100 bg-white dark:bg-[#0A0A0C] border-l border-slate-200 dark:border-[#27272A] shadow-2xl dark:shadow-none z-50 p-6 overflow-y-auto transform transition-transform duration-300">
       
       <div className="flex justify-between items-center mb-8">
         <h2 className="text-xl font-display font-black text-slate-900 dark:text-white uppercase tracking-tight">

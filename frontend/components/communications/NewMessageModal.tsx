@@ -165,7 +165,7 @@ export default function NewMessageModal({ onClose, onSent, lead }: { onClose: ()
                 {form.channel === 'WHATSAPP' ? (
                   <div className="flex gap-2">
                     <select 
-                      className="input-field appearance-none w-[100px] shrink-0"
+                      className="input-field appearance-none w-25 shrink-0"
                       value={form.countryCode}
                       onChange={(e) => setForm({...form, countryCode: e.target.value})}
                     >
@@ -207,7 +207,7 @@ export default function NewMessageModal({ onClose, onSent, lead }: { onClose: ()
                 onChange={handleChange} 
                 required 
                 rows={5}
-                className="input-field resize-y min-h-[100px] max-h-[400px]" 
+                className="input-field resize-y min-h-25 max-h-100" 
                 placeholder="Type your message here..." 
               />
             </div>

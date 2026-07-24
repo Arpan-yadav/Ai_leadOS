@@ -98,7 +98,7 @@ export default function DealDetailModal({ deal: initialDeal, onClose }: { deal: 
             {/* Right Column: Timeline */}
             <div className="space-y-4">
               <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Activity Timeline</h4>
-              <div className="relative pl-3 space-y-4 before:absolute before:inset-y-0 before:left-[11px] before:w-px before:bg-white/10 light:before:bg-slate-200">
+              <div className="relative pl-3 space-y-4 before:absolute before:inset-y-0 before:left-2.75 before:w-px before:bg-white/10 light:before:bg-slate-200">
                 
                 {loading ? (
                   <div className="text-xs text-slate-500">Loading timeline...</div>
@@ -107,7 +107,7 @@ export default function DealDetailModal({ deal: initialDeal, onClose }: { deal: 
                     const isFirst = i === 0;
                     return (
                       <div key={activity.id} className="relative pl-6">
-                        <div className={`absolute left-[-5px] top-1 w-3 h-3 rounded-full border-2 border-[#16161D] light:border-white ${isFirst ? 'bg-[#00f0ff] shadow-[0_0_8px_#00f0ff]' : 'bg-slate-500'} z-10`} />
+                        <div className={`absolute -left-1.25 top-1 w-3 h-3 rounded-full border-2 border-[#16161D] light:border-white ${isFirst ? 'bg-[#00f0ff] shadow-[0_0_8px_#00f0ff]' : 'bg-slate-500'} z-10`} />
                         <p className={`text-xs font-bold ${isFirst ? 'text-white light:text-slate-800' : 'text-slate-300 light:text-slate-700'}`}>
                           {activity.type === 'pipeline' ? 'Stage Update' : activity.type}
                         </p>
