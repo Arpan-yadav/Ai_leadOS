@@ -108,7 +108,7 @@ export default function AddLeadModal({ onClose, onAdd }: {
                   name="countryCode" 
                   value={form.countryCode} 
                   onChange={handleChange}
-                  className="input-field w-[100px] bg-[#111114] light:bg-slate-50 border border-white/10 light:border-slate-200 rounded-lg text-white light:text-slate-900 focus:outline-none focus:border-[#00f0ff]"
+                  className="input-field w-25 bg-[#111114] light:bg-slate-50 border border-white/10 light:border-slate-200 rounded-lg text-white light:text-slate-900 focus:outline-none focus:border-[#00f0ff]"
                 >
                   <option value="+1">+1 (US/CA)</option>
                   <option value="+44">+44 (UK)</option>
