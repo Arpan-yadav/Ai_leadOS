@@ -120,6 +120,7 @@ export default function RegisterPage() {
                   placeholder="Sarah Chen"
                   className="w-full bg-slate-50/50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 dark:text-white rounded-xl py-4 pl-12 pr-4 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 font-medium transition-all"
                   required 
+                  autoComplete="off"
                 />
               </div>
             </div>
@@ -134,6 +135,7 @@ export default function RegisterPage() {
                   placeholder="name@company.com"
                   className="w-full bg-slate-50/50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 dark:text-white rounded-xl py-4 pl-12 pr-4 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 font-medium transition-all"
                   required 
+                  autoComplete="off"
                 />
               </div>
             </div>
@@ -148,6 +150,7 @@ export default function RegisterPage() {
                   placeholder="••••••••"
                   className="w-full bg-slate-50/50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 dark:text-white rounded-xl py-4 pl-12 pr-12 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 font-medium transition-all"
                   required 
+                  autoComplete="new-password"
                 />
                 <button 
                   type="button"
