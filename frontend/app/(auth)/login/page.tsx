@@ -48,7 +48,7 @@ export default function LoginPage() {
       {/* Left: Branding & Value Prop */}
       <div className="hidden lg:flex flex-col justify-between p-12 bg-slate-900 relative overflow-hidden">
         <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-500/20 blur-[120px] -translate-y-1/2 translate-x-1/4" />
+        <div className="absolute top-0 right-0 w-125 h-125 bg-brand-500/20 blur-[120px] -translate-y-1/2 translate-x-1/4" />
         
         <div className="relative z-10 flex items-center gap-3">
           <div className="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center text-white shadow-2xl shadow-brand-500/20">
