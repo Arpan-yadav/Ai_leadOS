@@ -9,14 +9,15 @@ export class AiInsightsService {
     private readonly aiService: AiService,
   ) {}
 
-  async analyzeLead(leadId: string) {
+  async analyzeLead(leadId: string, userTenantId?: string) {
     const lead = await this.prisma.lead.findUnique({ where: { id: leadId } });
     if (!lead) throw new NotFoundException('Lead not found');
 
     const domain = lead.email.split('@')[1] || 'example.com';
     const url = `https://${domain}`;
 
-    const analysis = await this.aiService.analyzeCompany(url, lead.tenantId);
+    const effectiveTenantId = lead.tenantId || userTenantId || null;
+    const analysis = await this.aiService.analyzeCompany(url, effectiveTenantId);
 
     return this.prisma.aIInsight.create({
       data: {

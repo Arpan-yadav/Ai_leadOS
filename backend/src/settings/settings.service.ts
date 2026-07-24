@@ -72,7 +72,7 @@ export class SettingsService {
       for (const insight of demoInsights) {
         try {
           await this.prisma.aIInsight.delete({ where: { id: insight.id } });
-          await this.aiInsightsService.analyzeLead(insight.leadId);
+          await this.aiInsightsService.analyzeLead(insight.leadId, tenantId);
           this.logger.log(`[Settings] Successfully re-analyzed lead ${insight.leadId}`);
         } catch (err: any) {
           this.logger.error(`[Settings] Failed to re-analyze lead ${insight.leadId}: ${err?.message || err}`);
