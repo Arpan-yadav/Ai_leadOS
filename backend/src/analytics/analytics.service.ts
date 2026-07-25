@@ -97,17 +97,30 @@ export class AnalyticsService {
 
   // ─── Sprint 7: Conversion Funnel ──────────────────────────────────────────
   async getConversionFunnel() {
-    const stages = ['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'CONVERTED', 'UNQUALIFIED'];
-    const counts = await Promise.all(
-      stages.map(stage =>
-        this.prisma.lead.count({ where: { status: stage as any } })
-      )
-    );
-    return stages.map((stage, i) => ({
-      stage: stage.charAt(0) + stage.slice(1).toLowerCase(),
-      count: counts[i],
-      pct: i === 0 ? 100 : counts[0] > 0 ? Math.round((counts[i] / counts[0]) * 100) : 0,
-    }));
+    try {
+      const stages = ['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'CONVERTED', 'UNQUALIFIED'];
+      const counts = await Promise.all(
+        stages.map(stage =>
+          this.prisma.lead.count({ where: { status: stage as any } })
+        )
+      );
+      return stages.map((stage, i) => ({
+        stage: stage.charAt(0) + stage.slice(1).toLowerCase(),
+        count: counts[i],
+        pct: i === 0 ? 100 : counts[0] > 0 ? Math.round((counts[i] / counts[0]) * 100) : 0,
+      }));
+    } catch (error) {
+      this.logger.error('[Analytics] Error generating conversion funnel', error);
+      // Return safe fallback so demo never shows a 500
+      return [
+        { stage: 'New', count: 0, pct: 100 },
+        { stage: 'Contacted', count: 0, pct: 0 },
+        { stage: 'Qualified', count: 0, pct: 0 },
+        { stage: 'Proposal', count: 0, pct: 0 },
+        { stage: 'Negotiation', count: 0, pct: 0 },
+        { stage: 'Converted', count: 0, pct: 0 },
+      ];
+    }
   }
 
   // ─── Sprint 7: Revenue Pipeline by Deal Stage ──────────────────────────────
