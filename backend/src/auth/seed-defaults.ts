@@ -155,6 +155,9 @@ export async function seedDefaultWorkflows(userId: string, prisma: PrismaClient)
   ];
 
   for (const pair of pairs) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) continue;
+
     await prisma.workflow.create({
       data: {
         name: pair.name,
@@ -163,6 +166,7 @@ export async function seedDefaultWorkflows(userId: string, prisma: PrismaClient)
         status: 'ACTIVE',
         definition: pair.workflowDefinition,
         createdById: userId,
+        tenantId: user.tenantId,
       }
     });
 
@@ -175,6 +179,7 @@ export async function seedDefaultWorkflows(userId: string, prisma: PrismaClient)
         enrollment: { autoEnroll: false },
         exitRules: { reply: true, meeting: true },
         createdById: userId,
+        tenantId: user.tenantId,
       }
     });
   }
