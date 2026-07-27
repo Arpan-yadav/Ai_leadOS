@@ -130,4 +130,98 @@ export class AuthService {
     await this.prisma.user.update({ where: { id: userId }, data: { password: hashed } });
     return { success: true, message: 'Password changed successfully.' };
   }
+
+  // ─── Create Invite ─────────────────────────────────────────────
+
+  async createInvite(tenantId: string, frontendUrl: string) {
+    // Generate a secure random token
+    const token = require('crypto').randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    await this.prisma.invitation.create({
+      data: { token, tenantId, expiresAt },
+    });
+
+    const inviteUrl = `${frontendUrl}/join?token=${token}`;
+    return {
+      inviteUrl,
+      token,
+      expiresAt,
+      message: 'Share this link with your team member. It expires in 7 days.',
+    };
+  }
+
+  // ─── Accept Invite ─────────────────────────────────────────────
+
+  async acceptInvite(dto: { token: string; name: string; email: string; password: string }) {
+    const invitation = await this.prisma.invitation.findUnique({
+      where: { token: dto.token },
+      include: { tenant: true },
+    });
+
+    if (!invitation) {
+      throw new UnauthorizedException('Invalid invite link.');
+    }
+    if (invitation.used) {
+      throw new UnauthorizedException('This invite link has already been used.');
+    }
+    if (new Date() > invitation.expiresAt) {
+      throw new UnauthorizedException('This invite link has expired. Ask your admin to generate a new one.');
+    }
+
+    const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    if (existing) {
+      throw new ConflictException('An account with this email already exists.');
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+
+    // Create a Member role for this tenant (or reuse existing)
+    let memberRole = await this.prisma.customRole.findFirst({
+      where: { tenantId: invitation.tenantId, name: 'Member' },
+    });
+    if (!memberRole) {
+      memberRole = await this.prisma.customRole.create({
+        data: {
+          name: 'Member',
+          tenantId: invitation.tenantId,
+          permissions: { viewAllLeads: true, addLeads: true, addTasks: true },
+          isDefault: false,
+        },
+      });
+    }
+
+    const user = await this.prisma.user.create({
+      data: {
+        name: dto.name,
+        email: dto.email,
+        password: hashedPassword,
+        tenantId: invitation.tenantId,  // ← same tenant as the inviter!
+        roleId: memberRole.id,
+        isSuperAdmin: false,
+      },
+      include: { role: true },
+    });
+
+    // Mark invite as used
+    await this.prisma.invitation.update({
+      where: { token: dto.token },
+      data: { used: true },
+    });
+
+    const token = this.signToken(user.id, user.email, user.role?.name || 'Member', user.tenantId ?? '', user.isSuperAdmin);
+
+    return {
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role?.name || 'Member',
+        tenantId: user.tenantId ?? '',
+        isSuperAdmin: user.isSuperAdmin,
+      },
+      accessToken: token,
+    };
+  }
 }
+

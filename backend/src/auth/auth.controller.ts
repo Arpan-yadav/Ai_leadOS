@@ -1,14 +1,3 @@
-/**
- * @file auth.controller.ts
- * @description Authentication Controller — REST endpoints
- * Sprint 1 — Backend Team Deliverable
- *
- * Endpoints:
- *   POST /api/auth/register  — Create account
- *   POST /api/auth/login     — Login with email/password
- *   GET  /api/auth/me        — Get current user (JWT protected)
- */
-
 import {
   Controller,
   Post,
@@ -78,5 +67,33 @@ export class AuthController {
   changePassword(@Request() req: any, @Body() body: { currentPassword: string; newPassword: string }) {
     return this.authService.changePassword(req.user.id, body.currentPassword, body.newPassword);
   }
+
+  // ─── POST /api/auth/invite ──────────────────────────────────────
+  // Admin generates a shareable invite link for their workspace
+
+  @Post('invite')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Generate an invite link for a team member (Admin only)' })
+  @ApiResponse({ status: 201, description: 'Returns a shareable invite URL valid for 7 days' })
+  createInvite(@Request() req: any) {
+    const frontendUrl = process.env.FRONTEND_URL || 'https://ai-lead-os-eight.vercel.app';
+    return this.authService.createInvite(req.user.tenantId, frontendUrl);
+  }
+
+  // ─── POST /api/auth/accept-invite ──────────────────────────────
+  // New employee registers using an invite token — joins the same workspace
+
+  @Post('accept-invite')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Register as a team member using an invite link' })
+  @ApiResponse({ status: 201, description: 'User created and joined the workspace — returns JWT token' })
+  @ApiResponse({ status: 401, description: 'Invalid, used, or expired token' })
+  @ApiResponse({ status: 409, description: 'Email already exists' })
+  acceptInvite(@Body() body: { token: string; name: string; email: string; password: string }) {
+    return this.authService.acceptInvite(body);
+  }
 }
+
 

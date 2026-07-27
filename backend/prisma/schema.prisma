@@ -27,6 +27,7 @@ model Tenant {
   SequenceEnrollment SequenceEnrollment[]
   CommunicationLog   CommunicationLog[]
   TenantSettings     TenantSettings?
+  Invitation         Invitation[]
 
   @@map("tenants")
 }
@@ -329,6 +330,19 @@ model CommunicationLog {
 
   @@index([leadId])
   @@map("communication_logs")
+}
+
+model Invitation {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  email     String?
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  used      Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("invitations")
 }
 
 enum Role {

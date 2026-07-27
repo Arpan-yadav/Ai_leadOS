@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Users, Shield, Trash2, Key, Crown, UserCheck,
   Loader2, Search, BarChart3, Database, Zap, GitBranch, CheckCircle2,
-  Lock, Settings, Eye, Plus, LayoutDashboard
+  Lock, Settings, Eye, Plus, LayoutDashboard, UserPlus, Copy, Link
 } from 'lucide-react';
 import { getToken } from '@/lib/auth';
 import toast from 'react-hot-toast';
@@ -40,6 +40,34 @@ export default function AdminPage() {
   // New Role Modal state
   const [createRoleModal, setCreateRoleModal] = useState(false);
   const [newRole, setNewRole] = useState({ name: '', manageUsers: false, manageSettings: false, viewAllLeads: false, deleteData: false });
+
+  // Invite Member state
+  const [inviteModal, setInviteModal] = useState(false);
+  const [inviteUrl, setInviteUrl] = useState('');
+  const [inviteLoading, setInviteLoading] = useState(false);
+
+  const generateInvite = async () => {
+    setInviteLoading(true);
+    try {
+      const res = await fetch(`${API}/auth/invite`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      setInviteUrl(data.inviteUrl);
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to generate invite');
+    } finally {
+      setInviteLoading(false);
+    }
+  };
+
+  const copyInvite = () => {
+    navigator.clipboard.writeText(inviteUrl);
+    toast.success('Invite link copied to clipboard!');
+  };
+
   
   const token = getToken();
 
@@ -223,13 +251,20 @@ export default function AdminPage() {
               <h2 className="text-sm font-black text-white uppercase tracking-widest">User Management</h2>
               <p className="text-[10px] text-[#b9cacb] mt-0.5">{users.length} users in the system</p>
             </div>
-            <div className="relative">
-              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#b9cacb]" />
-              <input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search users..."
-                className="input-field pl-8 text-xs w-52"
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => { setInviteModal(true); setInviteUrl(''); }}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-[#0077b6]/20 border border-[#0077b6]/40 text-[#00b4d8] hover:bg-[#0077b6]/30 transition-all"
+              >
+                <UserPlus size={13} /> Invite Member
+              </button>
+              <div className="relative">
+                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#b9cacb]" />
+                <input
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Search users..."
+                  className="input-field pl-8 text-xs w-52"
               />
             </div>
           </div>
@@ -471,6 +506,73 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+
+      {/* ── INVITE MEMBER MODAL ────────────────────────────────── */}
+      {inviteModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="glass-card p-8 w-full max-w-md">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-[#0077b6]/20 flex items-center justify-center">
+                <UserPlus size={18} className="text-[#00b4d8]" />
+              </div>
+              <div>
+                <h2 className="text-white font-black text-sm uppercase tracking-widest">Invite Team Member</h2>
+                <p className="text-[#b9cacb] text-[11px]">Generate a link and share it — expires in 7 days</p>
+              </div>
+            </div>
+
+            <div className="border-t border-[#27272A] my-5" />
+
+            {!inviteUrl ? (
+              <>
+                <p className="text-[#b9cacb] text-sm mb-6">
+                  Click below to generate a unique invite link. Anyone who opens it can register and join your workspace as a Member.
+                </p>
+                <div className="flex gap-3">
+                  <button onClick={() => { setInviteModal(false); }} className="btn-secondary flex-1">Cancel</button>
+                  <button
+                    onClick={generateInvite}
+                    disabled={inviteLoading}
+                    className="btn-primary flex-1 flex items-center justify-center gap-2"
+                  >
+                    {inviteLoading ? <Loader2 size={13} className="animate-spin" /> : <Link size={13} />}
+                    {inviteLoading ? 'Generating...' : 'Generate Invite Link'}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-[#10b981] text-xs font-bold uppercase tracking-widest mb-3">✅ Invite link ready!</p>
+                <div className="flex items-center gap-2 bg-[#0A0A0C] border border-[#27272A] rounded-xl p-3 mb-4">
+                  <Link size={13} className="text-[#00b4d8] shrink-0" />
+                  <span className="text-[#b9cacb] text-xs truncate flex-1 font-mono">{inviteUrl}</span>
+                  <button
+                    onClick={copyInvite}
+                    className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#0077b6]/20 text-[#00b4d8] text-xs font-bold hover:bg-[#0077b6]/30 transition-all"
+                  >
+                    <Copy size={11} /> Copy
+                  </button>
+                </div>
+                <p className="text-[#b9cacb] text-xs mb-5">
+                  Share this link via WhatsApp, email, or any messaging app. The invited person will register and automatically join your workspace.
+                </p>
+                <div className="flex gap-3">
+                  <button onClick={() => { setInviteModal(false); setInviteUrl(''); }} className="btn-secondary flex-1">Close</button>
+                  <button
+                    onClick={generateInvite}
+                    disabled={inviteLoading}
+                    className="btn-primary flex-1 flex items-center justify-center gap-2"
+                  >
+                    {inviteLoading ? <Loader2 size={13} className="animate-spin" /> : <UserPlus size={13} />}
+                    Generate New Link
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
