@@ -61,6 +61,10 @@ export class AuthService {
       include: { role: true },
     });
 
+    // Seed the 5 default AI Workflows for the new workspace owner
+    const { seedDefaultWorkflows } = await import('./seed-defaults');
+    await seedDefaultWorkflows(user.id, this.prisma);
+
     const token = this.signToken(user.id, user.email, user.role?.name || 'User', user.tenantId ?? "", user.isSuperAdmin);
 
     return {

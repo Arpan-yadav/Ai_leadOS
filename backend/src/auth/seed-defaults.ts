@@ -1,25 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
-
-async function seedWorkflows() {
-  console.log('Seeding workflows & sequences...');
-
-  // Get Arpan Yadav's user to assign as creator
-  const user = await prisma.user.findFirst({
-    where: { email: 'yadavarpan03@gmail.com' }
-  });
-  if (!user) {
-    console.error('Arpan Yadav user not found in database to assign workflows to.');
-    return;
-  }
-
-  // Clear existing workflows & sequences
-  await prisma.workflowExecution.deleteMany();
-  await prisma.workflow.deleteMany();
-  await prisma.sequenceEnrollment.deleteMany();
-  await prisma.sequence.deleteMany();
-
+export async function seedDefaultWorkflows(userId: string, prisma: PrismaClient) {
   const pairs = [
     {
       name: 'Enterprise VIP Outreach (14 Days)',
@@ -173,20 +154,19 @@ async function seedWorkflows() {
     }
   ];
 
-  const createdPairs: any[] = [];
   for (const pair of pairs) {
-    const wf = await prisma.workflow.create({
+    await prisma.workflow.create({
       data: {
         name: pair.name,
         description: pair.description,
         hasAINodes: true,
         status: 'ACTIVE',
         definition: pair.workflowDefinition,
-        createdById: user.id,
+        createdById: userId,
       }
     });
 
-    const seq = await prisma.sequence.create({
+    await prisma.sequence.create({
       data: {
         name: pair.name,
         description: pair.description,
@@ -194,54 +174,8 @@ async function seedWorkflows() {
         steps: pair.sequenceSteps,
         enrollment: { autoEnroll: false },
         exitRules: { reply: true, meeting: true },
-        createdById: user.id,
+        createdById: userId,
       }
     });
-
-    createdPairs.push({ workflow: wf, sequence: seq });
-    console.log(`Created: ${pair.name}`);
   }
-
-  // Assign to active leads
-  const activeLeads = await prisma.lead.findMany();
-  let pairIndex = 0;
-
-  for (const lead of activeLeads) {
-    const { workflow, sequence } = createdPairs[pairIndex];
-
-    // Enroll in Sequence
-    const enrollment = await prisma.sequenceEnrollment.create({
-      data: {
-        sequenceId: sequence.id,
-        leadId: lead.id,
-        status: 'active',
-        currentStepNumber: 1,
-        nextStepAt: new Date(Date.now() + 2000), // start in 2 seconds
-      }
-    });
-
-    // Create Workflow Execution
-    await prisma.workflowExecution.create({
-      data: {
-        workflowId: workflow.id,
-        leadId: lead.id,
-        status: 'active',
-        currentStep: 1,
-      }
-    });
-
-    console.log(`Assigned Lead ${lead.name} to ${workflow.name}`);
-    pairIndex = (pairIndex + 1) % createdPairs.length;
-  }
-
-  console.log('Seeding complete!');
 }
-
-seedWorkflows()
-  .catch(e => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
