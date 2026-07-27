@@ -26,6 +26,7 @@ export interface LeadScoreInput {
   title?: string;
   source?: string;
   interactions?: number;
+  dealStage?: string;
 }
 
 export interface CompanyAnalysisResult {
@@ -152,6 +153,7 @@ Lead Profile:
 - Title: ${input.title ?? 'Unknown'}
 - Source: ${input.source ?? 'Unknown'}
 - Interaction Count: ${input.interactions ?? 0}
+${input.dealStage ? `- Active Deal Stage: ${input.dealStage} (CRITICAL: If the stage is WON, score must be 90-100. If NEGOTIATION, score must be 80-90. If PROPOSAL, score must be 70-80.)` : ''}
 
 Return exactly this JSON (no markdown, no extra text):
 {

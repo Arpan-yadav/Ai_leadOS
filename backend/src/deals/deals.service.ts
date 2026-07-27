@@ -121,6 +121,7 @@ export class DealsService {
             title: updatedDeal.lead.title ?? undefined,
             source: updatedDeal.lead.source,
             interactions: 1, // At least 1 interaction for the deal stage change
+            dealStage: stage,
             tenantId: tenantId ?? 'system',
           });
 
@@ -135,7 +136,7 @@ export class DealsService {
               analysis: `Deal stage changed to ${stage}. ${aiResult.reason}`,
               opportunities: [],
               sentiment: aiResult.score >= 75 ? 'positive' : aiResult.score >= 50 ? 'neutral' : 'negative',
-              qualityScore: aiResult.icpFit,
+              qualityScore: aiResult.score,
               qualityReason: `ICP Fit: ${aiResult.icpFit}/100 — Priority: ${aiResult.priority}`,
               nextAction: stage === 'WON' ? 'Onboard client' : `Follow up on ${stage} stage`,
               model: 'gemini-1.5-flash',

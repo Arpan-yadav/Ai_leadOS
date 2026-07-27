@@ -139,7 +139,7 @@ export class LeadsService implements OnModuleInit {
           analysis: aiResult.reason,
           opportunities: [],
           sentiment: aiResult.score >= 75 ? 'positive' : aiResult.score >= 50 ? 'neutral' : 'negative',
-          qualityScore: aiResult.icpFit,
+          qualityScore: aiResult.score,
           qualityReason: `ICP Fit: ${aiResult.icpFit}/100 — Priority: ${aiResult.priority}`,
           nextAction: aiResult.priority === 'high'
             ? 'Reach out within 24 hours'
