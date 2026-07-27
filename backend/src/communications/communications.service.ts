@@ -27,40 +27,48 @@ export class CommunicationsService implements OnModuleInit {
     } catch (e) {
       this.logger.error('Failed to init fallback email transporter', e);
     }
-    const count = await this.prisma.communicationLog.count();
-    if (count === 0) {
-      this.logger.log('Seeding initial communication logs...');
-      // Ensure we have a lead to attach to
-      let lead = await this.prisma.lead.findFirst();
-      if (!lead) {
-        lead = await this.prisma.lead.create({
-          data: { name: 'James Wilson', email: 'james@techcorp.com', company: 'TechCorp', title: 'CEO' }
-        });
-      }
 
-      await this.prisma.communicationLog.createMany({
-        data: [
-          {
-            leadId: lead.id,
-            channel: 'WHATSAPP',
-            direction: 'inbound',
-            status: 'read',
-            content: 'Sounds great! When can we schedule a call?',
-            sentAt: new Date(Date.now() - 1000 * 60 * 2) // 2m ago
-          },
-          {
-            leadId: lead.id,
-            channel: 'WHATSAPP',
-            direction: 'outbound',
-            status: 'delivered',
-            content: 'Yes! We have a native HubSpot integration. Want a live demo?',
-            sentAt: new Date(Date.now() - 1000 * 60 * 4) // 4m ago
-          }
-        ]
-      });
-      this.logger.log('Seeded communication logs.');
+    // Seed initial communication logs — wrapped in try/catch so a missing
+    // table (e.g. migration not yet applied on fresh deployment) never crashes startup
+    try {
+      const count = await this.prisma.communicationLog.count();
+      if (count === 0) {
+        this.logger.log('Seeding initial communication logs...');
+        // Ensure we have a lead to attach to
+        let lead = await this.prisma.lead.findFirst();
+        if (!lead) {
+          lead = await this.prisma.lead.create({
+            data: { name: 'James Wilson', email: 'james@techcorp.com', company: 'TechCorp', title: 'CEO' }
+          });
+        }
+
+        await this.prisma.communicationLog.createMany({
+          data: [
+            {
+              leadId: lead.id,
+              channel: 'WHATSAPP',
+              direction: 'inbound',
+              status: 'read',
+              content: 'Sounds great! When can we schedule a call?',
+              sentAt: new Date(Date.now() - 1000 * 60 * 2) // 2m ago
+            },
+            {
+              leadId: lead.id,
+              channel: 'WHATSAPP',
+              direction: 'outbound',
+              status: 'delivered',
+              content: 'Yes! We have a native HubSpot integration. Want a live demo?',
+              sentAt: new Date(Date.now() - 1000 * 60 * 4) // 4m ago
+            }
+          ]
+        });
+        this.logger.log('Seeded communication logs.');
+      }
+    } catch (e) {
+      this.logger.error('[CommunicationsService] Failed to seed communication logs — table may not exist yet. This is safe to ignore on first deploy before migrations run.', e);
     }
   }
+
 
   async getAllLogs() {
     return this.prisma.communicationLog.findMany({
