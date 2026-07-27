@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Users, Shield, Trash2, Key, Crown, UserCheck,
   Loader2, Search, BarChart3, Database, Zap, GitBranch, CheckCircle2,
-  Lock, Settings, Eye, Plus, LayoutDashboard, UserPlus, Copy, Link
+  Lock, Settings, Eye, Plus, LayoutDashboard, UserPlus, Copy, Link, Edit2
 } from 'lucide-react';
 import { getToken } from '@/lib/auth';
 import toast from 'react-hot-toast';
@@ -191,6 +191,41 @@ export default function AdminPage() {
   const filteredUsers = users.filter(u =>
     `${u.name} ${u.email}`.toLowerCase().includes(search.toLowerCase())
   );
+
+  const updateTenant = async (tenantId: string, oldName: string) => {
+    const newName = prompt(`Enter new name for "${oldName}":`, oldName);
+    if (!newName || newName === oldName) return;
+    try {
+      const res = await fetch(`${API}/admin/tenants/${tenantId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ name: newName })
+      });
+      if (res.ok) {
+        toast.success('Tenant updated');
+        setTenants(tenants.map(t => t.id === tenantId ? { ...t, name: newName } : t));
+        if (activeTenantDetails?.tenant.id === tenantId) setActiveTenantDetails({...activeTenantDetails, tenant: { ...activeTenantDetails.tenant, name: newName }});
+      } else toast.error('Failed to update tenant');
+    } catch { toast.error('Network error'); }
+  };
+
+  const deleteTenant = async (tenantId: string, name: string) => {
+    if (!confirm(`Are you absolutely sure you want to delete the tenant "${name}" and ALL its data?`)) return;
+    try {
+      const res = await fetch(`${API}/admin/tenants/${tenantId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        toast.success('Tenant deleted');
+        setTenants(tenants.filter(t => t.id !== tenantId));
+        if (activeTenantDetails?.tenant.id === tenantId) setActiveTenantDetails(null);
+      } else {
+        const d = await res.json();
+        toast.error(d.message || 'Failed to delete tenant');
+      }
+    } catch { toast.error('Network error'); }
+  };
 
   const fetchTenantDetails = async (tenantId: string) => {
     setLoading(true);
@@ -421,7 +456,52 @@ export default function AdminPage() {
                               <p className="text-[10px] text-[#b9cacb]">{u.email}</p>
                             </td>
                             <td className="px-4 py-3 text-right">
-                              <span className="inline-block px-2 py-0.5 rounded text-[10px] bg-[#00f0ff]/10 text-[#00f0ff]">{u.role?.name || 'Unassigned'}</span>
+                              <div className="flex items-center justify-end gap-2">
+                                <span className="inline-block px-2 py-0.5 rounded text-[10px] bg-[#00f0ff]/10 text-[#00f0ff]">{u.role?.name || 'Unassigned'}</span>
+                                {/* User Actions */}
+                                <div className="relative flex gap-1">
+                                  <div className="relative">
+                                    <button
+                                      onClick={() => setRoleMenuOpen(roleMenuOpen === u.id ? null : u.id)}
+                                      className="p-1 rounded text-[#b9cacb] hover:text-[#00f0ff] transition-colors"
+                                    >
+                                      <Shield size={12} />
+                                    </button>
+                                    {roleMenuOpen === u.id && (
+                                      <div className="absolute right-0 top-full mt-1 z-50 glass-card py-1 w-48 shadow-xl max-h-48 overflow-y-auto">
+                                        {roles.map(r => (
+                                          <button
+                                            key={r.id}
+                                            onClick={async () => {
+                                              await updateRole(u.id, r.id);
+                                              fetchTenantDetails(activeTenantDetails.tenant.id); // Refresh
+                                            }}
+                                            className="w-full text-left px-3 py-2 text-[11px] font-bold hover:bg-white/5 flex items-center gap-2 text-white"
+                                          >
+                                            {r.id === u.role?.id && <CheckCircle2 size={10} className="text-[#00f0ff]" />}
+                                            {r.name} {r.isDefault && <span className="text-[9px] text-[#b9cacb]">(Def)</span>}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <button
+                                    onClick={() => setResetPwd({ userId: u.id, name: u.name })}
+                                    className="p-1 rounded text-[#b9cacb] hover:text-amber-400 transition-colors"
+                                  >
+                                    <Key size={12} />
+                                  </button>
+                                  <button
+                                    onClick={async () => {
+                                      await deleteUser(u.id, u.name);
+                                      fetchTenantDetails(activeTenantDetails.tenant.id); // Refresh
+                                    }}
+                                    className="p-1 rounded text-[#b9cacb] hover:text-rose-400 transition-colors"
+                                  >
+                                    <Trash2 size={12} />
+                                  </button>
+                                </div>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -502,9 +582,17 @@ export default function AdminPage() {
                             {new Date(tenant.createdAt).toLocaleDateString()}
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <button onClick={() => fetchTenantDetails(tenant.id)} className="btn-secondary text-[10px] px-2 py-1 flex items-center gap-1 inline-flex">
-                              <Eye size={10} /> View Details
-                            </button>
+                            <div className="flex items-center justify-end gap-2">
+                              <button onClick={() => fetchTenantDetails(tenant.id)} className="btn-secondary text-[10px] px-2 py-1 flex items-center gap-1 inline-flex">
+                                <Eye size={10} /> View Details
+                              </button>
+                              <button onClick={() => updateTenant(tenant.id, tenant.name)} className="p-1.5 rounded text-[#b9cacb] hover:text-[#00f0ff] hover:bg-white/5 transition-colors" title="Rename Tenant">
+                                <Edit2 size={12} />
+                              </button>
+                              <button onClick={() => deleteTenant(tenant.id, tenant.name)} className="p-1.5 rounded text-[#b9cacb] hover:text-rose-400 hover:bg-white/5 transition-colors" title="Delete Tenant">
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}

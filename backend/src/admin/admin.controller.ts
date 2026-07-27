@@ -111,8 +111,9 @@ export class AdminController {
   @Patch('users/:id/role')
   @ApiOperation({ summary: 'Update a user role' })
   async updateRole(@Request() req: any, @Param('id') id: string, @Body() body: { roleId: string }) {
+    const filter = req.user.isSuperAdmin ? { id } : { id, tenantId: req.user.tenantId };
     const user = await this.prisma.user.update({
-      where: { id, tenantId: req.user.tenantId },
+      where: filter,
       data: { roleId: body.roleId },
       select: { id: true, name: true, email: true, role: { select: { id: true, name: true } } },
     });
@@ -123,15 +124,58 @@ export class AdminController {
   async resetPassword(@Request() req: any, @Param('id') id: string, @Body() body: { newPassword: string }) {
     if (!body.newPassword || body.newPassword.length < 8) throw new ForbiddenException('Password must be at least 8 characters');
     const hashed = await bcrypt.hash(body.newPassword, 10);
-    await this.prisma.user.update({ where: { id, tenantId: req.user.tenantId }, data: { password: hashed } });
+    const filter = req.user.isSuperAdmin ? { id } : { id, tenantId: req.user.tenantId };
+    await this.prisma.user.update({ where: filter, data: { password: hashed } });
     return { success: true, message: 'Password reset successfully' };
   }
 
   @Delete('users/:id')
   async deleteUser(@Request() req: any, @Param('id') id: string) {
     if (req.user.id === id) throw new ForbiddenException('You cannot delete your own account');
-    await this.prisma.user.delete({ where: { id, tenantId: req.user.tenantId } });
+    const filter = req.user.isSuperAdmin ? { id } : { id, tenantId: req.user.tenantId };
+    await this.prisma.user.delete({ where: filter });
     return { success: true, message: 'User deleted' };
+  }
+
+  // ─── PATCH /admin/tenants/:id ──────────────────────────────────────────────
+  @Patch('tenants/:id')
+  @ApiOperation({ summary: 'Update tenant details' })
+  async updateTenant(@Request() req: any, @Param('id') id: string, @Body() body: { name: string }) {
+    this.checkSuperAdmin(req);
+    if (!body.name?.trim()) throw new ForbiddenException('Tenant name is required');
+    const tenant = await this.prisma.tenant.update({
+      where: { id },
+      data: { name: body.name }
+    });
+    return { success: true, tenant };
+  }
+
+  @Delete('tenants/:id')
+  @ApiOperation({ summary: 'Delete a tenant and all its data' })
+  async deleteTenant(@Request() req: any, @Param('id') id: string) {
+    this.checkSuperAdmin(req);
+    if (id === req.user.tenantId) throw new ForbiddenException('Cannot delete your own supreme tenant');
+    
+    // We must manually clean up relations that don't cascade on delete in prisma
+    await this.prisma.task.deleteMany({ where: { assignedTo: { tenantId: id } } });
+    await this.prisma.activity.deleteMany({ where: { user: { tenantId: id } } });
+    await this.prisma.workflowExecution.deleteMany({ where: { workflow: { createdBy: { tenantId: id } } } }).catch(() => {});
+    await this.prisma.workflowEdge?.deleteMany({ where: { workflow: { createdBy: { tenantId: id } } } }).catch(() => {});
+    await this.prisma.workflowNode?.deleteMany({ where: { workflow: { createdBy: { tenantId: id } } } }).catch(() => {});
+    await this.prisma.sequenceEnrollment.deleteMany({ where: { sequence: { createdBy: { tenantId: id } } } }).catch(() => {});
+    await this.prisma.sequenceStep?.deleteMany({ where: { sequence: { createdBy: { tenantId: id } } } }).catch(() => {});
+    await this.prisma.workflow.deleteMany({ where: { createdBy: { tenantId: id } } }).catch(() => {});
+    await this.prisma.sequence.deleteMany({ where: { createdBy: { tenantId: id } } }).catch(() => {});
+    await this.prisma.invitation?.deleteMany({ where: { tenantId: id } }).catch(() => {});
+    await this.prisma.aIInsight?.deleteMany({ where: { lead: { assignedTo: { tenantId: id } } } }).catch(() => {});
+    await this.prisma.deal.deleteMany({ where: { owner: { tenantId: id } } });
+    await this.prisma.lead.deleteMany({ where: { assignedTo: { tenantId: id } } });
+    await this.prisma.customRole.deleteMany({ where: { tenantId: id } });
+    await this.prisma.user.deleteMany({ where: { tenantId: id } });
+    await this.prisma.communicationLog.deleteMany({ where: { tenantId: id } });
+
+    await this.prisma.tenant.delete({ where: { id } });
+    return { success: true, message: 'Tenant deleted' };
   }
 
   // ─── ROLES MANAGEMENT ─────────────────────────────────────────────────────
