@@ -10,7 +10,7 @@ async function test() {
 
   const service = moduleRef.get<DashboardService>(DashboardService);
   try {
-    const res = await service.getStats();
+    const res = await service.getStats({ isSuperAdmin: true });
     console.log(JSON.stringify(res, null, 2));
   } catch(e) {
     console.error("ERROR CAUGHT:");

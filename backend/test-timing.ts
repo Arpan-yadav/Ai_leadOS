@@ -11,7 +11,7 @@ async function test() {
   const service = moduleRef.get<DashboardService>(DashboardService);
   try {
     const start = Date.now();
-    await service.getStats();
+    await service.getStats({ isSuperAdmin: true });
     const end = Date.now();
     console.log(`Execution time: ${end - start} ms`);
   } catch(e) {

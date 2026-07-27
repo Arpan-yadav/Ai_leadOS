@@ -7,8 +7,8 @@ export class DashboardService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async getStats() {
-    this.logger.log('[DashboardService] Calculating dashboard stats...');
+  async getStats(user: any) {
+    this.logger.log(`[DashboardService] Calculating dashboard stats for ${user.isSuperAdmin ? 'all tenants' : 'tenant ' + user.tenantId}`);
 
     try {
       // 1. Calculate Dates
@@ -21,6 +21,9 @@ export class DashboardService {
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
+
+      const filter = user.isSuperAdmin ? {} : { tenantId: user.tenantId };
+      const filterWithDate = (dateFilter: any) => ({ ...filter, ...dateFilter });
 
       // 2. Fetch parallel data using Prisma Transactions for speed
       const [
@@ -41,22 +44,22 @@ export class DashboardService {
         leadsCapturedToday,
         recentInsights
       ] = await Promise.all([
-        this.prisma.lead.count(),
-        this.prisma.lead.count({ where: { createdAt: { gte: oneWeekAgo } } }),
-        this.prisma.lead.count({ where: { createdAt: { gte: twoWeeksAgo, lt: oneWeekAgo } } }),
-        this.prisma.deal.count(),
-        this.prisma.deal.count({ where: { createdAt: { gte: oneWeekAgo } } }),
-        this.prisma.deal.count({ where: { createdAt: { gte: twoWeeksAgo, lt: oneWeekAgo } } }),
-        this.prisma.deal.aggregate({ _sum: { amount: true }, where: { stage: 'WON' } }),
-        this.prisma.deal.aggregate({ _sum: { amount: true }, where: { stage: 'WON', closedAt: { lt: oneWeekAgo } } }), 
-        (this.prisma.lead.groupBy as any)({ by: ['status'], _count: { status: true } }),
-        (this.prisma.deal.groupBy as any)({ by: ['stage'], _count: { stage: true } }),
-        (this.prisma.lead.groupBy as any)({ by: ['source'], _count: { source: true } }),
-        this.prisma.lead.findMany({ take: 5, orderBy: { createdAt: 'desc' }, select: { name: true, company: true, source: true, createdAt: true } }),
-        this.prisma.lead.findMany({ where: { createdAt: { gte: oneWeekAgo } }, select: { createdAt: true } }),
-        this.prisma.deal.findMany({ where: { stage: 'WON', closedAt: { gte: oneWeekAgo } }, select: { closedAt: true, createdAt: true, amount: true } }),
-        this.prisma.lead.count({ where: { createdAt: { gte: today } } }),
-        this.prisma.aIInsight.findMany({ take: 2, orderBy: { createdAt: 'desc' }, include: { lead: true } })
+        this.prisma.lead.count({ where: filter }),
+        this.prisma.lead.count({ where: filterWithDate({ createdAt: { gte: oneWeekAgo } }) }),
+        this.prisma.lead.count({ where: filterWithDate({ createdAt: { gte: twoWeeksAgo, lt: oneWeekAgo } }) }),
+        this.prisma.deal.count({ where: filter }),
+        this.prisma.deal.count({ where: filterWithDate({ createdAt: { gte: oneWeekAgo } }) }),
+        this.prisma.deal.count({ where: filterWithDate({ createdAt: { gte: twoWeeksAgo, lt: oneWeekAgo } }) }),
+        this.prisma.deal.aggregate({ _sum: { amount: true }, where: filterWithDate({ stage: 'WON' }) }),
+        this.prisma.deal.aggregate({ _sum: { amount: true }, where: filterWithDate({ stage: 'WON', closedAt: { lt: oneWeekAgo } }) }), 
+        (this.prisma.lead.groupBy as any)({ by: ['status'], _count: { status: true }, where: filter }),
+        (this.prisma.deal.groupBy as any)({ by: ['stage'], _count: { stage: true }, where: filter }),
+        (this.prisma.lead.groupBy as any)({ by: ['source'], _count: { source: true }, where: filter }),
+        this.prisma.lead.findMany({ where: filter, take: 5, orderBy: { createdAt: 'desc' }, select: { name: true, company: true, source: true, createdAt: true } }),
+        this.prisma.lead.findMany({ where: filterWithDate({ createdAt: { gte: oneWeekAgo } }), select: { createdAt: true } }),
+        this.prisma.deal.findMany({ where: filterWithDate({ stage: 'WON', closedAt: { gte: oneWeekAgo } }), select: { closedAt: true, createdAt: true, amount: true } }),
+        this.prisma.lead.count({ where: filterWithDate({ createdAt: { gte: today } }) }),
+        this.prisma.aIInsight.findMany({ where: filter, take: 2, orderBy: { createdAt: 'desc' }, include: { lead: true } })
       ]);
 
       // 3. Format basic stats
@@ -90,8 +93,8 @@ export class DashboardService {
       // Basic conversion change logic based on new leads this week vs converted leads this week
       // For simplicity, we just check total converted vs total leads
       // Since historical is complex, we use a fixed mock or simplified delta
-      const convertedThisWeek = await this.prisma.lead.count({ where: { status: 'CONVERTED', createdAt: { gte: oneWeekAgo } } });
-      const convertedLastWeek = await this.prisma.lead.count({ where: { status: 'CONVERTED', createdAt: { gte: twoWeeksAgo, lt: oneWeekAgo } } });
+      const convertedThisWeek = await this.prisma.lead.count({ where: filterWithDate({ status: 'CONVERTED', createdAt: { gte: oneWeekAgo } }) });
+      const convertedLastWeek = await this.prisma.lead.count({ where: filterWithDate({ status: 'CONVERTED', createdAt: { gte: twoWeeksAgo, lt: oneWeekAgo } }) });
       const convRateThisWeek = newLeadsThisWeek > 0 ? (convertedThisWeek / newLeadsThisWeek) * 100 : 0;
       const convRateLastWeek = newLeadsLastWeek > 0 ? (convertedLastWeek / newLeadsLastWeek) * 100 : 0;
       const convRateChange = convRateThisWeek - convRateLastWeek;
