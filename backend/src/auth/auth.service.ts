@@ -166,9 +166,7 @@ export class AuthService {
     if (!invitation) {
       throw new UnauthorizedException('Invalid invite link.');
     }
-    if (invitation.used) {
-      throw new UnauthorizedException('This invite link has already been used.');
-    }
+    // Invite is multi-use, so we removed the `invitation.used` check.
     if (new Date() > invitation.expiresAt) {
       throw new UnauthorizedException('This invite link has expired. Ask your admin to generate a new one.');
     }
@@ -207,11 +205,11 @@ export class AuthService {
       include: { role: true },
     });
 
-    // Mark invite as used
-    await this.prisma.invitation.update({
-      where: { token: dto.token },
-      data: { used: true },
-    });
+    // We no longer mark the invite as used so multiple users can register.
+    // await this.prisma.invitation.update({
+    //   where: { token: dto.token },
+    //   data: { used: true },
+    // });
 
     const token = this.signToken(user.id, user.email, user.role?.name || 'Member', user.tenantId ?? '', user.isSuperAdmin);
 
