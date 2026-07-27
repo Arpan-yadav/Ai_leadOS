@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import { X, Loader2, Send, Sparkles, ChevronDown } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { getToken } from '@/lib/auth'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
@@ -48,7 +49,8 @@ export default function NewMessageModal({ onClose, onSent, lead: preselectedLead
   useEffect(() => {
     const fetchLeads = async () => {
       try {
-        const token = localStorage.getItem('token')
+        const token = getToken()
+        if (!token) return;
         const res = await fetch(`${API_URL}/leads?limit=100`, {
           headers: { Authorization: `Bearer ${token}` }
         })
@@ -85,7 +87,7 @@ export default function NewMessageModal({ onClose, onSent, lead: preselectedLead
 
     setAiLoading(true)
     try {
-      const token = localStorage.getItem('token')
+      const token = getToken()
 
       // Fetch past conversation for this lead if available
       let history = ''
@@ -140,7 +142,7 @@ export default function NewMessageModal({ onClose, onSent, lead: preselectedLead
     }
     try {
       setLoading(true)
-      const token = localStorage.getItem('token')
+      const token = getToken()
       const res = await fetch(`${API_URL}/communications/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
