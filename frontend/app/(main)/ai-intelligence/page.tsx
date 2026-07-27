@@ -56,6 +56,28 @@ export default function AIIntelligencePage() {
     fetchLeads()
   }, [token])
 
+  useEffect(() => {
+    if (!selectedLeadId) return;
+    const fetchLeadInsight = async () => {
+      try {
+        const res = await fetch(`${API_URL}/leads/${selectedLeadId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.aiInsights && data.aiInsights.length > 0) {
+            setInsight(data.aiInsights[0]);
+          } else {
+            setInsight(null);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch latest insight', err);
+      }
+    };
+    fetchLeadInsight();
+  }, [selectedLeadId, token]);
+
   const handleAnalyze = async () => {
     if (!selectedLeadId) return
     setLoading(true)
