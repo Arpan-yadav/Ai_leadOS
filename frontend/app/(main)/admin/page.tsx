@@ -266,6 +266,7 @@ export default function AdminPage() {
                   placeholder="Search users..."
                   className="input-field pl-8 text-xs w-52"
               />
+              </div>
             </div>
           </div>
 
