@@ -46,6 +46,7 @@ export default function AdminPage() {
   // Invite Member state
   const [inviteModal, setInviteModal] = useState(false);
   const [inviteUrl, setInviteUrl] = useState('');
+  const [showPwd, setShowPwd] = useState(false);
   const [inviteLoading, setInviteLoading] = useState(false);
 
   const generateInvite = async () => {
@@ -327,7 +328,7 @@ export default function AdminPage() {
               <Loader2 size={18} className="animate-spin" /> Loading users...
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-visible pb-16">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-[#27272A]">
@@ -446,7 +447,7 @@ export default function AdminPage() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="glass-card overflow-hidden">
                   <div className="px-6 py-4 border-b border-[#27272A]"><h3 className="text-sm font-bold text-white">Users</h3></div>
-                  <div className="max-h-64 overflow-y-auto">
+                  <div className="overflow-visible pb-24">
                     <table className="w-full">
                       <tbody className="divide-y divide-[#27272A]">
                         {activeTenantDetails.users.map((u: any) => (
@@ -727,15 +728,24 @@ export default function AdminPage() {
           <div className="glass-card p-6 w-full max-w-sm">
             <h3 className="text-sm font-black text-white uppercase tracking-widest mb-1">Reset Password</h3>
             <p className="text-[11px] text-[#b9cacb] mb-4">Set a new password for <span className="text-white font-bold">{resetPwd.name}</span></p>
-            <input
-              type="password"
-              value={newPwd}
-              onChange={e => setNewPwd(e.target.value)}
-              placeholder="New password (min 8 chars)"
-              className="input-field w-full mb-4"
-            />
+            <div className="relative mb-4">
+              <input
+                type={showPwd ? "text" : "password"}
+                value={newPwd}
+                onChange={e => setNewPwd(e.target.value)}
+                placeholder="New password (min 8 chars)"
+                className="input-field w-full pr-10"
+              />
+              <button
+                onClick={() => setShowPwd(!showPwd)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#b9cacb] hover:text-[#00f0ff] transition-colors"
+                type="button"
+              >
+                <Eye size={16} />
+              </button>
+            </div>
             <div className="flex gap-2">
-              <button onClick={() => { setResetPwd(null); setNewPwd(''); }} className="btn-secondary flex-1">Cancel</button>
+              <button onClick={() => { setResetPwd(null); setNewPwd(''); setShowPwd(false); }} className="btn-secondary flex-1">Cancel</button>
               <button onClick={submitResetPwd} disabled={saving || newPwd.length < 8} className="btn-primary flex-1 flex items-center justify-center gap-2">
                 {saving ? <Loader2 size={13} className="animate-spin" /> : <Key size={13} />}
                 Reset

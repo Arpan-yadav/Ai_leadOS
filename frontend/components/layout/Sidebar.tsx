@@ -87,7 +87,13 @@ export default function Sidebar() {
       <div className="flex-1 py-6 px-4 flex flex-col gap-1 overflow-y-auto overflow-x-visible no-scrollbar">
         {!collapsed && <div className="px-2 mb-2 text-[10px] font-bold uppercase tracking-wider font-mono text-slate-400 dark:text-[#b9cacb]">Main Menu</div>}
         
-        {navItems.map((item) => {
+        {navItems.filter((item) => {
+          if (item.label === 'Admin') {
+            const user = mounted && typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('leados_user') || '{}') : {};
+            return user.isSuperAdmin || ['Admin', 'Workspace Admin', 'Supreme Admin', 'Owner'].includes(user.role);
+          }
+          return true;
+        }).map((item) => {
           const isActive = pathname === item.path || pathname.startsWith(item.path + '/');
           return (
             <Link 
