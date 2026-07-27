@@ -25,20 +25,20 @@ export class AdminController {
   @ApiOperation({ summary: 'System-wide stats for admin dashboard' })
   async getStats(@Request() req: any) {
     this.checkSuperAdmin(req);
-    const tenantId = req.user.tenantId;
-    const [users, leads, deals, workflows, sequences] = await Promise.all([
-      this.prisma.user.count({ where: { tenantId } }),
-      this.prisma.lead.count({ where: { tenantId } }),
-      this.prisma.deal.count({ where: { tenantId } }),
-      this.prisma.workflow.count({ where: { tenantId } }),
-      this.prisma.sequence.count({ where: { tenantId } }),
+    const [users, leads, deals, workflows, sequences, tenants] = await Promise.all([
+      this.prisma.user.count(),
+      this.prisma.lead.count(),
+      this.prisma.deal.count(),
+      this.prisma.workflow.count(),
+      this.prisma.sequence.count(),
+      this.prisma.tenant.count(),
     ]);
     const wonRevenue = await this.prisma.deal.aggregate({
-      where: { tenantId, stage: 'WON' },
+      where: { stage: 'WON' },
       _sum: { amount: true },
     });
     return {
-      users, leads, deals, workflows, sequences,
+      users, leads, deals, workflows, sequences, tenants,
       wonRevenue: wonRevenue._sum?.amount ?? 0,
     };
   }
@@ -49,9 +49,9 @@ export class AdminController {
   async listUsers(@Request() req: any) {
     this.checkSuperAdmin(req);
     const users = await this.prisma.user.findMany({
-      where: { tenantId: req.user.tenantId },
       select: {
         id: true, name: true, email: true, isSuperAdmin: true, createdAt: true,
+        tenant: { select: { id: true, name: true } },
         role: { select: { id: true, name: true } },
         _count: { select: { leads: true, deals: true, activities: true, tasks: true } },
       },
@@ -60,13 +60,26 @@ export class AdminController {
     return users;
   }
 
+  // ─── GET /admin/tenants ────────────────────────────────────────────────────
+  @Get('tenants')
+  @ApiOperation({ summary: 'List all tenants' })
+  async listTenants(@Request() req: any) {
+    this.checkSuperAdmin(req);
+    return this.prisma.tenant.findMany({
+      include: {
+        _count: { select: { users: true, leads: true, Deal: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
   // ─── PATCH /admin/users/:id/role ──────────────────────────────────────────
   @Patch('users/:id/role')
   @ApiOperation({ summary: 'Update a user role' })
   async updateRole(@Request() req: any, @Param('id') id: string, @Body() body: { roleId: string }) {
     this.checkSuperAdmin(req);
     const user = await this.prisma.user.update({
-      where: { id, tenantId: req.user.tenantId },
+      where: { id },
       data: { roleId: body.roleId },
       select: { id: true, name: true, email: true, role: { select: { id: true, name: true } } },
     });
@@ -78,7 +91,7 @@ export class AdminController {
     this.checkSuperAdmin(req);
     if (!body.newPassword || body.newPassword.length < 8) throw new ForbiddenException('Password must be at least 8 characters');
     const hashed = await bcrypt.hash(body.newPassword, 10);
-    await this.prisma.user.update({ where: { id, tenantId: req.user.tenantId }, data: { password: hashed } });
+    await this.prisma.user.update({ where: { id }, data: { password: hashed } });
     return { success: true, message: 'Password reset successfully' };
   }
 
@@ -86,7 +99,7 @@ export class AdminController {
   async deleteUser(@Request() req: any, @Param('id') id: string) {
     this.checkSuperAdmin(req);
     if (req.user.id === id) throw new ForbiddenException('You cannot delete your own account');
-    await this.prisma.user.delete({ where: { id, tenantId: req.user.tenantId } });
+    await this.prisma.user.delete({ where: { id } });
     return { success: true, message: 'User deleted' };
   }
 
@@ -94,19 +107,17 @@ export class AdminController {
   @Get('roles')
   async listRoles(@Request() req: any) {
     this.checkSuperAdmin(req);
-    return this.prisma.customRole.findMany({
-      where: { tenantId: req.user.tenantId },
-    });
+    return this.prisma.customRole.findMany();
   }
 
   @Post('roles')
-  async createRole(@Request() req: any, @Body() body: { name: string, permissions: any }) {
+  async createRole(@Request() req: any, @Body() body: { name: string, permissions: any, tenantId?: string }) {
     this.checkSuperAdmin(req);
     return this.prisma.customRole.create({
       data: {
         name: body.name,
         permissions: body.permissions,
-        tenantId: req.user.tenantId,
+        tenantId: body.tenantId || req.user.tenantId,
         isDefault: false,
       }
     });
@@ -115,9 +126,9 @@ export class AdminController {
   @Delete('roles/:id')
   async deleteRole(@Request() req: any, @Param('id') id: string) {
     this.checkSuperAdmin(req);
-    const role = await this.prisma.customRole.findUnique({ where: { id, tenantId: req.user.tenantId } });
+    const role = await this.prisma.customRole.findUnique({ where: { id } });
     if (role?.isDefault) throw new ForbiddenException('Cannot delete default roles');
-    await this.prisma.customRole.delete({ where: { id, tenantId: req.user.tenantId } });
+    await this.prisma.customRole.delete({ where: { id } });
     return { success: true };
   }
 }

@@ -25,9 +25,10 @@ function StatCard({ icon: Icon, label, value, color }: any) {
 }
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'USERS' | 'ROLES'>('OVERVIEW');
+  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'USERS' | 'ROLES' | 'TENANTS'>('OVERVIEW');
   const [users, setUsers] = useState<any[]>([]);
   const [roles, setRoles] = useState<any[]>([]);
+  const [tenants, setTenants] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
@@ -75,13 +76,14 @@ export default function AdminPage() {
     setLoading(true);
     setAccessDenied(false);
     try {
-      const [usersRes, statsRes, rolesRes] = await Promise.all([
+      const [usersRes, statsRes, rolesRes, tenantsRes] = await Promise.all([
         fetch(`${API}/admin/users`, { headers: { Authorization: `Bearer ${token}` } }),
         fetch(`${API}/admin/stats`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API}/admin/roles`, { headers: { Authorization: `Bearer ${token}` } })
+        fetch(`${API}/admin/roles`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API}/admin/tenants`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
       
-      if (usersRes.status === 403 || statsRes.status === 403 || rolesRes.status === 403) {
+      if (usersRes.status === 403 || statsRes.status === 403 || rolesRes.status === 403 || tenantsRes.status === 403) {
         setAccessDenied(true);
         return;
       }
@@ -89,6 +91,7 @@ export default function AdminPage() {
       if (usersRes.ok) setUsers(await usersRes.json());
       if (statsRes.ok) setStats(await statsRes.json());
       if (rolesRes.ok) setRoles(await rolesRes.json());
+      if (tenantsRes.ok) setTenants(await tenantsRes.json());
     } catch (e) {
       toast.error('Failed to load admin data.');
     } finally {
@@ -222,6 +225,9 @@ export default function AdminPage() {
           <button onClick={() => setActiveTab('ROLES')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${activeTab === 'ROLES' ? 'bg-[#bd00ff]/10 text-[#bd00ff]' : 'text-[#b9cacb] hover:text-white'}`}>
             <Shield size={14} /> Roles
           </button>
+          <button onClick={() => setActiveTab('TENANTS')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${activeTab === 'TENANTS' ? 'bg-[#00ff9d]/10 text-[#00ff9d]' : 'text-[#b9cacb] hover:text-white'}`}>
+            <Database size={14} /> Tenants
+          </button>
         </div>
       </header>
 
@@ -235,9 +241,9 @@ export default function AdminPage() {
               <StatCard icon={Users}     label="Users"     value={stats?.users}     color="bg-[#00f0ff]/10 text-[#00f0ff]" />
               <StatCard icon={UserCheck} label="Leads"     value={stats?.leads}     color="bg-[#bd00ff]/10 text-[#bd00ff]" />
               <StatCard icon={BarChart3} label="Deals"     value={stats?.deals}     color="bg-emerald-500/10 text-emerald-400" />
-              <StatCard icon={Zap}       label="Workflows" value={stats?.workflows} color="bg-amber-500/10 text-amber-400" />
+              <StatCard icon={Database}  label="Tenants"   value={stats?.tenants}   color="bg-[#00ff9d]/10 text-[#00ff9d]" />
               <StatCard icon={GitBranch} label="Sequences" value={stats?.sequences} color="bg-[#ff007a]/10 text-[#ff007a]" />
-              <StatCard icon={Database}  label="Revenue"   value={`$${((stats?.wonRevenue || 0) / 1000).toFixed(1)}k`} color="bg-green-500/10 text-green-400" />
+              <StatCard icon={Zap}       label="Revenue"   value={`$${((stats?.wonRevenue || 0) / 1000).toFixed(1)}k`} color="bg-amber-500/10 text-amber-400" />
             </div>
           )}
         </>
@@ -358,6 +364,65 @@ export default function AdminPage() {
                             </button>
                           )}
                         </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+      {/* TENANTS TAB */}
+      {activeTab === 'TENANTS' && (
+        <div className="glass-card overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#27272A] flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-black text-white uppercase tracking-widest">Tenant Management</h2>
+              <p className="text-[10px] text-[#b9cacb] mt-0.5">{tenants.length} tenants across the platform</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#b9cacb]" />
+                <input
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Search tenants..."
+                  className="input-field pl-8 text-xs w-52"
+                />
+              </div>
+            </div>
+          </div>
+          {loading ? (
+            <div className="p-8 flex items-center justify-center gap-2 text-[#b9cacb]">
+              <Loader2 size={18} className="animate-spin" /> Loading tenants...
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-[#27272A]">
+                    {['Tenant Name', 'Users', 'Leads', 'Deals', 'Created'].map(h => (
+                      <th key={h} className="text-left px-6 py-3 text-[10px] font-black text-[#b9cacb] uppercase tracking-widest">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#27272A]">
+                  {tenants.filter(t => t.name.toLowerCase().includes(search.toLowerCase())).map(tenant => (
+                    <tr key={tenant.id} className="hover:bg-white/2 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-linear-to-br from-[#00ff9d]/20 to-[#0077b6]/20 border border-[#00ff9d]/20 flex items-center justify-center text-[10px] font-bold text-[#00ff9d]">
+                            {tenant.name.substring(0, 2).toUpperCase()}
+                          </div>
+                          <p className="text-sm font-bold text-white">{tenant.name}</p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-white font-mono">{tenant._count?.users ?? 0}</td>
+                      <td className="px-6 py-4 text-sm text-white font-mono">{tenant._count?.leads ?? 0}</td>
+                      <td className="px-6 py-4 text-sm text-white font-mono">{tenant._count?.Deal ?? 0}</td>
+                      <td className="px-6 py-4 text-[11px] text-[#b9cacb]">
+                        {new Date(tenant.createdAt).toLocaleDateString()}
                       </td>
                     </tr>
                   ))}
