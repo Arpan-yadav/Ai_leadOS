@@ -196,13 +196,20 @@ export class LeadsService implements OnModuleInit {
        return;
     }
 
+    const user = await this.prisma.user.findUnique({ where: { id: assignedUserId } });
+    if (!user || !user.tenantId) {
+      this.logger.error(`[AutoPilot] User ${assignedUserId} not found or has no tenantId.`);
+      return;
+    }
+    const tenantId = user.tenantId;
+
     // 1. Generate Strategy & Select Master Workflow
     const strategy = await this.aiService.generateDynamicStrategy(leadName, company, title, score);
     const masterWorkflowName = strategy.masterWorkflow || 'Warm Nurture';
     
     // 2. Find or Create Master Workflow
     let workflow = await this.prisma.workflow.findFirst({
-      where: { name: masterWorkflowName }
+      where: { name: masterWorkflowName, tenantId: tenantId }
     });
 
     if (!workflow) {
@@ -212,6 +219,7 @@ export class LeadsService implements OnModuleInit {
           description: `Auto-generated master workflow: ${masterWorkflowName}`,
           status: 'ACTIVE',
           createdById: assignedUserId,
+          tenantId: tenantId,
           definition: { nodes: [], edges: [] }
         }
       });
@@ -223,6 +231,7 @@ export class LeadsService implements OnModuleInit {
         name: `[Auto] Strategy for ${leadName}`,
         description: `Auto-generated 14-day outreach for ${leadName} at ${company} (Score: ${score})`,
         createdById: assignedUserId,
+        tenantId: tenantId,
         status: 'ACTIVE',
         durationDays: 14,
         steps: strategy.sequences.map((s, index) => ({
