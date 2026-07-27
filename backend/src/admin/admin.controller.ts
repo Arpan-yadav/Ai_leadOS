@@ -160,10 +160,7 @@ export class AdminController {
     await this.prisma.task.deleteMany({ where: { assignedTo: { tenantId: id } } });
     await this.prisma.activity.deleteMany({ where: { user: { tenantId: id } } });
     await this.prisma.workflowExecution.deleteMany({ where: { workflow: { createdBy: { tenantId: id } } } }).catch(() => {});
-    await this.prisma.workflowEdge?.deleteMany({ where: { workflow: { createdBy: { tenantId: id } } } }).catch(() => {});
-    await this.prisma.workflowNode?.deleteMany({ where: { workflow: { createdBy: { tenantId: id } } } }).catch(() => {});
     await this.prisma.sequenceEnrollment.deleteMany({ where: { sequence: { createdBy: { tenantId: id } } } }).catch(() => {});
-    await this.prisma.sequenceStep?.deleteMany({ where: { sequence: { createdBy: { tenantId: id } } } }).catch(() => {});
     await this.prisma.workflow.deleteMany({ where: { createdBy: { tenantId: id } } }).catch(() => {});
     await this.prisma.sequence.deleteMany({ where: { createdBy: { tenantId: id } } }).catch(() => {});
     await this.prisma.invitation?.deleteMany({ where: { tenantId: id } }).catch(() => {});
