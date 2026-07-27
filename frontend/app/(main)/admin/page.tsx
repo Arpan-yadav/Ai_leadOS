@@ -31,7 +31,8 @@ export default function AdminPage() {
   const [tenants, setTenants] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [accessDenied, setAccessDenied] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [activeTenantDetails, setActiveTenantDetails] = useState<any>(null);
   const [search, setSearch] = useState('');
   const [roleMenuOpen, setRoleMenuOpen] = useState<string | null>(null);
   const [resetPwd, setResetPwd] = useState<{ userId: string; name: string } | null>(null);
@@ -74,24 +75,29 @@ export default function AdminPage() {
 
   const fetchAll = async () => {
     setLoading(true);
-    setAccessDenied(false);
     try {
-      const [usersRes, statsRes, rolesRes, tenantsRes] = await Promise.all([
+      const [meRes, usersRes, statsRes, rolesRes] = await Promise.all([
+        fetch(`${API}/auth/me`, { headers: { Authorization: `Bearer ${token}` } }),
         fetch(`${API}/admin/users`, { headers: { Authorization: `Bearer ${token}` } }),
         fetch(`${API}/admin/stats`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API}/admin/roles`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API}/admin/tenants`, { headers: { Authorization: `Bearer ${token}` } })
+        fetch(`${API}/admin/roles`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
       
-      if (usersRes.status === 403 || statsRes.status === 403 || rolesRes.status === 403 || tenantsRes.status === 403) {
-        setAccessDenied(true);
-        return;
+      let isSuperAdmin = false;
+      if (meRes.ok) {
+        const me = await meRes.json();
+        setCurrentUser(me);
+        isSuperAdmin = me.isSuperAdmin;
       }
       
       if (usersRes.ok) setUsers(await usersRes.json());
       if (statsRes.ok) setStats(await statsRes.json());
       if (rolesRes.ok) setRoles(await rolesRes.json());
-      if (tenantsRes.ok) setTenants(await tenantsRes.json());
+
+      if (isSuperAdmin) {
+        const tenantsRes = await fetch(`${API}/admin/tenants`, { headers: { Authorization: `Bearer ${token}` } });
+        if (tenantsRes.ok) setTenants(await tenantsRes.json());
+      }
     } catch (e) {
       toast.error('Failed to load admin data.');
     } finally {
@@ -186,21 +192,24 @@ export default function AdminPage() {
     `${u.name} ${u.email}`.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (accessDenied) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4 animate-fade-in">
-        <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
-          <Shield size={24} className="text-rose-400" />
-        </div>
-        <div className="text-center">
-          <h2 className="text-lg font-black text-white uppercase tracking-widest">Supreme Admin Required</h2>
-          <p className="text-[12px] text-[#b9cacb] mt-2 max-w-sm">
-            You do not have access to the Supreme Admin dashboard. Only the workspace owner can access this area to manage system roles and global metrics.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const fetchTenantDetails = async (tenantId: string) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/admin/tenants/${tenantId}/details`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setActiveTenantDetails(data);
+      } else {
+        toast.error('Failed to load tenant details');
+      }
+    } catch {
+      toast.error('Network error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6 pb-12 animate-fade-in">
@@ -208,7 +217,7 @@ export default function AdminPage() {
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight uppercase flex items-center gap-2">
             <Crown size={22} className="text-[#ff007a]" />
-            Supreme Admin Panel
+            {currentUser?.isSuperAdmin ? 'Supreme Admin Panel' : 'Workspace Admin Panel'}
           </h1>
           <p className="text-[#b9cacb] mt-1 font-mono text-[11px] uppercase tracking-wider">
             Full system control · Custom Roles · Advanced Security
@@ -225,9 +234,11 @@ export default function AdminPage() {
           <button onClick={() => setActiveTab('ROLES')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${activeTab === 'ROLES' ? 'bg-[#bd00ff]/10 text-[#bd00ff]' : 'text-[#b9cacb] hover:text-white'}`}>
             <Shield size={14} /> Roles
           </button>
-          <button onClick={() => setActiveTab('TENANTS')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${activeTab === 'TENANTS' ? 'bg-[#00ff9d]/10 text-[#00ff9d]' : 'text-[#b9cacb] hover:text-white'}`}>
-            <Database size={14} /> Tenants
-          </button>
+          {currentUser?.isSuperAdmin && (
+            <button onClick={() => setActiveTab('TENANTS')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${activeTab === 'TENANTS' ? 'bg-[#00ff9d]/10 text-[#00ff9d]' : 'text-[#b9cacb] hover:text-white'}`}>
+              <Database size={14} /> Tenants
+            </button>
+          )}
         </div>
       </header>
 
@@ -375,62 +386,135 @@ export default function AdminPage() {
       )}
       {/* TENANTS TAB */}
       {activeTab === 'TENANTS' && (
-        <div className="glass-card overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#27272A] flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-black text-white uppercase tracking-widest">Tenant Management</h2>
-              <p className="text-[10px] text-[#b9cacb] mt-0.5">{tenants.length} tenants across the platform</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#b9cacb]" />
-                <input
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  placeholder="Search tenants..."
-                  className="input-field pl-8 text-xs w-52"
-                />
+        <>
+          {activeTenantDetails ? (
+            <div className="space-y-4">
+              <button onClick={() => setActiveTenantDetails(null)} className="btn-secondary text-xs flex items-center gap-2 mb-2">
+                ← Back to Tenants
+              </button>
+              <div className="glass-card p-6 flex justify-between items-center">
+                <div>
+                  <h2 className="text-xl font-bold text-white">{activeTenantDetails.tenant.name}</h2>
+                  <p className="text-xs text-[#b9cacb] mt-1">Tenant Overview</p>
+                </div>
+                <div className="flex gap-4">
+                  <div className="text-right">
+                    <p className="text-xs text-[#b9cacb] uppercase tracking-widest font-bold">Users</p>
+                    <p className="text-xl font-mono font-bold text-[#00f0ff]">{activeTenantDetails.users.length}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-[#b9cacb] uppercase tracking-widest font-bold">Leads</p>
+                    <p className="text-xl font-mono font-bold text-[#bd00ff]">{activeTenantDetails.leads.length}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="glass-card overflow-hidden">
+                  <div className="px-6 py-4 border-b border-[#27272A]"><h3 className="text-sm font-bold text-white">Users</h3></div>
+                  <div className="max-h-64 overflow-y-auto">
+                    <table className="w-full">
+                      <tbody className="divide-y divide-[#27272A]">
+                        {activeTenantDetails.users.map((u: any) => (
+                          <tr key={u.id}>
+                            <td className="px-4 py-3">
+                              <p className="text-sm font-bold text-white">{u.name}</p>
+                              <p className="text-[10px] text-[#b9cacb]">{u.email}</p>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <span className="inline-block px-2 py-0.5 rounded text-[10px] bg-[#00f0ff]/10 text-[#00f0ff]">{u.role?.name || 'Unassigned'}</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div className="glass-card overflow-hidden">
+                  <div className="px-6 py-4 border-b border-[#27272A]"><h3 className="text-sm font-bold text-white">Recent Leads</h3></div>
+                  <div className="max-h-64 overflow-y-auto">
+                    <table className="w-full">
+                      <tbody className="divide-y divide-[#27272A]">
+                        {activeTenantDetails.leads.map((l: any) => (
+                          <tr key={l.id}>
+                            <td className="px-4 py-3">
+                              <p className="text-sm font-bold text-white">{l.name}</p>
+                              <p className="text-[10px] text-[#b9cacb]">{l.company}</p>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <span className={`inline-block px-2 py-0.5 rounded text-[10px] ${l.status === 'HOT' ? 'bg-rose-500/10 text-rose-400' : 'bg-[#b9cacb]/10 text-[#b9cacb]'}`}>{l.status}</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-          {loading ? (
-            <div className="p-8 flex items-center justify-center gap-2 text-[#b9cacb]">
-              <Loader2 size={18} className="animate-spin" /> Loading tenants...
-            </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-[#27272A]">
-                    {['Tenant Name', 'Users', 'Leads', 'Deals', 'Created'].map(h => (
-                      <th key={h} className="text-left px-6 py-3 text-[10px] font-black text-[#b9cacb] uppercase tracking-widest">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#27272A]">
-                  {tenants.filter(t => t.name.toLowerCase().includes(search.toLowerCase())).map(tenant => (
-                    <tr key={tenant.id} className="hover:bg-white/2 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-linear-to-br from-[#00ff9d]/20 to-[#0077b6]/20 border border-[#00ff9d]/20 flex items-center justify-center text-[10px] font-bold text-[#00ff9d]">
-                            {tenant.name.substring(0, 2).toUpperCase()}
-                          </div>
-                          <p className="text-sm font-bold text-white">{tenant.name}</p>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-white font-mono">{tenant._count?.users ?? 0}</td>
-                      <td className="px-6 py-4 text-sm text-white font-mono">{tenant._count?.leads ?? 0}</td>
-                      <td className="px-6 py-4 text-sm text-white font-mono">{tenant._count?.Deal ?? 0}</td>
-                      <td className="px-6 py-4 text-[11px] text-[#b9cacb]">
-                        {new Date(tenant.createdAt).toLocaleDateString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="glass-card overflow-hidden">
+              <div className="px-6 py-4 border-b border-[#27272A] flex items-center justify-between">
+                <div>
+                  <h2 className="text-sm font-black text-white uppercase tracking-widest">Tenant Management</h2>
+                  <p className="text-[10px] text-[#b9cacb] mt-0.5">{tenants.length} tenants across the platform</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#b9cacb]" />
+                    <input
+                      value={search}
+                      onChange={e => setSearch(e.target.value)}
+                      placeholder="Search tenants..."
+                      className="input-field pl-8 text-xs w-52"
+                    />
+                  </div>
+                </div>
+              </div>
+              {loading ? (
+                <div className="p-8 flex items-center justify-center gap-2 text-[#b9cacb]">
+                  <Loader2 size={18} className="animate-spin" /> Loading tenants...
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-[#27272A]">
+                        {['Tenant Name', 'Users', 'Leads', 'Deals', 'Created', ''].map(h => (
+                          <th key={h} className="text-left px-6 py-3 text-[10px] font-black text-[#b9cacb] uppercase tracking-widest">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#27272A]">
+                      {tenants.filter(t => t.name.toLowerCase().includes(search.toLowerCase())).map(tenant => (
+                        <tr key={tenant.id} className="hover:bg-white/2 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-linear-to-br from-[#00ff9d]/20 to-[#0077b6]/20 border border-[#00ff9d]/20 flex items-center justify-center text-[10px] font-bold text-[#00ff9d]">
+                                {tenant.name.substring(0, 2).toUpperCase()}
+                              </div>
+                              <p className="text-sm font-bold text-white">{tenant.name}</p>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-white font-mono">{tenant._count?.users ?? 0}</td>
+                          <td className="px-6 py-4 text-sm text-white font-mono">{tenant._count?.leads ?? 0}</td>
+                          <td className="px-6 py-4 text-sm text-white font-mono">{tenant._count?.Deal ?? 0}</td>
+                          <td className="px-6 py-4 text-[11px] text-[#b9cacb]">
+                            {new Date(tenant.createdAt).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <button onClick={() => fetchTenantDetails(tenant.id)} className="btn-secondary text-[10px] px-2 py-1 flex items-center gap-1 inline-flex">
+                              <Eye size={10} /> View Details
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
-        </div>
+        </>
       )}
 
       {/* ROLES TAB */}

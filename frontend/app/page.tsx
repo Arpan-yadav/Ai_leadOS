@@ -107,7 +107,7 @@ export default function LandingPage() {
               <img 
                 src="/dashboard_preview.png"
                 alt="Dashboard Preview"
-                className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
+                className="w-full h-full object-contain object-center transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute inset-0 dark:bg-linear-to-t dark:from-slate-950/80 dark:to-transparent" style={{ background: 'linear-gradient(to top, rgba(15, 23, 42, 0.4), transparent)' }} />
               
