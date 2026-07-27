@@ -351,7 +351,15 @@ export class LeadsService implements OnModuleInit {
   async remove(id: string, tenantId?: string, isSuperAdmin?: boolean) {
     await this.findOne(id, tenantId, isSuperAdmin); // throws if not found
     
-    return this.prisma.$transaction([
+    // 1. Find sequences this lead is enrolled in
+    const enrollments = await this.prisma.sequenceEnrollment.findMany({
+      where: { leadId: id },
+      include: { sequence: true }
+    });
+    const sequenceIdsToCheck = enrollments.map(e => e.sequence.id);
+
+    // 2. Delete the lead and all its related execution data
+    const result = await this.prisma.$transaction([
       this.prisma.activity.deleteMany({ where: { leadId: id } }),
       this.prisma.communicationLog.deleteMany({ where: { leadId: id } }),
       this.prisma.task.deleteMany({ where: { leadId: id } }),
@@ -361,6 +369,21 @@ export class LeadsService implements OnModuleInit {
       this.prisma.workflowExecution.deleteMany({ where: { leadId: id } }),
       this.prisma.lead.delete({ where: { id } })
     ]);
+
+    // 3. Clean up orphaned auto-generated sequences
+    for (const seqId of sequenceIdsToCheck) {
+      const seq = await this.prisma.sequence.findUnique({
+        where: { id: seqId },
+        include: { _count: { select: { enrollments: true } } }
+      });
+      
+      if (seq && seq.name.startsWith('[Auto] Strategy for') && seq._count.enrollments === 0) {
+        await this.prisma.sequence.delete({ where: { id: seqId } });
+        this.logger.log(`[LeadsService] Deleted orphaned auto-generated sequence ${seqId}`);
+      }
+    }
+
+    return result;
   }
 
   async getHighIntentCount(tenantId?: string, isSuperAdmin?: boolean) {
