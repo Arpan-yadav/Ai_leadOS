@@ -488,27 +488,37 @@ Return only the email subject line and body. No other conversational text or mar
   /**
    * Generate highly personalized outreach message using Gemini
    */
-  async generatePersonalizedMessage(leadName: string, company: string, context?: string): Promise<{ message: string }> {
+  async generatePersonalizedMessage(
+    leadName: string,
+    company: string,
+    context?: string,
+    aiInsightSummary?: string,
+    conversationHistory?: string,
+    tenantId?: string,
+  ): Promise<{ message: string }> {
     const prompt = `
 You are an elite B2B Sales Development Representative (SDR) known for writing hyper-personalized, high-converting outreach messages.
-Your task is to write a highly unique and personalized opening message for a prospect.
+Your task is to write a highly unique and personalized message for a prospect.
 
 Lead: ${leadName}
 Company: ${company}
-Context/Channel: ${context ?? 'Standard B2B intro'}
+Channel/Context: ${context ?? 'Standard B2B intro'}
+${aiInsightSummary ? `\nAI Business Intelligence:\n${aiInsightSummary}` : ''}
+${conversationHistory ? `\nPrevious Conversation History:\n${conversationHistory}\n\nIMPORTANT: This is a FOLLOW-UP message. Reference the previous conversation naturally. Do NOT send a cold intro.` : 'This is a first-touch cold outreach message.'}
 
 Instructions:
-1. Simulate deep research on "${company}". Identify their likely industry, typical business model, and common pain points for a company of their profile.
-2. Weave this "research" seamlessly into the opening line to prove you understand their specific business context. Do NOT use generic phrases like "I noticed your impressive growth".
-3. Propose a highly specific value hypothesis on how AI automation can solve their exact pain points.
-4. Keep the message under 4 sentences. Keep it conversational, not overly formal.
+1. Use the AI Business Intelligence to prove deep understanding of their specific situation.
+2. If there is conversation history, continue the thread naturally — acknowledge their last message and propose a clear next step.
+3. If it's a cold message, simulate research on "${company}" to craft a hyper-specific opening line.
+4. Propose a clear value hypothesis tied to their exact pain points.
+5. Keep it under 4 sentences. Conversational, not salesy.
 
 Return exactly this JSON (no markdown):
 {
   "message": "<the generated message>"
 }`.trim();
 
-    const result = await this.generateJSON<{ message: string }>(prompt);
+    const result = await this.generateJSON<{ message: string }>(prompt, tenantId);
     if (result) return result;
 
     return {

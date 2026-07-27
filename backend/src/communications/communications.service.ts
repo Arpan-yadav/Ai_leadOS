@@ -70,8 +70,11 @@ export class CommunicationsService implements OnModuleInit {
   }
 
 
-  async getAllLogs() {
+  async getAllLogs(tenantId?: string, isSuperAdmin?: boolean) {
     return this.prisma.communicationLog.findMany({
+      where: {
+        ...( (!isSuperAdmin && tenantId) && { lead: { tenantId } } )
+      },
       orderBy: { sentAt: 'desc' },
       include: { lead: true }
     });
@@ -281,8 +284,31 @@ export class CommunicationsService implements OnModuleInit {
     return { received: true, replied: true, replyContent: aiResponse.reply };
   }
 
-  async generatePersonalizedMessage(leadName: string, company: string, context?: string) {
-    return this.aiService.generatePersonalizedMessage(leadName, company, context);
+  async generatePersonalizedMessage(leadName: string, company: string, context?: string, leadId?: string, history?: string, tenantId?: string) {
+    // Fetch additional context: lead's AI insights and past communications
+    let aiInsightSummary = '';
+    let conversationHistory = history || '';
+
+    if (leadId) {
+      try {
+        const [insights, pastMessages] = await Promise.all([
+          this.prisma.aIInsight.findFirst({ where: { leadId }, orderBy: { createdAt: 'desc' } }),
+          this.prisma.communicationLog.findMany({ where: { leadId }, orderBy: { sentAt: 'desc' }, take: 5 }),
+        ]);
+
+        if (insights) {
+          aiInsightSummary = `AI Analysis: ${insights.analysis}. Sentiment: ${insights.sentiment}. Next action: ${insights.nextAction || 'follow up'}`;
+        }
+
+        if (pastMessages.length > 0) {
+          conversationHistory = pastMessages.reverse()
+            .map(m => `${m.direction === 'inbound' ? 'Lead' : 'You'}: ${m.content}`)
+            .join('\n');
+        }
+      } catch (e) { /* non-critical, fall through */ }
+    }
+
+    return this.aiService.generatePersonalizedMessage(leadName, company, context, aiInsightSummary, conversationHistory, tenantId);
   }
 
   async suggestOptimalSendTime(leadName: string, company: string) {
