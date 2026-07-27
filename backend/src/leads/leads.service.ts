@@ -273,7 +273,7 @@ export class LeadsService implements OnModuleInit {
   // ─── Read ─────────────────────────────────────────────────────────────────
 
   async findAll(query: LeadQueryDto, tenantId?: string, isSuperAdmin?: boolean) {
-    const { page = 1, limit = 20, search, status, source } = query;
+    const { page = 1, limit = 20, search, status, source, assignedToId } = query;
     const skip = (page - 1) * limit;
 
     const where: Prisma.LeadWhereInput = {
@@ -287,6 +287,7 @@ export class LeadsService implements OnModuleInit {
       }),
       ...(status && { status }),
       ...(source && { source }),
+      ...(assignedToId && { assignedToId }),
     };
 
     const [data, total] = await this.prisma.$transaction([

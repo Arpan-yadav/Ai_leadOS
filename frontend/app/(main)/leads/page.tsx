@@ -1,6 +1,6 @@
 'use client'
 import React, { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Search, Filter, Download, Plus, MoreHorizontal, Mail, Linkedin, Globe, Zap, MessageSquare, Facebook, Sparkles, X, Trash2 } from 'lucide-react'
 import StatusBadge from '@/components/ui/StatusBadge'
 import AddLeadModal from '@/components/leads/AddLeadModal'
@@ -65,6 +65,9 @@ const LeadsPage = () => {
   const [page, setPage]                 = useState(1)
   const [totalPages, setTotalPages]     = useState(1)
   const [refresh, setRefresh]           = useState(0)
+  
+  const searchParams = useSearchParams()
+  const assignedToIdParam = searchParams.get('assignedToId')
 
   useEffect(() => {
     const fetchLeads = async () => {
@@ -76,6 +79,9 @@ const LeadsPage = () => {
         if (channel !== 'All') {
           const mappedSource = channel === 'Meta' ? 'META_LEADS' : channel.toUpperCase()
           params.append('source', mappedSource)
+        }
+        if (assignedToIdParam) {
+          params.append('assignedToId', assignedToIdParam)
         }
 
         const res = await fetch(`${API_URL}/leads?${params.toString()}`, {
@@ -92,7 +98,7 @@ const LeadsPage = () => {
       }
     }
     fetchLeads()
-  }, [page, search, channel, refresh])
+  }, [page, search, channel, refresh, assignedToIdParam])
 
   const filteredLeads = leads
 

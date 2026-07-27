@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { getToken } from '@/lib/auth';
 import toast from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
@@ -25,6 +26,7 @@ function StatCard({ icon: Icon, label, value, color }: any) {
 }
 
 export default function AdminPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'USERS' | 'ROLES' | 'TENANTS'>('OVERVIEW');
   const [users, setUsers] = useState<any[]>([]);
   const [roles, setRoles] = useState<any[]>([]);
@@ -359,7 +361,15 @@ export default function AdminPage() {
                           {user.role?.name || 'Unassigned'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-white font-mono">{user._count?.leads ?? 0}</td>
+                      <td className="px-6 py-4 text-sm text-white font-mono">
+                        <button 
+                          onClick={() => router.push(`/leads?assignedToId=${user.id}`)}
+                          className="hover:text-[#00f0ff] hover:underline cursor-pointer transition-colors"
+                          title="View Leads added by this user"
+                        >
+                          {user._count?.leads ?? 0}
+                        </button>
+                      </td>
                       <td className="px-6 py-4 text-sm text-white font-mono">{user._count?.deals ?? 0}</td>
                       <td className="px-6 py-4 text-[11px] text-[#b9cacb]">
                         {new Date(user.createdAt).toLocaleDateString()}

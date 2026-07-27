@@ -38,4 +38,9 @@ export class LeadQueryDto {
   @IsOptional()
   @IsEnum(LeadSourceEnum)
   source?: LeadSourceEnum;
+
+  @ApiPropertyOptional({ description: 'Filter by assigned user/creator ID' })
+  @IsOptional()
+  @IsString()
+  assignedToId?: string;
 }
