@@ -105,7 +105,7 @@ export default function LandingPage() {
             <div className="absolute inset-0 bg-brand-600/10 dark:bg-brand-500/20 blur-[120px] rounded-full transition-colors duration-300" />
             <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden group transition-colors duration-300" style={{ aspectRatio: '4/3', borderRadius: '1rem' }}>
               <img 
-                src="https://images.unsplash.com/photo-1551288049-bbbda50a867c?auto=format&fit=crop&q=80&w=1200" 
+                src="/dashboard_preview.png"
                 alt="Dashboard Preview"
                 className="w-full h-full object-cover grayscale transition-all duration-700 group-hover:grayscale-0 group-hover:scale-105"
               />

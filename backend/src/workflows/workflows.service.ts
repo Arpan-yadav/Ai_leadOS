@@ -7,18 +7,22 @@ import { UpdateWorkflowDto } from './dto/update-workflow.dto';
 export class WorkflowsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createWorkflowDto: CreateWorkflowDto, userId: string) {
+  async create(createWorkflowDto: CreateWorkflowDto, userId: string, tenantId?: string) {
     return this.prisma.workflow.create({
       data: {
         ...createWorkflowDto,
         definition: createWorkflowDto.definition as any, // Prisma Json handling
         createdById: userId,
+        tenantId,
       },
     });
   }
 
-  async findAll() {
+  async findAll(tenantId?: string, isSuperAdmin?: boolean) {
     return this.prisma.workflow.findMany({
+      where: {
+        ...( (!isSuperAdmin && tenantId) && { tenantId } )
+      },
       orderBy: { updatedAt: 'desc' },
       include: {
         createdBy: {
@@ -35,9 +39,14 @@ export class WorkflowsService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, tenantId?: string, isSuperAdmin?: boolean) {
+    const whereClause: any = { id };
+    if (!isSuperAdmin && tenantId) {
+      whereClause.tenantId = tenantId;
+    }
+
     const workflow = await this.prisma.workflow.findUnique({
-      where: { id },
+      where: whereClause,
       include: {
         createdBy: {
           select: { id: true, name: true, avatar: true },
@@ -55,8 +64,8 @@ export class WorkflowsService {
     return workflow;
   }
 
-  async update(id: string, updateWorkflowDto: UpdateWorkflowDto) {
-    const workflow = await this.prisma.workflow.findUnique({ where: { id } });
+  async update(id: string, updateWorkflowDto: UpdateWorkflowDto, tenantId?: string, isSuperAdmin?: boolean) {
+    const workflow = await this.findOne(id, tenantId, isSuperAdmin); // throws if not found
     if (!workflow) {
       throw new NotFoundException(`Workflow with ID ${id} not found`);
     }
@@ -70,8 +79,8 @@ export class WorkflowsService {
     });
   }
 
-  async remove(id: string) {
-    const workflow = await this.prisma.workflow.findUnique({ where: { id } });
+  async remove(id: string, tenantId?: string, isSuperAdmin?: boolean) {
+    const workflow = await this.findOne(id, tenantId, isSuperAdmin); // throws if not found
     if (!workflow) {
       throw new NotFoundException(`Workflow with ID ${id} not found`);
     }

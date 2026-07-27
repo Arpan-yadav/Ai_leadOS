@@ -10,7 +10,7 @@ export class DealsService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(dto: CreateDealDto, userId: string) {
+  async create(dto: CreateDealDto, userId: string, tenantId?: string) {
     this.logger.log(`[DealsService] Creating deal for Lead ID: ${dto.leadId}`);
     return this.prisma.deal.create({
       data: {
@@ -19,12 +19,16 @@ export class DealsService {
         stage: dto.stage ?? 'DISCOVERY',
         leadId: dto.leadId,
         ownerId: userId,
+        tenantId,
       },
     });
   }
 
-  async findAll() {
+  async findAll(tenantId?: string, isSuperAdmin?: boolean) {
     return this.prisma.deal.findMany({
+      where: {
+        ...( (!isSuperAdmin && tenantId) && { tenantId } )
+      },
       orderBy: { createdAt: 'desc' },
       include: {
         lead: { select: { id: true, name: true, company: true } },
@@ -32,9 +36,14 @@ export class DealsService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, tenantId?: string, isSuperAdmin?: boolean) {
+    const whereClause: any = { id };
+    if (!isSuperAdmin && tenantId) {
+      whereClause.tenantId = tenantId;
+    }
+
     const deal = await this.prisma.deal.findUnique({
-      where: { id },
+      where: whereClause,
       include: {
         lead: true,
       },
@@ -53,16 +62,16 @@ export class DealsService {
     return { ...deal, activities: dealActivities };
   }
 
-  async update(id: string, dto: UpdateDealDto) {
-    await this.findOne(id);
+  async update(id: string, dto: UpdateDealDto, tenantId?: string, isSuperAdmin?: boolean) {
+    await this.findOne(id, tenantId, isSuperAdmin);
     return this.prisma.deal.update({
       where: { id },
       data: dto,
     });
   }
 
-  async updateStage(id: string, stage: DealStage, userId: string) {
-    const existingDeal = await this.findOne(id);
+  async updateStage(id: string, stage: DealStage, userId: string, tenantId?: string, isSuperAdmin?: boolean) {
+    const existingDeal = await this.findOne(id, tenantId, isSuperAdmin);
 
     const updatedDeal = await this.prisma.deal.update({
       where: { id },
@@ -106,8 +115,8 @@ export class DealsService {
     return updatedDeal;
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, tenantId?: string, isSuperAdmin?: boolean) {
+    await this.findOne(id, tenantId, isSuperAdmin);
     return this.prisma.deal.delete({ where: { id } });
   }
 }

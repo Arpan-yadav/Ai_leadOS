@@ -32,7 +32,7 @@ export class LeadsService implements OnModuleInit {
 
   // ─── Create Lead ──────────────────────────────────────────────────────────
 
-  async create(dto: CreateLeadDto, userId: string) {
+  async create(dto: CreateLeadDto, userId: string, tenantId?: string) {
     const lead = await this.prisma.lead.create({
       data: {
         name: dto.name,
@@ -45,6 +45,7 @@ export class LeadsService implements OnModuleInit {
         source: dto.source ?? 'WEBSITE',
         status: dto.status ?? 'NEW',
         assignedToId: userId,
+        tenantId,
       },
     });
 
@@ -67,7 +68,7 @@ export class LeadsService implements OnModuleInit {
     return lead;
   }
 
-  async createBulk(dtos: CreateLeadDto[], userId: string) {
+  async createBulk(dtos: CreateLeadDto[], userId: string, tenantId?: string) {
     this.logger.log(`[LeadsService] Bulk creating ${dtos.length} leads...`);
     
     const createdLeads = await Promise.all(
@@ -84,6 +85,7 @@ export class LeadsService implements OnModuleInit {
             source: dto.source ?? 'WEBSITE',
             status: dto.status ?? 'NEW',
             assignedToId: userId,
+            tenantId,
           }
         })
       )
@@ -261,11 +263,12 @@ export class LeadsService implements OnModuleInit {
 
   // ─── Read ─────────────────────────────────────────────────────────────────
 
-  async findAll(query: LeadQueryDto) {
+  async findAll(query: LeadQueryDto, tenantId?: string, isSuperAdmin?: boolean) {
     const { page = 1, limit = 20, search, status, source } = query;
     const skip = (page - 1) * limit;
 
     const where: Prisma.LeadWhereInput = {
+      ...( (!isSuperAdmin && tenantId) && { tenantId } ),
       ...(search && {
         OR: [
           { name: { contains: search, mode: 'insensitive' } },
@@ -294,9 +297,14 @@ export class LeadsService implements OnModuleInit {
     return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, tenantId?: string, isSuperAdmin?: boolean) {
+    const whereClause: any = { id };
+    if (!isSuperAdmin && tenantId) {
+      whereClause.tenantId = tenantId;
+    }
+
     const lead = await this.prisma.lead.findUnique({
-      where: { id },
+      where: whereClause,
       include: {
         assignedTo: { select: { id: true, name: true, email: true } },
         aiInsights: { orderBy: { createdAt: 'desc' }, take: 3 },
@@ -311,8 +319,8 @@ export class LeadsService implements OnModuleInit {
 
   // ─── Update ───────────────────────────────────────────────────────────────
 
-  async update(id: string, dto: UpdateLeadDto, userId?: string) {
-    const existing = await this.findOne(id); // throws if not found
+  async update(id: string, dto: UpdateLeadDto, userId?: string, tenantId?: string, isSuperAdmin?: boolean) {
+    const existing = await this.findOne(id, tenantId, isSuperAdmin); // throws if not found
     const updated = await this.prisma.lead.update({ where: { id }, data: dto });
 
     // Sprint 3 (Soumya): Fire lead.status_changed event when status changes
@@ -331,8 +339,8 @@ export class LeadsService implements OnModuleInit {
 
   // ─── Delete ───────────────────────────────────────────────────────────────
 
-  async remove(id: string) {
-    await this.findOne(id); // throws if not found
+  async remove(id: string, tenantId?: string, isSuperAdmin?: boolean) {
+    await this.findOne(id, tenantId, isSuperAdmin); // throws if not found
     
     return this.prisma.$transaction([
       this.prisma.activity.deleteMany({ where: { leadId: id } }),
@@ -346,10 +354,11 @@ export class LeadsService implements OnModuleInit {
     ]);
   }
 
-  async getHighIntentCount() {
+  async getHighIntentCount(tenantId?: string, isSuperAdmin?: boolean) {
     return this.prisma.lead.count({
       where: {
-        score: { gte: 80 }
+        score: { gte: 80 },
+        ...( (!isSuperAdmin && tenantId) && { tenantId } )
       }
     });
   }

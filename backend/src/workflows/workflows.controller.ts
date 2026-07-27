@@ -25,19 +25,19 @@ export class WorkflowsController {
   @Post()
   @ApiOperation({ summary: 'Create a new visual automation workflow' })
   create(@Body() createWorkflowDto: CreateWorkflowDto, @Request() req: any) {
-    return this.workflowsService.create(createWorkflowDto, req.user.id);
+    return this.workflowsService.create(createWorkflowDto, req.user.id, req.user.tenantId);
   }
 
   @Get()
   @ApiOperation({ summary: 'List all automation workflows' })
-  findAll() {
-    return this.workflowsService.findAll();
+  findAll(@Request() req: any) {
+    return this.workflowsService.findAll(req.user.tenantId, req.user.isSuperAdmin);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a specific workflow and its definition' })
-  findOne(@Param('id') id: string) {
-    return this.workflowsService.findOne(id);
+  findOne(@Param('id') id: string, @Request() req: any) {
+    return this.workflowsService.findOne(id, req.user.tenantId, req.user.isSuperAdmin);
   }
 
   @Patch(':id')
@@ -45,13 +45,14 @@ export class WorkflowsController {
   update(
     @Param('id') id: string,
     @Body() updateWorkflowDto: UpdateWorkflowDto,
+    @Request() req: any,
   ) {
-    return this.workflowsService.update(id, updateWorkflowDto);
+    return this.workflowsService.update(id, updateWorkflowDto, req.user.tenantId, req.user.isSuperAdmin);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a workflow' })
-  remove(@Param('id') id: string) {
-    return this.workflowsService.remove(id);
+  remove(@Param('id') id: string, @Request() req: any) {
+    return this.workflowsService.remove(id, req.user.tenantId, req.user.isSuperAdmin);
   }
 }

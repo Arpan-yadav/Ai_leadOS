@@ -35,21 +35,21 @@ export class DealsController {
   @ApiOperation({ summary: 'Create a new deal' })
   @ApiResponse({ status: 201, description: 'Deal successfully created.' })
   create(@Body() dto: CreateDealDto, @Request() req: any) {
-    return this.dealsService.create(dto, req.user.id);
+    return this.dealsService.create(dto, req.user.id, req.user.tenantId);
   }
 
   @Get()
   @ApiOperation({ summary: 'List all deals' })
   @ApiResponse({ status: 200, description: 'List of deals retrieved successfully.' })
-  findAll() {
-    return this.dealsService.findAll();
+  findAll(@Request() req: any) {
+    return this.dealsService.findAll(req.user.tenantId, req.user.isSuperAdmin);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get details of a specific deal' })
   @ApiParam({ name: 'id', description: 'Deal ID (cuid)' })
-  findOne(@Param('id') id: string) {
-    return this.dealsService.findOne(id);
+  findOne(@Param('id') id: string, @Request() req: any) {
+    return this.dealsService.findOne(id, req.user.tenantId, req.user.isSuperAdmin);
   }
 
   @Patch(':id/stage')
@@ -60,21 +60,21 @@ export class DealsController {
     @Body() dto: UpdateStageDto,
     @Request() req: any,
   ) {
-    return this.dealsService.updateStage(id, dto.stage, req.user.id);
+    return this.dealsService.updateStage(id, dto.stage, req.user.id, req.user.tenantId, req.user.isSuperAdmin);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update an existing deal' })
   @ApiParam({ name: 'id', description: 'Deal ID (cuid)' })
-  update(@Param('id') id: string, @Body() dto: UpdateDealDto) {
-    return this.dealsService.update(id, dto);
+  update(@Param('id') id: string, @Body() dto: UpdateDealDto, @Request() req: any) {
+    return this.dealsService.update(id, dto, req.user.tenantId, req.user.isSuperAdmin);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a deal' })
   @ApiParam({ name: 'id', description: 'Deal ID (cuid)' })
-  remove(@Param('id') id: string) {
-    return this.dealsService.remove(id);
+  remove(@Param('id') id: string, @Request() req: any) {
+    return this.dealsService.remove(id, req.user.tenantId, req.user.isSuperAdmin);
   }
 }

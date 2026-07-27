@@ -36,56 +36,56 @@ export class TasksController {
   @ApiOperation({ summary: 'Create a new task linked to a lead' })
   @ApiResponse({ status: 201, description: 'Task successfully created.' })
   create(@Body() dto: CreateTaskDto, @Request() req: any) {
-    return this.tasksService.create(dto, req.user.id);
+    return this.tasksService.create(dto, req.user.id, req.user.tenantId);
   }
 
   @Get()
   @ApiOperation({ summary: 'List tasks with pagination and status filter' })
   @ApiResponse({ status: 200, description: 'List of tasks retrieved successfully.' })
-  findAll(@Query() query: TaskQueryDto) {
-    return this.tasksService.findAll(query);
+  findAll(@Query() query: TaskQueryDto, @Request() req: any) {
+    return this.tasksService.findAll(query, req.user.tenantId, req.user.isSuperAdmin);
   }
 
   @Get('suggest')
   @ApiOperation({ summary: 'Get AI task suggestions' })
   @ApiResponse({ status: 200, description: 'AI generated task suggestions.' })
-  suggest() {
-    return this.tasksService.suggest();
+  suggest(@Request() req: any) {
+    return this.tasksService.suggest(req.user.tenantId, req.user.isSuperAdmin);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get details of a specific task' })
   @ApiParam({ name: 'id', description: 'Task ID (cuid)' })
-  findOne(@Param('id') id: string) {
-    return this.tasksService.findOne(id);
+  findOne(@Param('id') id: string, @Request() req: any) {
+    return this.tasksService.findOne(id, req.user.tenantId, req.user.isSuperAdmin);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update an existing task' })
   @ApiParam({ name: 'id', description: 'Task ID (cuid)' })
-  update(@Param('id') id: string, @Body() dto: UpdateTaskDto) {
-    return this.tasksService.update(id, dto);
+  update(@Param('id') id: string, @Body() dto: UpdateTaskDto, @Request() req: any) {
+    return this.tasksService.update(id, dto, req.user.tenantId, req.user.isSuperAdmin);
   }
 
   @Patch(':id/complete')
   @ApiOperation({ summary: 'Mark a task as completed' })
   @ApiParam({ name: 'id', description: 'Task ID (cuid)' })
   complete(@Param('id') id: string, @Request() req: any) {
-    return this.tasksService.complete(id, req.user.id);
+    return this.tasksService.complete(id, req.user.id, req.user.tenantId, req.user.isSuperAdmin);
   }
 
   @Patch(':id/undo')
   @ApiOperation({ summary: 'Revert a completed task to pending' })
   @ApiParam({ name: 'id', description: 'Task ID (cuid)' })
-  undo(@Param('id') id: string) {
-    return this.tasksService.undo(id);
+  undo(@Param('id') id: string, @Request() req: any) {
+    return this.tasksService.undo(id, req.user.tenantId, req.user.isSuperAdmin);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a task' })
   @ApiParam({ name: 'id', description: 'Task ID (cuid)' })
-  remove(@Param('id') id: string) {
-    return this.tasksService.remove(id);
+  remove(@Param('id') id: string, @Request() req: any) {
+    return this.tasksService.remove(id, req.user.tenantId, req.user.isSuperAdmin);
   }
 }

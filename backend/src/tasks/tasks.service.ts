@@ -20,7 +20,7 @@ export class TasksService {
     private readonly aiService: AiService,
   ) {}
 
-  async create(dto: CreateTaskDto, userId: string) {
+  async create(dto: CreateTaskDto, userId: string, tenantId?: string) {
     return this.prisma.task.create({
       data: {
         title: dto.title,
@@ -30,16 +30,18 @@ export class TasksService {
         status: 'pending',
         leadId: dto.leadId,
         assignedToId: userId,
+        tenantId,
       },
     });
   }
 
-  async findAll(query: TaskQueryDto) {
+  async findAll(query: TaskQueryDto, tenantId?: string, isSuperAdmin?: boolean) {
     const { page = 1, limit = 20, status } = query;
     const skip = (page - 1) * limit;
 
     const where = {
       ...(status && { status }),
+      ...( (!isSuperAdmin && tenantId) && { tenantId } )
     };
 
     const [data, total] = await this.prisma.$transaction([
@@ -65,9 +67,14 @@ export class TasksService {
     };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, tenantId?: string, isSuperAdmin?: boolean) {
+    const whereClause: any = { id };
+    if (!isSuperAdmin && tenantId) {
+      whereClause.tenantId = tenantId;
+    }
+
     const task = await this.prisma.task.findUnique({
-      where: { id },
+      where: whereClause,
       include: {
         lead: { select: { id: true, name: true, company: true } },
         assignedTo: { select: { id: true, name: true, email: true } },
@@ -78,8 +85,8 @@ export class TasksService {
     return task;
   }
 
-  async update(id: string, dto: UpdateTaskDto) {
-    await this.findOne(id);
+  async update(id: string, dto: UpdateTaskDto, tenantId?: string, isSuperAdmin?: boolean) {
+    await this.findOne(id, tenantId, isSuperAdmin);
 
     return this.prisma.task.update({
       where: { id },
@@ -90,8 +97,8 @@ export class TasksService {
     });
   }
 
-  async complete(id: string, userId: string) {
-    const task = await this.findOne(id);
+  async complete(id: string, userId: string, tenantId?: string, isSuperAdmin?: boolean) {
+    const task = await this.findOne(id, tenantId, isSuperAdmin);
 
     const completed = await this.prisma.task.update({
       where: { id },
@@ -112,8 +119,8 @@ export class TasksService {
     return completed;
   }
 
-  async undo(id: string) {
-    await this.findOne(id);
+  async undo(id: string, tenantId?: string, isSuperAdmin?: boolean) {
+    await this.findOne(id, tenantId, isSuperAdmin);
 
     return this.prisma.task.update({
       where: { id },
@@ -124,16 +131,22 @@ export class TasksService {
     });
   }
 
-  async suggest() {
+  async suggest(tenantId?: string, isSuperAdmin?: boolean) {
     const activeDeals = await this.prisma.deal.findMany({
-      where: { stage: { in: ['PROPOSAL', 'NEGOTIATION'] } },
+      where: { 
+        stage: { in: ['PROPOSAL', 'NEGOTIATION'] },
+        ...( (!isSuperAdmin && tenantId) && { tenantId } )
+      },
       take: 5,
       include: { lead: { select: { company: true, name: true } } },
       orderBy: { updatedAt: 'asc' }
     });
 
     const newLeads = await this.prisma.lead.findMany({
-      where: { status: 'NEW' },
+      where: { 
+        status: 'NEW',
+        ...( (!isSuperAdmin && tenantId) && { tenantId } )
+      },
       take: 5,
       orderBy: { createdAt: 'asc' }
     });
@@ -142,8 +155,8 @@ export class TasksService {
     return this.aiService.suggestTasks(contextData);
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, tenantId?: string, isSuperAdmin?: boolean) {
+    await this.findOne(id, tenantId, isSuperAdmin);
     return this.prisma.task.delete({ where: { id } });
   }
 }

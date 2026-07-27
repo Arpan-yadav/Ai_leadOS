@@ -8,7 +8,7 @@ import { ActivityQueryDto } from './dto/activity-query.dto';
 export class ActivitiesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(dto: CreateActivityDto, userId: string) {
+  async create(dto: CreateActivityDto, userId: string, tenantId?: string) {
     return this.prisma.activity.create({
       data: {
         type: dto.type,
@@ -16,13 +16,15 @@ export class ActivitiesService {
         metadata: dto.metadata,
         leadId: dto.leadId,
         userId,
+        tenantId,
       },
     });
   }
 
-  async findAll(query: ActivityQueryDto) {
+  async findAll(query: ActivityQueryDto, tenantId?: string, isSuperAdmin?: boolean) {
     const where = {
       ...(query.leadId && { leadId: query.leadId }),
+      ...( (!isSuperAdmin && tenantId) && { tenantId } )
     };
 
     return this.prisma.activity.findMany({
@@ -35,9 +37,14 @@ export class ActivitiesService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, tenantId?: string, isSuperAdmin?: boolean) {
+    const whereClause: any = { id };
+    if (!isSuperAdmin && tenantId) {
+      whereClause.tenantId = tenantId;
+    }
+
     const activity = await this.prisma.activity.findUnique({
-      where: { id },
+      where: whereClause,
       include: {
         lead: true,
         user: true,
@@ -48,8 +55,8 @@ export class ActivitiesService {
     return activity;
   }
 
-  async update(id: string, dto: UpdateActivityDto) {
-    await this.findOne(id);
+  async update(id: string, dto: UpdateActivityDto, tenantId?: string, isSuperAdmin?: boolean) {
+    await this.findOne(id, tenantId, isSuperAdmin);
 
     return this.prisma.activity.update({
       where: { id },
@@ -57,8 +64,8 @@ export class ActivitiesService {
     });
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, tenantId?: string, isSuperAdmin?: boolean) {
+    await this.findOne(id, tenantId, isSuperAdmin);
     return this.prisma.activity.delete({ where: { id } });
   }
 }

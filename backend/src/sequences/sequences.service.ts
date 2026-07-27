@@ -104,7 +104,7 @@ export class SequencesService {
     }
   }
 
-  async create(dto: CreateSequenceDto, userId: string) {
+  async create(dto: CreateSequenceDto, userId: string, tenantId?: string) {
     return this.prisma.sequence.create({
       data: {
         name: dto.name,
@@ -117,12 +117,16 @@ export class SequencesService {
         tags: dto.tags ?? [],
         status: SequenceStatus.ACTIVE,
         createdById: userId,
+        tenantId,
       },
     });
   }
 
-  async findAll() {
+  async findAll(tenantId?: string, isSuperAdmin?: boolean) {
     return this.prisma.sequence.findMany({
+      where: {
+        ...( (!isSuperAdmin && tenantId) && { tenantId } )
+      },
       orderBy: { createdAt: 'desc' },
       include: {
         _count: {
@@ -135,9 +139,14 @@ export class SequencesService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, tenantId?: string, isSuperAdmin?: boolean) {
+    const whereClause: any = { id };
+    if (!isSuperAdmin && tenantId) {
+      whereClause.tenantId = tenantId;
+    }
+
     const sequence = await this.prisma.sequence.findUnique({
-      where: { id },
+      where: whereClause,
       include: {
         enrollments: {
           include: { lead: true },
@@ -152,8 +161,8 @@ export class SequencesService {
     return sequence;
   }
 
-  async update(id: string, dto: UpdateSequenceDto) {
-    await this.findOne(id);
+  async update(id: string, dto: UpdateSequenceDto, tenantId?: string, isSuperAdmin?: boolean) {
+    await this.findOne(id, tenantId, isSuperAdmin);
     return this.prisma.sequence.update({
       where: { id },
       data: {
@@ -162,13 +171,13 @@ export class SequencesService {
     });
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, tenantId?: string, isSuperAdmin?: boolean) {
+    await this.findOne(id, tenantId, isSuperAdmin);
     return this.prisma.sequence.delete({ where: { id } });
   }
 
-  async enrollLead(sequenceId: string, leadId: string) {
-    await this.findOne(sequenceId);
+  async enrollLead(sequenceId: string, leadId: string, tenantId?: string, isSuperAdmin?: boolean) {
+    await this.findOne(sequenceId, tenantId, isSuperAdmin);
     
     // Check if lead exists
     const lead = await this.prisma.lead.findUnique({ where: { id: leadId } });
@@ -184,9 +193,12 @@ export class SequencesService {
       },
     });
   }
-  async advanceEnrollment(enrollmentId: string) {
-    const enrollment = await this.prisma.sequenceEnrollment.findUnique({
-      where: { id: enrollmentId },
+  async advanceEnrollment(enrollmentId: string, tenantId?: string, isSuperAdmin?: boolean) {
+    const enrollment = await this.prisma.sequenceEnrollment.findFirst({
+      where: { 
+        id: enrollmentId,
+        ...( (!isSuperAdmin && tenantId) && { sequence: { tenantId } } )
+      },
       include: { sequence: true, lead: true },
     });
     
@@ -266,9 +278,12 @@ export class SequencesService {
     });
   }
 
-  async undoEnrollment(enrollmentId: string, targetStep: number) {
-    const enrollment = await this.prisma.sequenceEnrollment.findUnique({
-      where: { id: enrollmentId },
+  async undoEnrollment(enrollmentId: string, targetStep: number, tenantId?: string, isSuperAdmin?: boolean) {
+    const enrollment = await this.prisma.sequenceEnrollment.findFirst({
+      where: { 
+        id: enrollmentId,
+        ...( (!isSuperAdmin && tenantId) && { sequence: { tenantId } } )
+      },
     });
     
     if (!enrollment) throw new NotFoundException('Enrollment not found');

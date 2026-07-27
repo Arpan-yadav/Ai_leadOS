@@ -12,11 +12,11 @@ export class AnalyticsService {
   ) {}
 
   // ─── Explorer (existing) ───────────────────────────────────────────────────
-  async getExplorerData() {
+  async getExplorerData(tenantId?: string, isSuperAdmin?: boolean) {
     this.logger.log('[Analytics] Generating Explorer Data...');
     try {
       const leadsGroupedBySource = await (this.prisma.lead.groupBy as any)({
-        by: ['source'],
+        where: { ...( (!isSuperAdmin && tenantId) && { tenantId } ) }, by: ['source'],
         _count: { source: true },
       });
       const leadSourcesData = leadsGroupedBySource.map((item: any) => ({
@@ -25,7 +25,7 @@ export class AnalyticsService {
       }));
 
       const dealsWithLeads = await this.prisma.deal.findMany({
-        where: { amount: { gt: 0 } },
+        where: { amount: { gt: 0 }, ...( (!isSuperAdmin && tenantId) && { tenantId } ) },
         include: { lead: true },
       });
       const scoreVsValueData = dealsWithLeads.map((deal) => ({
@@ -36,7 +36,7 @@ export class AnalyticsService {
       }));
 
       const dealsGroupedByStage = await (this.prisma.deal.groupBy as any)({
-        by: ['stage'],
+        where: { ...( (!isSuperAdmin && tenantId) && { tenantId } ) }, by: ['stage'],
         _count: { stage: true },
       });
       const stageConversionData = dealsGroupedByStage.map((item: any) => ({
@@ -48,7 +48,7 @@ export class AnalyticsService {
       oneWeekAgo.setDate(oneWeekAgo.getDate() - 6);
       oneWeekAgo.setHours(0, 0, 0, 0);
       const recentDeals = await this.prisma.deal.findMany({
-        where: { createdAt: { gte: oneWeekAgo } },
+        where: { createdAt: { gte: oneWeekAgo }, ...( (!isSuperAdmin && tenantId) && { tenantId } ) },
         include: { lead: true },
       });
       const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -70,7 +70,7 @@ export class AnalyticsService {
       const revenueByChannelData = Array.from(revenueMap.values());
 
       const tasksGroupedByStatus = await (this.prisma.task.groupBy as any)({
-        by: ['status'],
+        where: { ...( (!isSuperAdmin && tenantId) && { tenantId } ) }, by: ['status'],
         _count: { status: true },
       });
       const pending = tasksGroupedByStatus.find((t: any) => t.status === 'pending')?._count?.status || 0;
@@ -96,12 +96,12 @@ export class AnalyticsService {
   }
 
   // ─── Sprint 7: Conversion Funnel ──────────────────────────────────────────
-  async getConversionFunnel() {
+  async getConversionFunnel(tenantId?: string, isSuperAdmin?: boolean) {
     try {
       const stages = ['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'CONVERTED', 'UNQUALIFIED'];
       const counts = await Promise.all(
         stages.map(stage =>
-          this.prisma.lead.count({ where: { status: stage as any } })
+          this.prisma.lead.count({ where: { status: stage as any, ...( (!isSuperAdmin && tenantId) && { tenantId } ) } })
         )
       );
       return stages.map((stage, i) => ({
@@ -124,12 +124,12 @@ export class AnalyticsService {
   }
 
   // ─── Sprint 7: Revenue Pipeline by Deal Stage ──────────────────────────────
-  async getRevenuePipeline() {
+  async getRevenuePipeline(tenantId?: string, isSuperAdmin?: boolean) {
     const stages = ['DISCOVERY', 'PROPOSAL', 'NEGOTIATION', 'CLOSING', 'WON', 'LOST'];
     const results = await Promise.all(
       stages.map(stage =>
         this.prisma.deal.aggregate({
-          where: { stage: stage as any },
+          where: { stage: stage as any, ...( (!isSuperAdmin && tenantId) && { tenantId } ) },
           _sum: { amount: true },
           _count: { id: true },
         })
@@ -143,9 +143,9 @@ export class AnalyticsService {
   }
 
   // ─── Sprint 7: Lead Velocity (avg days NEW -> CONVERTED) ──────────────────
-  async getLeadVelocity() {
+  async getLeadVelocity(tenantId?: string, isSuperAdmin?: boolean) {
     const converted = await this.prisma.lead.findMany({
-      where: { status: 'CONVERTED' },
+      where: { status: 'CONVERTED', ...( (!isSuperAdmin && tenantId) && { tenantId } ) },
       select: { createdAt: true, updatedAt: true, company: true, name: true },
       orderBy: { updatedAt: 'desc' },
       take: 50,
@@ -195,8 +195,9 @@ export class AnalyticsService {
   }
 
   // ─── Sprint 7: Team Performance ────────────────────────────────────────────
-  async getTeamPerformance() {
+  async getTeamPerformance(tenantId?: string, isSuperAdmin?: boolean) {
     const users = await this.prisma.user.findMany({
+      where: { ...( (!isSuperAdmin && tenantId) && { tenantId } ) },
       select: { id: true, name: true, role: true },
     });
 
@@ -235,13 +236,14 @@ export class AnalyticsService {
   }
 
   // ─── Sprint 7: Anomaly Detection ───────────────────────────────────────────
-  async getAnomalies(inactiveDays = 14) {
+  async getAnomalies(inactiveDays = 14, tenantId?: string, isSuperAdmin?: boolean) {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - inactiveDays);
 
     const staleLeads = await this.prisma.lead.findMany({
       where: {
         status: { notIn: ['CONVERTED', 'UNQUALIFIED'] as any },
+        ...( (!isSuperAdmin && tenantId) && { tenantId } ),
         updatedAt: { lt: cutoff },
       },
       select: { id: true, name: true, company: true, status: true, updatedAt: true, score: true },
@@ -253,6 +255,7 @@ export class AnalyticsService {
       where: {
         score: { gte: 70 },
         status: { notIn: ['CONVERTED'] as any },
+        ...( (!isSuperAdmin && tenantId) && { tenantId } ),
         activities: { none: { createdAt: { gte: cutoff } } },
       },
       select: { id: true, name: true, company: true, score: true, status: true },
@@ -274,18 +277,18 @@ export class AnalyticsService {
   }
 
   // ─── Sprint 7: AI Weekly Performance Summary ───────────────────────────────
-  async getAiWeeklySummary() {
+  async getAiWeeklySummary(tenantId?: string, isSuperAdmin?: boolean) {
     // Gather real data first
     const [totalLeads, convertedLeads, totalDeals, wonDeals, topTeam] = await Promise.all([
-      this.prisma.lead.count(),
-      this.prisma.lead.count({ where: { status: 'CONVERTED' } }),
-      this.prisma.deal.count(),
-      this.prisma.deal.count({ where: { stage: 'WON' } }),
-      this.getTeamPerformance(),
+      this.prisma.lead.count({ where: { ...( (!isSuperAdmin && tenantId) && { tenantId } ) } }),
+      this.prisma.lead.count({ where: { status: 'CONVERTED', ...( (!isSuperAdmin && tenantId) && { tenantId } ) } }),
+      this.prisma.deal.count({ where: { ...( (!isSuperAdmin && tenantId) && { tenantId } ) } }),
+      this.prisma.deal.count({ where: { stage: 'WON', ...( (!isSuperAdmin && tenantId) && { tenantId } ) } }),
+      this.getTeamPerformance(tenantId, isSuperAdmin),
     ]);
 
     const wonRevenue = await this.prisma.deal.aggregate({
-      where: { stage: 'WON' },
+      where: { stage: 'WON', ...( (!isSuperAdmin && tenantId) && { tenantId } ) },
       _sum: { amount: true },
     });
 
@@ -310,9 +313,9 @@ export class AnalyticsService {
   }
 
   // ─── Sprint 7: Predictive Deal Close Probability ───────────────────────────
-  async getPredictiveProbabilities() {
+  async getPredictiveProbabilities(tenantId?: string, isSuperAdmin?: boolean) {
     const openDeals = await this.prisma.deal.findMany({
-      where: { stage: { notIn: ['WON', 'LOST'] as any } },
+      where: { stage: { notIn: ['WON', 'LOST'] as any }, ...( (!isSuperAdmin && tenantId) && { tenantId } ) },
       include: { lead: { select: { name: true, company: true, score: true } } },
       orderBy: { amount: 'desc' },
       take: 15,
