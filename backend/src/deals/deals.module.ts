@@ -3,8 +3,10 @@ import { DealsService } from './deals.service';
 import { DealsController } from './deals.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 
+import { AiModule } from '../ai/ai.module';
+
 @Module({
-  imports: [PrismaModule], 
+  imports: [PrismaModule, AiModule], 
   providers: [DealsService],
   controllers: [DealsController],
   exports: [DealsService],
