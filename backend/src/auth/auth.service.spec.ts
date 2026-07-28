@@ -39,7 +39,7 @@ describe('AuthService - by Arpan', () => {
     mockPrisma.tenant.create.mockResolvedValue({ id: 't1', name: 'Test Corp' });
     mockUsersService.createUser.mockResolvedValue({ id: 'u1', email: 'test@example.com' });
 
-    const result = await service.register('test@example.com', 'password123', 'Test Corp', 'Admin User');
+    const result = await service.register({ email: 'test@example.com', password: 'password123', name: 'Admin User', company: 'Test Corp' } as any);
     
     expect(result).toHaveProperty('token', 'mock-jwt-token');
     expect(mockUsersService.createUser).toHaveBeenCalled();
@@ -49,8 +49,8 @@ describe('AuthService - by Arpan', () => {
   it('should throw an error if email is already taken', async () => {
     mockUsersService.findByEmail.mockResolvedValue({ id: 'u1', email: 'test@example.com' });
 
-    await expect(service.register('test@example.com', 'pwd', 'Corp', 'Name'))
-      .rejects.toThrow('Email already exists');
+    await expect(service.register({ email: 'test@example.com', password: 'pwd', name: 'Name', company: 'Corp' } as any))
+      .rejects.toThrow('A user with this email already exists');
   });
 
   it('should login an existing user', async () => {

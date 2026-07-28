@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LeadsService } from './leads.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { EventsGateway } from '../events/events.gateway';
+import { EventBusService } from '../events/event-bus.service';
 import { AiService } from '../ai/ai.service';
 
 describe('LeadsService - by Leads Team', () => {
@@ -27,7 +27,7 @@ describe('LeadsService - by Leads Team', () => {
       providers: [
         LeadsService,
         { provide: PrismaService, useValue: mockPrisma },
-        { provide: EventsGateway, useValue: { server: { emit: jest.fn() } } },
+        { provide: EventBusService, useValue: { emit: jest.fn() } },
         { provide: AiService, useValue: mockAi },
       ],
     }).compile();
@@ -43,7 +43,7 @@ describe('LeadsService - by Leads Team', () => {
     const mockLeads = [{ id: '1', tenantId: 't1' }, { id: '2', tenantId: 't1' }];
     mockPrisma.lead.findMany.mockResolvedValue(mockLeads);
 
-    const result = await service.findAll('t1', false);
+    const result = await service.findAll({}, 't1', false);
     expect(mockPrisma.lead.findMany).toHaveBeenCalledWith({
       where: { tenantId: 't1' },
       include: { latestActivity: true }
@@ -52,7 +52,7 @@ describe('LeadsService - by Leads Team', () => {
   });
 
   it('should fetch all leads for super admin', async () => {
-    await service.findAll('t1', true);
+    await service.findAll({}, 't1', true);
     expect(mockPrisma.lead.findMany).toHaveBeenCalledWith({
       where: {},
       include: { latestActivity: true }

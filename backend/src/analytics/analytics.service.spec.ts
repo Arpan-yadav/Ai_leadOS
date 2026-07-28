@@ -29,6 +29,6 @@ describe('AnalyticsService - by Analytics Team', () => {
     
     const revenue = await service.getRevenuePipeline('t1', false);
     const wonData = revenue.find(r => r.stage === 'WON');
-    expect(wonData?.value).toBe(0);
+    expect(wonData?.revenue).toBe(0);
   });
 });

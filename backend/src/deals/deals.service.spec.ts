@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DealsService } from './deals.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
-import { EventsGateway } from '../events/events.gateway';
+import { EventBusService } from '../events/event-bus.service';
 
 describe('DealsService - by Soumya', () => {
   let service: DealsService;
@@ -23,7 +23,7 @@ describe('DealsService - by Soumya', () => {
         DealsService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AiService, useValue: { scoreLead: jest.fn() } },
-        { provide: EventsGateway, useValue: { server: { emit: jest.fn() } } },
+        { provide: EventBusService, useValue: { emit: jest.fn() } },
       ],
     }).compile();
 
@@ -41,7 +41,7 @@ describe('DealsService - by Soumya', () => {
 
   it('should update deal stage and sync AI score', async () => {
     mockPrisma.deal.update.mockResolvedValue({ id: 'd1', stage: 'WON', leadId: 'l1' });
-    await service.updateStage('d1', 'WON', 't1', false);
+    await service.updateStage('d1', 'WON', 'user1', 't1');
     
     // Changing to WON triggers lead status update
     expect(mockPrisma.lead.update).toHaveBeenCalledWith({

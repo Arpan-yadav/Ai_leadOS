@@ -32,7 +32,7 @@ describe('EmailRouterService - by Arpan', () => {
     global.fetch = jest.fn().mockResolvedValue({ ok: true, json: jest.fn().mockResolvedValue({}) }) as jest.Mock;
 
     const result = await service.routeAndSendEmail('t1', 'test@test.com', 'Subj', 'Body');
-    expect(result.isFallback).toBe(true);
+    expect((result as any).isFallback).toBe(true);
     expect(result.providerUsed).toBe('RESEND');
   });
 
