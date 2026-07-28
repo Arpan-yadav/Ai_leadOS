@@ -28,6 +28,8 @@ model Tenant {
   CommunicationLog   CommunicationLog[]
   TenantSettings     TenantSettings?
   Invitation         Invitation[]
+  EmailAccount       EmailAccount[]
+  WhatsAppAccount    WhatsAppAccount[]
 
   @@map("tenants")
 }
@@ -431,4 +433,56 @@ model TenantSettings {
   updatedAt DateTime @updatedAt
 
   @@map("tenant_settings")
+}
+
+model EmailAccount {
+  id                String   @id @default(cuid())
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name              String   // e.g. "Sales Team Gmail"
+  provider          String   // SMTP, RESEND, GMAIL_OAUTH
+  
+  // Credentials
+  resendApiKey      String?
+  smtpHost          String?
+  smtpPort          Int?
+  smtpUser          String?
+  smtpPass          String?
+  gmailClientId     String?
+  gmailClientSecret String?
+  gmailRefreshToken String?
+
+  // Quota Management
+  dailyLimit        Int      @default(500)
+  sentToday         Int      @default(0)
+  lastResetAt       DateTime @default(now())
+  isActive          Boolean  @default(true)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("email_accounts")
+}
+
+model WhatsAppAccount {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name                String   // e.g. "Support WhatsApp"
+  
+  // Credentials
+  waPhoneNumberId     String
+  waAccessToken       String
+  waBusinessAccountId String?
+  
+  // Quota Management
+  dailyLimit          Int      @default(1000)
+  sentToday           Int      @default(0)
+  lastResetAt         DateTime @default(now())
+  isActive            Boolean  @default(true)
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("whatsapp_accounts")
 }

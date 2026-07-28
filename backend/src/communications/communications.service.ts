@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
+import { EmailRouterService } from '../email-router/email-router.service';
 import * as nodemailer from 'nodemailer';
 
 @Injectable()
@@ -11,6 +12,7 @@ export class CommunicationsService implements OnModuleInit {
   constructor(
     private readonly prisma: PrismaService,
     private readonly aiService: AiService,
+    private readonly emailRouter: EmailRouterService,
   ) {}
 
   async onModuleInit() {
@@ -90,6 +92,7 @@ export class CommunicationsService implements OnModuleInit {
   async sendMessage(leadId: string | undefined, recipient: string | undefined, channel: string, content: string, subject?: string) {
     let finalLeadId = leadId;
     let recipientName = recipient || 'Unknown';
+    let leadCompany = 'Unknown';
     if (!finalLeadId) {
       if (!recipient) {
         throw new Error('Either leadId or recipient must be provided');
@@ -104,55 +107,30 @@ export class CommunicationsService implements OnModuleInit {
       }
       finalLeadId = lead.id;
       recipientName = lead.name;
+      leadCompany = lead.company;
+    } else {
+      const lead = await this.prisma.lead.findUnique({ where: { id: finalLeadId } });
+      if (lead) {
+        recipientName = lead.name;
+        leadCompany = lead.company;
+      }
     }
     
     this.logger.log(`Sending ${channel} to lead ${finalLeadId} (${recipient})`);
     
     // ─── Email Sending ────────────────────────────────────────────────────────
     let previewUrl: string | false | null = null;
+    let providerUsed = 'unknown';
+
     if (channel === 'EMAIL') {
       try {
-        // 1. Try user's Resend API key
-        const tenantSettings = finalLeadId 
-          ? await this.prisma.tenantSettings.findFirst({ where: { tenant: { leads: { some: { id: finalLeadId } } } } })
-          : null;
-
-        if (tenantSettings?.emailProvider === 'RESEND' && tenantSettings?.resendApiKey) {
-          const res = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${tenantSettings.resendApiKey}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              from: `AI LeadOS <onboarding@resend.dev>`,
-              to: [recipient],
-              subject: subject || 'Message from AI LeadOS',
-              text: content,
-              html: `<p>${content.replace(/\n/g, '<br/>')}</p>`
-            })
-          });
-          const data = await res.json() as any;
-          if (res.ok) {
-            this.logger.log(`📧 Email sent via Resend to ${recipient}`);
-          } else {
-            this.logger.error(`Resend error: ${JSON.stringify(data)}`);
-          }
-        } else if (tenantSettings?.emailProvider === 'SMTP' && tenantSettings?.smtpHost && tenantSettings?.smtpUser) {
-          // 2. User's custom SMTP
-          const userTransporter = nodemailer.createTransport({
-            host: tenantSettings.smtpHost,
-            port: tenantSettings.smtpPort || 587,
-            secure: (tenantSettings.smtpPort || 587) === 465,
-            auth: { user: tenantSettings.smtpUser, pass: tenantSettings.smtpPass || '' },
-          });
-          const info = await userTransporter.sendMail({
-            from: `"AI LeadOS" <${tenantSettings.smtpUser}>`,
-            to: recipient,
-            subject: subject || 'Message from AI LeadOS',
-            text: content,
-            html: `<p>${content.replace(/\n/g, '<br/>')}</p>`
-          });
-          this.logger.log(`📧 Email sent via user SMTP to ${recipient}`);
+        const lead = await this.prisma.lead.findUnique({ where: { id: finalLeadId }, select: { tenantId: true } });
+        if (lead && lead.tenantId) {
+          const result = await this.emailRouter.routeAndSendEmail(lead.tenantId, recipient || 'unknown', subject || 'Message from AI LeadOS', content, leadCompany);
+          providerUsed = result.providerUsed;
+          this.logger.log(`📧 Email sent via ${result.providerUsed} to ${recipient}`);
         } else {
-          // 3. Fallback to Ethereal (demo)
+          // 3. Fallback to Ethereal (demo) if no tenant
           if (this.fallbackTransporter) {
             const info = await this.fallbackTransporter.sendMail({
               from: '"AI LeadOS" <system@aileados.com>',
@@ -162,11 +140,13 @@ export class CommunicationsService implements OnModuleInit {
               html: `<p>${content.replace(/\n/g, '<br/>')}</p>`
             });
             previewUrl = nodemailer.getTestMessageUrl(info);
+            providerUsed = 'ETHEREAL';
             this.logger.log(`📧 Email sent via Ethereal (demo). Preview: ${previewUrl}`);
           }
         }
-      } catch (err) {
+      } catch (err: any) {
         this.logger.error('Email sending failed', err);
+        throw new Error(`Email sending failed: ${err.message}`);
       }
     } else if (channel === 'WHATSAPP') {
       // ─── WhatsApp via Meta Cloud API ────────────────────────────────────────

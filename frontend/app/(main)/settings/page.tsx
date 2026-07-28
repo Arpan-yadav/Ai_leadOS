@@ -9,6 +9,8 @@ import { useRouter } from 'next/navigation';
 import { removeToken, getToken } from '@/lib/auth';
 import toast from 'react-hot-toast';
 import { useTheme } from 'next-themes';
+import EmailSettings from '@/components/settings/EmailSettings';
+import WhatsAppSettings from '@/components/settings/WhatsAppSettings';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
@@ -346,148 +348,12 @@ export default function SettingsPage() {
 
           {/* ─── WHATSAPP ─── */}
           {active === 'whatsapp' && (
-            <div className="space-y-6">
-              <h2 className="text-sm font-black text-white uppercase tracking-widest border-b border-[#27272A] pb-4">WhatsApp Integration</h2>
-              <div className="glass-card p-4 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-bold text-white">Meta Cloud API</p>
-                  <p className="text-[11px] text-[#b9cacb] mt-0.5">
-                    {settings?.whatsapp?.status === 'CONNECTED'
-                      ? `Connected — Phone ID: ${settings.whatsapp.phoneNumberId}`
-                      : 'Not configured'}
-                  </p>
-                </div>
-                <StatusBadge connected={settings?.whatsapp?.status === 'CONNECTED'} />
-              </div>
-              <div className="p-4 bg-blue-500/5 border border-blue-500/20 rounded-xl text-[11px] text-[#b9cacb]">
-                Get your credentials from{' '}
-                <a href="https://developers.facebook.com/apps" target="_blank" rel="noopener noreferrer" className="text-[#00f0ff] hover:underline inline-flex items-center gap-0.5">
-                  Meta for Developers <ExternalLink size={10} />
-                </a>
-                {' '}→ Your App → WhatsApp → API Setup
-              </div>
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">Phone Number ID</label>
-                  <input value={waPhoneNumberId} onChange={e => setWaPhoneNumberId(e.target.value)} placeholder="123456789012345" className="input-field w-full" autoComplete="off" />
-                </div>
-                <div>
-                  <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">Permanent Access Token</label>
-                  <SecretInput value={waAccessToken} onChange={setWaAccessToken} placeholder="EAA..." />
-                </div>
-                <div>
-                  <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">Business Account ID (optional)</label>
-                  <input value={waBusinessAccountId} onChange={e => setWaBusinessAccountId(e.target.value)} placeholder="987654321" className="input-field w-full" autoComplete="off" />
-                </div>
-              </div>
-              <button onClick={saveWhatsApp} disabled={saving} className="btn-primary flex items-center gap-2">
-                {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                Save Credentials
-              </button>
-              <div className="border-t border-[#27272A] pt-4">
-                <p className="text-[11px] font-black text-white uppercase tracking-widest mb-3">Test Connection</p>
-                <div className="flex gap-2">
-                  <input value={waTestPhone} onChange={e => setWaTestPhone(e.target.value)} placeholder="+919876543210" className="input-field flex-1" />
-                  <button onClick={testWhatsApp} disabled={testing || !waTestPhone} className="btn-secondary flex items-center gap-2 whitespace-nowrap">
-                    {testing ? <Loader2 size={13} className="animate-spin" /> : <MessageSquare size={13} />}
-                    Send Test
-                  </button>
-                </div>
-              </div>
-            </div>
+            <WhatsAppSettings />
           )}
 
           {/* ─── EMAIL ─── */}
           {active === 'email' && (
-            <div className="space-y-6">
-              <h2 className="text-sm font-black text-white uppercase tracking-widest border-b border-[#27272A] pb-4">Email Configuration</h2>
-              <div className="glass-card p-4 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-bold text-white">Email Provider: <span className="text-[#00f0ff]">{settings?.email?.provider || 'SMTP'}</span></p>
-                  <p className="text-[11px] text-[#b9cacb] mt-0.5">{settings?.email?.hasResendKey || settings?.email?.hasSmtpPass ? 'Credentials saved' : 'Using demo Ethereal account'}</p>
-                </div>
-                <StatusBadge connected={settings?.email?.hasResendKey || settings?.email?.hasSmtpPass} />
-              </div>
-              <div>
-                <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-2">Provider</label>
-                <div className="flex gap-2">
-                  {(['RESEND', 'SMTP', 'GMAIL_OAUTH'] as const).map(p => (
-                    <button
-                      key={p}
-                      onClick={() => setEmailProvider(p)}
-                      className={`px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-widest border transition-all ${emailProvider === p ? 'bg-[#00f0ff]/10 text-[#00f0ff] border-[#00f0ff]/30' : 'text-[#b9cacb] border-[#27272A] hover:border-[#00f0ff]/20'}`}
-                    >
-                      {p.replace('_', ' ')}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {emailProvider === 'RESEND' && (
-                <div>
-                  <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">Resend API Key</label>
-                  <SecretInput value={resendApiKey} onChange={setResendApiKey} placeholder="re_..." />
-                  <p className="text-[10px] text-[#b9cacb] mt-1.5 flex items-center gap-1">
-                    Get your key at <a href="https://resend.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-[#00f0ff] hover:underline inline-flex items-center gap-0.5">Resend.com <ExternalLink size={10} /></a>
-                  </p>
-                </div>
-              )}
-              {emailProvider === 'SMTP' && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="col-span-2 sm:col-span-1">
-                    <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">SMTP Host</label>
-                    <input value={smtpHost} onChange={e => setSmtpHost(e.target.value)} placeholder="smtp.gmail.com" className="input-field w-full" autoComplete="off" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">Port</label>
-                    <input value={smtpPort} onChange={e => setSmtpPort(e.target.value)} placeholder="587" className="input-field w-full" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">Username / Email</label>
-                    <input value={smtpUser} onChange={e => setSmtpUser(e.target.value)} placeholder="you@gmail.com" className="input-field w-full" autoComplete="off" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">Password / App Password</label>
-                    <SecretInput value={smtpPass} onChange={setSmtpPass} placeholder="••••••••" />
-                  </div>
-                </div>
-              )}
-              {emailProvider === 'GMAIL_OAUTH' && (
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-xl text-[11px] text-[#b9cacb] mb-2">
-                    Gmail OAuth requires a Google Cloud Console project setup with the Gmail API enabled.
-                    <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer" className="text-[#00f0ff] hover:underline ml-1 inline-flex items-center gap-0.5">
-                      Open Cloud Console <ExternalLink size={10} />
-                    </a>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">Client ID</label>
-                    <input value={gmailClientId} onChange={e => setGmailClientId(e.target.value)} placeholder="123456789-abc.apps.googleusercontent.com" className="input-field w-full" autoComplete="off" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">Client Secret</label>
-                    <SecretInput value={gmailClientSecret} onChange={setGmailClientSecret} placeholder="GOCSPX-..." />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">Refresh Token</label>
-                    <SecretInput value={gmailRefreshToken} onChange={setGmailRefreshToken} placeholder="1//04..." />
-                  </div>
-                </div>
-              )}
-              <button onClick={saveEmail} disabled={saving} className="btn-primary flex items-center gap-2">
-                {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                Save Email Config
-              </button>
-              <div className="border-t border-[#27272A] pt-4">
-                <p className="text-[11px] font-black text-white uppercase tracking-widest mb-3">Send Test Email</p>
-                <div className="flex gap-2">
-                  <input value={testEmailAddr} onChange={e => setTestEmailAddr(e.target.value)} placeholder="yourtest@email.com" className="input-field flex-1" />
-                  <button onClick={testEmail} disabled={testing || !testEmailAddr} className="btn-secondary flex items-center gap-2 whitespace-nowrap">
-                    {testing ? <Loader2 size={13} className="animate-spin" /> : <Mail size={13} />}
-                    Send Test
-                  </button>
-                </div>
-              </div>
-            </div>
+            <EmailSettings />
           )}
 
           {/* ─── NOTIFICATIONS ─── */}

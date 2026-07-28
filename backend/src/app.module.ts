@@ -32,6 +32,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { SettingsModule } from './settings/settings.module';
 import { AdminModule } from './admin/admin.module';
 import { SupportModule } from './support/support.module';
+import { EmailRouterModule } from './email-router/email-router.module';
 
 @Module({
   imports: [
@@ -70,6 +71,7 @@ import { SupportModule } from './support/support.module';
     SettingsModule,    // Sprint 6 — BYOK tenant settings
     AdminModule,       // Sprint 7 — Admin user management
     SupportModule,
+    EmailRouterModule, // Email router for AI selection
   ],
   providers: [
     {

@@ -192,6 +192,53 @@ export class SettingsService {
     }
   }
 
+  // ─── Multi-Account Management ───────────────────────────────────────────────
+  
+  async addEmailAccount(tenantId: string, dto: any) {
+    return this.prisma.emailAccount.create({
+      data: {
+        tenantId,
+        ...dto
+      }
+    });
+  }
+
+  async listEmailAccounts(tenantId: string) {
+    const accounts = await this.prisma.emailAccount.findMany({ where: { tenantId }, orderBy: { createdAt: 'asc' } });
+    return accounts.map(a => ({
+      ...a,
+      resendApiKey: a.resendApiKey ? `...${a.resendApiKey.slice(-4)}` : null,
+      smtpPass: a.smtpPass ? '********' : null,
+      gmailClientSecret: a.gmailClientSecret ? '********' : null,
+      gmailRefreshToken: a.gmailRefreshToken ? '********' : null,
+    }));
+  }
+
+  async deleteEmailAccount(tenantId: string, accountId: string) {
+    return this.prisma.emailAccount.delete({ where: { id: accountId, tenantId } });
+  }
+
+  async addWhatsAppAccount(tenantId: string, dto: any) {
+    return this.prisma.whatsAppAccount.create({
+      data: {
+        tenantId,
+        ...dto
+      }
+    });
+  }
+
+  async listWhatsAppAccounts(tenantId: string) {
+    const accounts = await this.prisma.whatsAppAccount.findMany({ where: { tenantId }, orderBy: { createdAt: 'asc' } });
+    return accounts.map(a => ({
+      ...a,
+      waAccessToken: a.waAccessToken ? `...${a.waAccessToken.slice(-4)}` : null,
+    }));
+  }
+
+  async deleteWhatsAppAccount(tenantId: string, accountId: string) {
+    return this.prisma.whatsAppAccount.delete({ where: { id: accountId, tenantId } });
+  }
+
   // ─── Helpers ──────────────────────────────────────────────────────────────
   async getRawSettings(tenantId: string) {
     return this.prisma.tenantSettings.findUnique({ where: { tenantId } });

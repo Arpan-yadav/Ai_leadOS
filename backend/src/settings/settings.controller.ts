@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Patch, Post, Body, Request, UseGuards
+  Controller, Get, Patch, Post, Delete, Param, Body, Request, UseGuards
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -50,5 +50,43 @@ export class SettingsController {
   @ApiOperation({ summary: 'Send a test email to verify configuration' })
   testEmail(@Request() req: any, @Body() dto: TestEmailDto) {
     return this.settingsService.testEmail(req.user.tenantId, dto.testEmail);
+  }
+
+  // ─── Multi-Account Management ───────────────────────────────────────────────
+
+  @Get('email-accounts')
+  @ApiOperation({ summary: 'List all email accounts for AI routing pool' })
+  listEmailAccounts(@Request() req: any) {
+    return this.settingsService.listEmailAccounts(req.user.tenantId);
+  }
+
+  @Post('email-accounts')
+  @ApiOperation({ summary: 'Add a new email account' })
+  addEmailAccount(@Request() req: any, @Body() dto: any) {
+    return this.settingsService.addEmailAccount(req.user.tenantId, dto);
+  }
+
+  @Delete('email-accounts/:id')
+  @ApiOperation({ summary: 'Delete an email account' })
+  deleteEmailAccount(@Request() req: any, @Param('id') id: string) {
+    return this.settingsService.deleteEmailAccount(req.user.tenantId, id);
+  }
+
+  @Get('whatsapp-accounts')
+  @ApiOperation({ summary: 'List all WhatsApp accounts' })
+  listWhatsAppAccounts(@Request() req: any) {
+    return this.settingsService.listWhatsAppAccounts(req.user.tenantId);
+  }
+
+  @Post('whatsapp-accounts')
+  @ApiOperation({ summary: 'Add a new WhatsApp account' })
+  addWhatsAppAccount(@Request() req: any, @Body() dto: any) {
+    return this.settingsService.addWhatsAppAccount(req.user.tenantId, dto);
+  }
+
+  @Delete('whatsapp-accounts/:id')
+  @ApiOperation({ summary: 'Delete a WhatsApp account' })
+  deleteWhatsAppAccount(@Request() req: any, @Param('id') id: string) {
+    return this.settingsService.deleteWhatsAppAccount(req.user.tenantId, id);
   }
 }
