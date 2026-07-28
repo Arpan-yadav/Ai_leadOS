@@ -138,6 +138,21 @@ export class AiService {
 
   // ─── Public Methods ────────────────────────────────────────────────────────
 
+  async generateText(prompt: string, tenantId?: string | null): Promise<string> {
+    const client = await this.getClientForUser(tenantId);
+    if (!client) return '{}';
+    try {
+      const result = await client.models.generateContent({
+        model: this.model,
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      });
+      return (result as any).text ?? '{}';
+    } catch (err: any) {
+      this.logger.error('generateText error:', err?.message || err);
+      return '{}';
+    }
+  }
+
   /**
    * Score a lead from 0–100 based on their profile.
    * Called automatically on every POST /leads.

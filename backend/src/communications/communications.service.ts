@@ -153,7 +153,7 @@ export class CommunicationsService implements OnModuleInit {
       try {
         const lead = finalLeadId ? await this.prisma.lead.findUnique({ where: { id: finalLeadId }, select: { tenantId: true } }) : null;
         
-        let waAccount = null;
+        let waAccount: any = null;
         if (lead && lead.tenantId) {
           if (accountId) {
             waAccount = await this.prisma.whatsAppAccount.findUnique({ where: { id: accountId } });
@@ -225,9 +225,7 @@ export class CommunicationsService implements OnModuleInit {
             // Let it pass (creates log entry anyway as a record)
           }
         }
-          this.logger.log(`📱 [MOCK WhatsApp] No Meta credentials configured. Message logged only: ${content.substring(0, 50)}`);
-        }
-      } catch (err) {
+      } catch (err: any) {
         this.logger.error('WhatsApp sending failed', err);
       }
     } else {
