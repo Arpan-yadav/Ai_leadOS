@@ -89,7 +89,7 @@ export class CommunicationsService implements OnModuleInit {
     });
   }
 
-  async sendMessage(leadId: string | undefined, recipient: string | undefined, channel: string, content: string, subject?: string) {
+  async sendMessage(leadId: string | undefined, recipient: string | undefined, channel: string, content: string, subject?: string, accountId?: string) {
     let finalLeadId = leadId;
     let recipientName = recipient || 'Unknown';
     let leadCompany = 'Unknown';
@@ -126,7 +126,7 @@ export class CommunicationsService implements OnModuleInit {
       try {
         const lead = await this.prisma.lead.findUnique({ where: { id: finalLeadId }, select: { tenantId: true } });
         if (lead && lead.tenantId) {
-          const result = await this.emailRouter.routeAndSendEmail(lead.tenantId, recipient || 'unknown', subject || 'Message from AI LeadOS', content, leadCompany);
+          const result = await this.emailRouter.routeAndSendEmail(lead.tenantId, recipient || 'unknown', subject || 'Message from AI LeadOS', content, leadCompany, accountId);
           providerUsed = result.providerUsed;
           this.logger.log(`📧 Email sent via ${result.providerUsed} to ${recipient}`);
         } else {
@@ -149,19 +149,30 @@ export class CommunicationsService implements OnModuleInit {
         throw new Error(`Email sending failed: ${err.message}`);
       }
     } else if (channel === 'WHATSAPP') {
-      // ─── WhatsApp via Meta Cloud API ────────────────────────────────────────
+      // ─── WhatsApp via Meta Cloud API (Pool) ────────────────────────────────────────
       try {
-        const tenantSettings = finalLeadId
-          ? await this.prisma.tenantSettings.findFirst({ where: { tenant: { leads: { some: { id: finalLeadId } } } } })
-          : null;
+        const lead = finalLeadId ? await this.prisma.lead.findUnique({ where: { id: finalLeadId }, select: { tenantId: true } }) : null;
+        
+        let waAccount = null;
+        if (lead && lead.tenantId) {
+          if (accountId) {
+            waAccount = await this.prisma.whatsAppAccount.findUnique({ where: { id: accountId } });
+          } else {
+            // Pick the first available active WhatsApp account if no specific one is requested
+            waAccount = await this.prisma.whatsAppAccount.findFirst({
+              where: { tenantId: lead.tenantId, isActive: true },
+              orderBy: { createdAt: 'asc' }
+            });
+          }
+        }
 
-        if (tenantSettings?.waAccessToken && tenantSettings?.waPhoneNumberId) {
-          const url = `https://graph.facebook.com/v19.0/${tenantSettings.waPhoneNumberId}/messages`;
+        if (waAccount && waAccount.waAccessToken && waAccount.waPhoneNumberId) {
+          const url = `https://graph.facebook.com/v19.0/${waAccount.waPhoneNumberId}/messages`;
           const cleanPhone = (recipient || '').replace(/\D/g, '');
           const res = await fetch(url, {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${tenantSettings.waAccessToken}`,
+              'Authorization': `Bearer ${waAccount.waAccessToken}`,
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
@@ -173,11 +184,47 @@ export class CommunicationsService implements OnModuleInit {
           });
           const data = await res.json() as any;
           if (res.ok) {
-            this.logger.log(`💬 WhatsApp sent via Meta Cloud API to ${cleanPhone}`);
+            this.logger.log(`💬 WhatsApp sent via Meta Cloud API to ${cleanPhone} using account ${waAccount.waPhoneNumberId}`);
+            providerUsed = 'META_WHATSAPP';
           } else {
             this.logger.error(`Meta WhatsApp API error: ${JSON.stringify(data)}`);
+            throw new Error(data.error?.message || 'Meta API Error');
           }
         } else {
+          // Fallback to legacy TenantSettings if no pool account found
+          const tenantSettings = finalLeadId
+            ? await this.prisma.tenantSettings.findFirst({ where: { tenant: { leads: { some: { id: finalLeadId } } } } })
+            : null;
+
+          if (tenantSettings?.waAccessToken && tenantSettings?.waPhoneNumberId) {
+            const url = `https://graph.facebook.com/v19.0/${tenantSettings.waPhoneNumberId}/messages`;
+            const cleanPhone = (recipient || '').replace(/\D/g, '');
+            const res = await fetch(url, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${tenantSettings.waAccessToken}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                messaging_product: 'whatsapp',
+                to: cleanPhone,
+                type: 'text',
+                text: { body: content }
+              }),
+            });
+            const data = await res.json() as any;
+            if (res.ok) {
+              this.logger.log(`💬 WhatsApp sent via Meta Cloud API to ${cleanPhone} (Legacy Settings)`);
+              providerUsed = 'META_WHATSAPP';
+            } else {
+              this.logger.error(`Meta WhatsApp API error: ${JSON.stringify(data)}`);
+              throw new Error(data.error?.message || 'Meta API Error');
+            }
+          } else {
+            this.logger.warn(`No WhatsApp configuration found for lead ${finalLeadId}`);
+            // Let it pass (creates log entry anyway as a record)
+          }
+        }
           this.logger.log(`📱 [MOCK WhatsApp] No Meta credentials configured. Message logged only: ${content.substring(0, 50)}`);
         }
       } catch (err) {

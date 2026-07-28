@@ -29,8 +29,13 @@ export class SendMessageDto {
   @IsNotEmpty()
   content: string;
 
-  @ApiPropertyOptional({ description: 'Subject of the message (required for EMAIL)' })
+  @ApiPropertyOptional({ description: 'Subject (for emails)' })
   @IsString()
   @IsOptional()
   subject?: string;
+
+  @ApiPropertyOptional({ description: 'ID of the specific EmailAccount or WhatsAppAccount to use (bypasses AI auto-router)' })
+  @IsString()
+  @IsOptional()
+  accountId?: string;
 }

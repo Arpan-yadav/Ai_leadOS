@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Loader2, Plus, Trash2, Mail } from 'lucide-react';
+import { Loader2, Plus, Trash2, Mail, Eye, EyeOff } from 'lucide-react';
 import { getToken } from '@/lib/auth';
 import toast from 'react-hot-toast';
 
@@ -18,7 +18,16 @@ export default function EmailSettings() {
   const [smtpPort, setSmtpPort] = useState('587');
   const [smtpUser, setSmtpUser] = useState('');
   const [smtpPass, setSmtpPass] = useState('');
+  const [gmailClientId, setGmailClientId] = useState('');
+  const [gmailClientSecret, setGmailClientSecret] = useState('');
+  const [gmailRefreshToken, setGmailRefreshToken] = useState('');
   const [dailyLimit, setDailyLimit] = useState(500);
+
+  // Visibility toggles
+  const [showResend, setShowResend] = useState(false);
+  const [showSmtp, setShowSmtp] = useState(false);
+  const [showOauthSecret, setShowOauthSecret] = useState(false);
+  const [showOauthToken, setShowOauthToken] = useState(false);
 
   const token = getToken();
 
@@ -46,6 +55,11 @@ export default function EmailSettings() {
         payload.smtpPort = Number(smtpPort);
         payload.smtpUser = smtpUser;
         payload.smtpPass = smtpPass;
+      } else if (provider === 'GMAIL_OAUTH') {
+        if (!gmailClientId || !gmailClientSecret || !gmailRefreshToken) throw new Error('Missing OAuth credentials');
+        payload.gmailClientId = gmailClientId;
+        payload.gmailClientSecret = gmailClientSecret;
+        payload.gmailRefreshToken = gmailRefreshToken;
       }
       
       const res = await fetch(`${API}/settings/email-accounts`, {
@@ -58,6 +72,7 @@ export default function EmailSettings() {
         toast.success('Email account added!');
         setAdding(false);
         setResendApiKey(''); setSmtpHost(''); setSmtpUser(''); setSmtpPass('');
+        setGmailClientId(''); setGmailClientSecret(''); setGmailRefreshToken('');
         fetchAccounts();
       } else {
         const err = await res.json();
@@ -115,7 +130,12 @@ export default function EmailSettings() {
             {provider === 'RESEND' && (
               <div className="col-span-2">
                 <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">Resend API Key</label>
-                <input type="password" value={resendApiKey} onChange={e => setResendApiKey(e.target.value)} placeholder="re_..." className="input-field w-full" />
+                <div className="relative">
+                  <input type={showResend ? "text" : "password"} value={resendApiKey} onChange={e => setResendApiKey(e.target.value)} placeholder="re_..." className="input-field w-full pr-10" />
+                  <button type="button" onClick={() => setShowResend(!showResend)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#b9cacb] hover:text-white">
+                    {showResend ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
               </div>
             )}
 
@@ -135,15 +155,44 @@ export default function EmailSettings() {
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">Password</label>
-                  <input type="password" value={smtpPass} onChange={e => setSmtpPass(e.target.value)} placeholder="••••••••" className="input-field w-full" />
+                  <div className="relative">
+                    <input type={showSmtp ? "text" : "password"} value={smtpPass} onChange={e => setSmtpPass(e.target.value)} placeholder="••••••••" className="input-field w-full pr-10" />
+                    <button type="button" onClick={() => setShowSmtp(!showSmtp)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#b9cacb] hover:text-white">
+                      {showSmtp ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
                 </div>
               </>
             )}
 
             {provider === 'GMAIL_OAUTH' && (
-              <div className="col-span-2 text-xs text-amber-400 p-2 bg-amber-400/10 rounded">
-                OAuth flow will be implemented in future phase. Please use SMTP with App Password for Gmail.
-              </div>
+              <>
+                <div className="col-span-2 text-xs text-amber-400 p-2 bg-amber-400/10 rounded">
+                  Gmail OAuth requires a Google Cloud Console project setup with the Gmail API enabled.
+                </div>
+                <div className="col-span-2">
+                  <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">Client ID</label>
+                  <input value={gmailClientId} onChange={e => setGmailClientId(e.target.value)} placeholder="123456789-abc.apps.googleusercontent.com" className="input-field w-full" autoComplete="off" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">Client Secret</label>
+                  <div className="relative">
+                    <input type={showOauthSecret ? "text" : "password"} value={gmailClientSecret} onChange={e => setGmailClientSecret(e.target.value)} placeholder="GOCSPX-..." className="input-field w-full pr-10" />
+                    <button type="button" onClick={() => setShowOauthSecret(!showOauthSecret)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#b9cacb] hover:text-white">
+                      {showOauthSecret ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">Refresh Token</label>
+                  <div className="relative">
+                    <input type={showOauthToken ? "text" : "password"} value={gmailRefreshToken} onChange={e => setGmailRefreshToken(e.target.value)} placeholder="1//04..." className="input-field w-full pr-10" />
+                    <button type="button" onClick={() => setShowOauthToken(!showOauthToken)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#b9cacb] hover:text-white">
+                      {showOauthToken ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                </div>
+              </>
             )}
 
             <div className="col-span-2">
@@ -153,7 +202,7 @@ export default function EmailSettings() {
             </div>
           </div>
 
-          <button onClick={addAccount} disabled={loading || (provider === 'GMAIL_OAUTH')} className="btn-primary w-full flex items-center justify-center gap-2 mt-4">
+          <button onClick={addAccount} disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2 mt-4">
             {loading && <Loader2 size={14} className="animate-spin" />}
             Save Account
           </button>

@@ -14,6 +14,11 @@ export default function NewMessageModal({ onClose, onSent, lead: preselectedLead
   const [leadDropdownOpen, setLeadDropdownOpen] = useState(false)
   const [leadSearch, setLeadSearch] = useState('')
 
+  // Account routing
+  const [emailAccounts, setEmailAccounts] = useState<any[]>([])
+  const [waAccounts, setWaAccounts] = useState<any[]>([])
+  const [selectedAccountId, setSelectedAccountId] = useState<string>('auto')
+
   const parsePhone = (phone: string) => {
     if (!phone) return { code: '+91', number: '' }
     const commonCodes = ['+91', '+44', '+61', '+1']
@@ -61,6 +66,21 @@ export default function NewMessageModal({ onClose, onSent, lead: preselectedLead
       } catch { /* silent */ }
     }
     fetchLeads()
+    
+    // Fetch user's Email and WhatsApp accounts for manual selection
+    const fetchAccounts = async () => {
+      try {
+        const token = getToken()
+        if (!token) return;
+        const [emailRes, waRes] = await Promise.all([
+          fetch(`${API_URL}/settings/email-accounts`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API_URL}/settings/whatsapp-accounts`, { headers: { Authorization: `Bearer ${token}` } })
+        ]);
+        if (emailRes.ok) setEmailAccounts(await emailRes.json());
+        if (waRes.ok) setWaAccounts(await waRes.json());
+      } catch { /* silent */ }
+    }
+    fetchAccounts();
   }, [])
 
   // Auto-update recipient when lead or channel changes
@@ -152,7 +172,8 @@ export default function NewMessageModal({ onClose, onSent, lead: preselectedLead
             ? `${form.countryCode}${form.recipient}` : form.recipient,
           channel: form.channel,
           content: form.message,
-          subject: form.subject
+          subject: form.subject,
+          accountId: selectedAccountId === 'auto' ? undefined : selectedAccountId
         })
       })
       if (!res.ok) throw new Error('Failed to send')
@@ -278,6 +299,30 @@ export default function NewMessageModal({ onClose, onSent, lead: preselectedLead
               )}
             </div>
           </div>
+
+          {/* Account Selection */}
+          {(form.channel === 'EMAIL' || form.channel === 'WHATSAPP') && (
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block">Send From Account</label>
+              <select 
+                value={selectedAccountId} 
+                onChange={e => setSelectedAccountId(e.target.value)} 
+                className="input-field appearance-none w-full"
+              >
+                <option value="auto">🌟 AI Auto-Select (Max Limit Saver)</option>
+                {form.channel === 'EMAIL' && emailAccounts.map(acc => (
+                  <option key={acc.id} value={acc.id}>
+                    {acc.provider} - {acc.smtpUser || acc.id.slice(-4)} (Quota: {acc.sentToday}/{acc.dailyLimit})
+                  </option>
+                ))}
+                {form.channel === 'WHATSAPP' && waAccounts.map(acc => (
+                  <option key={acc.id} value={acc.id}>
+                    Meta Cloud API - ID: {acc.waPhoneNumberId}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {form.channel === 'EMAIL' && (
             <div className="space-y-1">

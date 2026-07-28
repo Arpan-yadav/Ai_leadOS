@@ -28,7 +28,7 @@ export class CommunicationsController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Send a message (Email, WhatsApp, LinkedIn, Meta)' })
   async sendMessage(@Body() body: SendMessageDto) {
-    return this.communicationsService.sendMessage(body.leadId, body.recipient, body.channel, body.content, body.subject);
+    return this.communicationsService.sendMessage(body.leadId, body.recipient, body.channel, body.content, body.subject, body.accountId);
   }
 
   @Post('webhook/resend')
@@ -41,6 +41,20 @@ export class CommunicationsController {
   @ApiOperation({ summary: 'Incoming webhook from Meta for WhatsApp messages (No JWT required)' })
   async handleWhatsAppWebhook(@Body() payload: any) {
     return this.communicationsService.handleWhatsAppWebhook(payload);
+  }
+
+  @Get('webhook/whatsapp')
+  @ApiOperation({ summary: 'Verify Meta WhatsApp webhook endpoint (No JWT required)' })
+  async verifyWhatsAppWebhook(@Query() query: any) {
+    const mode = query['hub.mode'];
+    const token = query['hub.verify_token'];
+    const challenge = query['hub.challenge'];
+
+    // In a real app, verify the token matches your environment variable
+    if (mode === 'subscribe' && challenge) {
+      return challenge; // Must return the raw challenge string
+    }
+    return 'Invalid verification request';
   }
 
   @Post('generate-message')

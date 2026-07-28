@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Loader2, Plus, Trash2, MessageSquare } from 'lucide-react';
+import { Loader2, Plus, Trash2, MessageSquare, Eye, EyeOff } from 'lucide-react';
 import { getToken } from '@/lib/auth';
 import toast from 'react-hot-toast';
 
@@ -15,6 +15,7 @@ export default function WhatsAppSettings() {
   const [phoneNumberId, setPhoneNumberId] = useState('');
   const [accessToken, setAccessToken] = useState('');
   const [businessAccountId, setBusinessAccountId] = useState('');
+  const [showToken, setShowToken] = useState(false);
 
   const token = getToken();
 
@@ -93,7 +94,12 @@ export default function WhatsAppSettings() {
             </div>
             <div>
               <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">Permanent Access Token</label>
-              <input type="password" value={accessToken} onChange={e => setAccessToken(e.target.value)} placeholder="EAA..." className="input-field w-full" />
+              <div className="relative">
+                <input type={showToken ? "text" : "password"} value={accessToken} onChange={e => setAccessToken(e.target.value)} placeholder="EAA..." className="input-field w-full pr-10" />
+                <button type="button" onClick={() => setShowToken(!showToken)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#b9cacb] hover:text-white">
+                  {showToken ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              </div>
             </div>
             <div className="col-span-2">
               <label className="text-[10px] font-black text-[#b9cacb] uppercase tracking-widest block mb-1">Business Account ID (optional)</label>

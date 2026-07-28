@@ -37,9 +37,13 @@ export class EmailRouterService {
   /**
    * Main entry point for routing an email
    */
-  async routeAndSendEmail(tenantId: string, to: string, subject: string, content: string, leadCompany?: string) {
+  async routeAndSendEmail(tenantId: string, to: string, subject: string, content: string, leadCompany?: string, forcedAccountId?: string) {
     let accounts = await this.prisma.emailAccount.findMany({
-      where: { tenantId, isActive: true }
+      where: { 
+        tenantId, 
+        isActive: true,
+        ...(forcedAccountId ? { id: forcedAccountId } : {})
+      }
     });
 
     if (accounts.length === 0) {
@@ -50,8 +54,9 @@ export class EmailRouterService {
 
     await this.resetQuotasIfNeeded(accounts);
 
-    // Warm-up logic: cap at 50/day if account is < 7 days old
+    // Warm-up logic: cap at 50/day if account is < 7 days old (unless forced)
     const availableAccounts = accounts.filter(acc => {
+      if (forcedAccountId) return true; // Bypass quota if manually forced
       const ageDays = (Date.now() - new Date(acc.createdAt).getTime()) / (1000 * 60 * 60 * 24);
       const effectiveLimit = ageDays < 7 ? Math.min(acc.dailyLimit, 50) : acc.dailyLimit;
       return acc.sentToday < effectiveLimit;
@@ -61,22 +66,27 @@ export class EmailRouterService {
       throw new Error('All configured email accounts have exhausted their daily quotas.');
     }
 
-    // AI Account Selection logic
+    // 3. AI recommends the best account (skip if forced)
     let selectedAccount = availableAccounts[0];
     
-    if (availableAccounts.length > 1) {
+    if (!forcedAccountId && availableAccounts.length > 1) {
       try {
-        const prompt = `Given these email accounts:\n${availableAccounts.map(a => `- ID: ${a.id}, Provider: ${a.provider}, Quota Left: ${a.dailyLimit - a.sentToday}`).join('\n')}\nWhich account should I use to email a lead at ${leadCompany || 'Unknown'}? Maximize deliverability. Respond with ONLY the account ID string.`;
-        // Since we don't have a direct raw prompt method on AiService, we can just randomly rotate 
-        // to balance load, or use a basic heuristics (e.g., account with most quota left).
-        // For true AI routing, we can use the genAI instance. For now, heuristics based on quota:
-        availableAccounts.sort((a, b) => (b.dailyLimit - b.sentToday) - (a.dailyLimit - a.sentToday));
-        selectedAccount = availableAccounts[0];
-        
-        // Simulating the AI choice for log
-        this.logger.log(`[EmailRouter] AI selected account ${selectedAccount.id} (${selectedAccount.provider}) based on load balancing.`);
-      } catch (err) {
-        this.logger.warn('[EmailRouter] AI selection failed, defaulting to first available.');
+        const prompt = `
+You are an email routing AI. You have ${availableAccounts.length} available accounts.
+Accounts: ${JSON.stringify(availableAccounts.map(a => ({ id: a.id, provider: a.provider, used: a.sentToday, limit: a.dailyLimit })))}
+Lead Company: ${leadCompany || 'Unknown'}
+
+Select the best account ID to use. Prioritize accounts with the lowest % of quota used.
+If sending to a known enterprise, prefer Google/SMTP over Resend if possible.
+Return ONLY a JSON object: { "selectedId": "uuid" }`;
+        const aiResponse = await this.aiService.generateText(prompt);
+        const parsed = JSON.parse(aiResponse.replace(/```json/g, '').replace(/```/g, ''));
+        if (parsed.selectedId) {
+          const match = availableAccounts.find(a => a.id === parsed.selectedId);
+          if (match) selectedAccount = match;
+        }
+      } catch (e) {
+        this.logger.warn('AI router failed to pick, using first available account');
       }
     }
 
