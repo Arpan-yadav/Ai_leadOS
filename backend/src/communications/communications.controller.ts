@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query, Request, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, Request, UseGuards, ForbiddenException } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CommunicationsService } from './communications.service';
@@ -50,11 +50,15 @@ export class CommunicationsController {
     const token = query['hub.verify_token'];
     const challenge = query['hub.challenge'];
 
-    // In a real app, verify the token matches your environment variable
-    if (mode === 'subscribe' && challenge) {
-      return challenge; // Must return the raw challenge string
+    const expectedToken = process.env.META_WEBHOOK_VERIFY_TOKEN || 'aileados_webhook_secret';
+    
+    if (mode === 'subscribe' && token === expectedToken) {
+      if (challenge) {
+        return challenge; // Must return the raw challenge string for Meta
+      }
     }
-    return 'Invalid verification request';
+    
+    throw new ForbiddenException('Invalid verification token');
   }
 
   @Post('generate-message')
