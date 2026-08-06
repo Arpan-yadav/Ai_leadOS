@@ -1,0 +1,62 @@
+AI LeadOS - Comprehensive Test Case & Deployment Report
+1. Executive Summary & Testing Journey
+The testing journey for AI LeadOS has been a rigorous, multi-stage process designed to ensure absolute reliability, data security, and strict tenant isolation across the platform. Our approach mandated that developers could not test their own code, enforcing a strict cross-team verification model among the AI/Automation, Frontend, and Backend teams.
+Throughout the journey, we faced and resolved complex challenges, particularly around Dependency Injection in our testing modules (e.g., mocking the PrismaService, TasksService, and AiService across intertwined modules). We established a comprehensive suite of Unit Tests using Jest for the backend and React Testing Library for the frontend. We heavily utilized mocking to isolate services, ensuring that our business logic—especially the complex AI Email Routing, WhatsApp Meta Webhooks, and Multi-SMTP fallback systems—was tested exhaustively without affecting production databases.
+2. Environment & Deployment Details
+Frontend Environment (Vercel)
+The Next.js 14 frontend application is deployed on Vercel. Vercel was chosen for its seamless CI/CD integration with GitHub, Edge Network caching, and optimized rendering strategies (Server-Side Rendering and Static Site Generation). Environment variables are securely injected at build time, protecting sensitive OAuth keys and API secrets. Every push to the main branch triggers an automatic immutable deployment, followed by automated smoke tests to ensure UI stability.
+Backend Environment (Render)
+The NestJS backend infrastructure is hosted on Render. Render provides a robust, Docker-containerized environment that scales horizontally. The backend service is configured to auto-deploy upon passing GitHub Actions checks. Render’s private networking is utilized to securely connect the Node.js application instances to internal Redis caches (for rate limiting and job queues) and our PostgreSQL database.
+Database & Data Layer (Supabase PostgreSQL)
+Data persistence is handled by a managed PostgreSQL instance on Supabase. To handle high concurrency, connection pooling via PgBouncer is enabled. Strict Row-Level Security (RLS) is mirrored in our application layer via Prisma middleware to enforce tenant isolation—guaranteeing that Tenant A can never query or manipulate Tenant B's leads, deals, or communication logs.
+3. Cross-Testing Assignments & Test Cases
+To ensure unbiased verification, modules developed by one team were assigned to random members of a different team for testing. The teams involved are: AI/Automation Team (Arpan, Soumya), Frontend Team (Arav, Harshwardhan, Arshjot), and Backend Team (Dushyant, Saransh, Ujjwal).
+Module: AI Score Sync & Automated Sequences
+Developed By: Arpan and Soumya  (AI/Automation Team)
+Tested By: Arav (Frontend Team) , Dushyant & Saransh(Backend Team) (Cross-Verified)
+Status: 100% Passed
+1. Verify AI lead score updates dynamically when deal stage changes from PROPOSAL to WON.
+2. Verify Automated Sequences correctly enqueue background tasks when a lead is enrolled.
+3. Verify the AI prompt generator accurately parses lead context (company, industry) to create personalized emails.
+4. Verify AI Smart Routing selects the WhatsApp/Email account with the lowest limit consumption.
+5. Verify rate-limiting logic halts sequence execution if the tenant API limit is exhausted.
+Module: Authentication & Tenant Isolation
+Developed By: Dushyant , Ujjwal , Saransh  (Backend Team)
+Tested By: Arpan (AI/Automation Team) , Harshwardhan (Frontend Team) (Cross-Verified)  
+Status: 100% Passed
+1. Verify a new registration correctly creates a User, a Tenant, and assigns the Admin CustomRole.
+2. Verify attempting to register with an existing email throws an HTTP 409 Conflict error.
+3. Verify JWT tokens are issued with the correct tenantId payload and have a 24-hour expiration.
+4. Verify API requests lacking the Authorization header are rejected with HTTP 401 Unauthorized.
+5. Verify Tenant A querying /leads only returns leads explicitly linked to Tenant A.
+6. Verify SuperAdmin users can bypass tenantId checks when querying the system-wide logs.
+Module: Leads & Deals CRM Operations
+Developed By: Saransh , Ujjwal , Dushyant (Backend Team)
+Tested By: Arshjot (Frontend Team) , Soumya (AI/Automation Team)(Cross-Verified)
+Status: 100% Passed
+1. Verify creating a lead persists data accurately and triggers a "Lead Created" event on the EventBus.
+2. Verify the leads pagination system correctly offsets and limits results (e.g., page 2, limit 10).
+3. Verify attempting to delete a lead from a different tenant returns HTTP 404/403.
+4. Verify linking a Deal to a Lead updates both relational models correctly in Prisma.
+5. Verify deleting a lead cascades deletions to SequenceEnrollments, Activities, and Tasks.
+6. Verify the pipeline aggregation query accurately sums the value of all WON deals.
+Module: UI Dashboard & Frontend Workflows
+Developed By: Arav , Harshwardhan, Arshjot (Frontend Team)
+Tested By: Ujjwal (Backend Team) , Arpan (AI/Automation Team) (Cross-Verified)
+Status: 100% Passed
+1. Verify the Dashboard charts (Revenue, Lead Conversion) render correctly using Recharts.
+2. Verify the "Add Lead" modal validates email formats before allowing form submission.
+3. Verify the "Eye" toggle button correctly masks and unmasks sensitive API keys in the Settings page.
+4. Verify responsive design breaks down to a mobile-friendly hamburger menu on screens < 768px.
+5. Verify dark mode / light mode toggle correctly updates CSS custom properties across all components.
+6. Verify error toasts appear in the bottom-right corner when an API request fails.
+Module: Communications Routing (Email & WhatsApp)
+Developed By: Ujjwal , Saransh , Dushyant(Backend Team)
+Tested By: Aarav (Frontend Team) , Soumya (AI/Automation Team) (Cross-Verified)
+Status: 100% Passed
+1. Verify sending an email via fallback Ethereal works when no custom SMTP/Resend accounts are configured.
+2. Verify integrating multiple Resend/SMTP accounts saves encrypted credentials to the database.
+3. Verify the EmailRouterService gracefully falls back to Account B if Account A returns a rate-limit error.
+4. Verify Meta WhatsApp Cloud API webhooks return the correct hub.challenge during verification.
+5. Verify incoming WhatsApp messages from leads are correctly parsed and logged to the CommunicationLog.
+6. Verify manual selection of a specific sender account overrides the AI Auto-Select algorithm.

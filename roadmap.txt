@@ -1,0 +1,361 @@
+🚀 AI LeadOS — Full Project Roadmap & Team Guide
+ProyoTech Internship 2026
+
+**For the team:** This document is your single source of truth for how we are building AI LeadOS. It covers every sprint, who is active when, how to work with Git, and what "done" means for each deliverable.
+
+
+
+📌 Project Overview
+
+
+
+
+
+👥 Team Structure & Roles
+
+
+
+
+
+🔄 Sprint Rotation Strategy
+
+To keep the codebase conflict-free, only one member per team is active in each sprint. The inactive member reviews PRs, studies the codebase, and prepares for their upcoming sprint.
+
+**Note:** **Arshjot** joined the Frontend team from **Sprint 6** onwards, adding capacity to the Frontend rotation from that point.
+
+
+
+**Inactive members:** Review the active member's PR, read the new code, and use the sprint to prepare questions, set up your local dev environment, and study the relevant docs.
+
+
+
+🌿 Git Workflow (Everyone Must Follow This)
+
+
+main                          ← protected, never push directly
+
+└── sprint-N/feature-name     ← your working branch
+
+
+
+Branch Naming
+
+sprint-2/leads-backend        ← backend feature
+
+sprint-2/leads-ui             ← frontend feature
+
+sprint-2/ai-auto-score        ← AI feature
+
+fix/lead-score-bug            ← bug fix
+
+docs/update-roadmap           ← documentation only
+
+
+
+Commit Convention
+
+feat: add lead CRUD endpoints
+
+fix: correct null check in leads service
+
+docs: update sprint 2 architecture
+
+test: add unit tests for auth service
+
+refactor: extract lead validation to guard
+
+
+
+Pull Request Rules
+Branch from `main`, never from another feature branch
+PR title must follow commit convention (feat:, fix:, etc.)
+At least 1 reviewer must approve before merging (the inactive team member reviews)
+Copilot review is automatic — address all High/Medium comments before merging
+Delete your branch after merge
+PR description must include: what was built, how to test it, checklist
+
+
+
+📅 Sprint-by-Sprint Plan
+
+
+
+✅ Sprint 1 — Foundation & Setup
+Status: Merged to main (Completed 19 June)
+Active: Arpan (solo bootstrap)
+
+Sprint 1 was completed structured by Arpan to set up the foundation for everyone.
+
+Arpan — Setup & Foundation
+
+
+
+
+🔵 Sprint 2 — Core CRM: Leads, Deals & Dashboard Data
+Status: 🟡 Active
+Goal: Real CRM data layer — leads & deals CRUD, live dashboard stats, AI auto-scoring.
+
+
+
+Dushyant — Backend (`sprint-2/backend`)
+
+
+Arav — Frontend (`sprint-2/frontend`)
+
+
+Arpan — AI + Automation (`sprint-2/ai-automation`)
+
+
+
+
+🟡 Sprint 3 — Pipeline, Activity Feed & Task Management
+Status: Upcoming
+Goal: Kanban pipeline, per-lead activity timeline, task management.
+
+
+
+Saransh — Backend
+
+
+Harshwardhan — Frontend
+
+
+Soumya — AI + Automation
+
+
+
+
+🟠 Sprint 4 — AI Intelligence Module & Outreach Sequences
+Status: Upcoming
+Goal: Real per-lead AI analysis (company audit), outreach sequence builder.
+
+
+
+Ujjwal — Backend
+
+
+Arav — Frontend
+
+
+Arpan — AI + Automation
+
+
+
+
+🔴 Sprint 5 — Automation Builder (Visual Workflow Editor)
+Status: Upcoming
+Goal: Drag-and-drop visual workflow builder with real DB-backed execution engine.
+
+
+
+Dushyant — Backend
+
+
+Harshwardhan — Frontend
+
+
+Soumya — AI + Automation
+
+
+
+
+🟣 Sprint 6 — Communications Hub (Email, WhatsApp, LinkedIn)
+Status: ✅ Complete
+Goal: Outbound communication channels connected to the CRM.
+
+
+
+🆕 **Arshjot joined the team this sprint** as a Frontend Developer.
+
+Saransh — Backend
+
+
+Arav — Frontend
+
+
+Arshjot — Frontend 🆕
+
+
+Arpan — AI + Automation
+
+
+🌟 Extra Features (Added ad-hoc)
+
+
+
+
+🟢 Sprint 7 — Analytics, Reporting & Admin Panel
+Status: ✅ Complete
+Goal: Charts dashboard, team performance metrics, admin user management.
+
+
+
+Ujjwal — Backend
+
+
+Harshwardhan — Frontend
+
+
+Arshjot — Frontend
+
+
+Soumya — AI + Automation
+
+
+
+
+🏁 Sprint 8 — Polish, Production Readiness & Launch
+Status: ✅ Complete — Deployed to Production
+Goal: Deployment, security hardening, final demo.
+
+
+
+Dushyant — Backend + DevOps
+
+
+Arav — Frontend
+
+
+Arshjot — Frontend
+
+
+Arpan — AI + Automation + DevOps + Final Docs
+
+
+
+
+🗓️ Sprint Timeline Overview
+
+
+Sprint 1  ✅  Foundation & Setup                  19 June
+
+Sprint 2  ✅  Core CRM — Leads, Deals, Dashboard  26 June
+
+Sprint 3  ✅  Pipeline, Activities, Tasks          3 July
+
+Sprint 4  ✅  AI Intelligence & Sequences          8 July
+
+Sprint 5  ✅  Automation Builder (Visual)          11 July
+
+Sprint 6  ✅  Communications Hub                  15 July  ← Arshjot joins 🆕
+
+Sprint 7  ✅  Analytics & Admin                   18 July
+
+Sprint 8  ✅  Polish, Deploy & Launch              19 July  ← DEPLOYED TO PRODUCTION 🚀
+
+
+
+Production URLs:
+🌍 Frontend: https://ai-lead-os-eight.vercel.app
+⚙️ Backend API: https://ai-leados.onrender.com/api/docs
+
+
+
+📋 Definition of Done (Every Sprint)
+
+Before any branch is merged to main:
+
+[ ] Feature fully implemented as described in this roadmap
+[ ] TypeScript compiles with no errors (npx tsc --noEmit)
+[ ] Swagger docs updated for all backend endpoints
+[ ] No hardcoded secrets or .env values in code
+[ ] Copilot High/Medium severity comments addressed
+[ ] PR description: what was built + how to test
+[ ] At least 1 peer review approval
+[ ] Branch deleted after merge
+
+
+
+⚠️ Team Rules (Non-Negotiable)
+
+Never push directly to `main` — always open a PR
+Always `git pull origin main` before creating your branch
+One person per branch — never share a working branch
+Commit and push daily — don't sit on uncommitted work
+Read every merged PR description — know what changed
+Prisma schema is shared — coordinate with the active backend dev before touching it
+If you're stuck, speak up immediately — don't stay blocked silently
+Inactive sprint? Still review PRs and study the new code — stay sharp
+
+
+
+🔗 Key Resources
+
+
+
+
+
+🚦 Quick Start for Every Member
+
+
+# 1. Clone the repo (first time only)
+
+git clone https://github.com/proyotech/AI_LeadOS.git
+
+cd AI_LeadOS
+
+
+
+# 2. Always start from latest main
+
+git checkout main
+
+git pull origin main
+
+
+
+# 3. Create your sprint branch (use the name from your task sheet)
+
+git checkout -b sprint-2/backend        # example
+
+
+
+# 4. Backend setup
+
+cd backend
+
+npm install
+
+cp .env.example .env
+
+# Fill in: DATABASE_URL, JWT_SECRET, PGADMIN_DEFAULT_PASSWORD
+
+docker-compose up -d
+
+npx prisma migrate dev
+
+npm run start:dev       # → http://localhost:3001/api/docs
+
+
+
+# 5. Frontend setup (new terminal)
+
+cd ../frontend
+
+npm install
+
+echo "NEXT_PUBLIC_API_URL=http://localhost:3001/api" > .env.local
+
+npm run dev             # → http://localhost:3000
+
+
+
+# 6. Commit and push your work
+
+git add .
+
+git commit -m "feat: your feature description"
+
+git push origin sprint-2/backend
+
+
+
+# 7. Open a Pull Request on GitHub → base: main
+
+
+
+
+
+Last updated: Sprint 8 Complete — ProyoTech Internship 2026
+Maintained by: Arpan (Tech Lead)
+Team (9 members): Arpan, Soumya, Dushyant, Saransh, Ujjwal, Arav, Harshwardhan, Arshjot (joined Sprint 6)

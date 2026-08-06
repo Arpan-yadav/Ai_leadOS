@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SequencesService } from './sequences.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CommunicationsService } from '../communications/communications.service';
+import { AiService } from '../ai/ai.service';
+import { TasksService } from '../tasks/tasks.service';
 
 describe('SequencesService - by Automation Team', () => {
   let service: SequencesService;
@@ -21,7 +23,9 @@ describe('SequencesService - by Automation Team', () => {
       providers: [
         SequencesService,
         { provide: PrismaService, useValue: mockPrisma },
-        { provide: CommunicationsService, useValue: {} },
+        { provide: TasksService, useValue: { createTask: jest.fn() } },
+        { provide: CommunicationsService, useValue: { sendMessage: jest.fn() } },
+        { provide: AiService, useValue: {} },
       ],
     }).compile();
 
