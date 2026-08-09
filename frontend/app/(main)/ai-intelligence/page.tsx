@@ -117,7 +117,7 @@ export default function AIIntelligencePage() {
         <p className="text-[#b9cacb] light:text-slate-500 mt-2 font-mono text-[11px] uppercase tracking-wider">Deep-dive company audits and strategic opportunity analysis powered by Gemini.</p>
       </header>
 
-      <div className="glass-panel p-6 mb-8 flex flex-col md:flex-row gap-4 items-end max-w-4xl border border-[#27272A] light:border-slate-200">
+      <div className="glass-panel p-6 mb-8 flex flex-col md:flex-row gap-4 items-end max-w-4xl border border-[#27272A] light:border-slate-200 relative overflow-visible">
         <div className="flex-1 w-full relative">
           <label className="block text-[10px] font-mono font-bold text-[#b9cacb] light:text-slate-500 uppercase tracking-wider mb-2">Select a Target Lead</label>
           <div 
@@ -137,7 +137,7 @@ export default function AIIntelligencePage() {
           </div>
           
           {dropdownOpen && (
-            <div className="absolute z-50 w-full mt-2 bg-[#0A0A0C] light:bg-white border border-[#27272A] light:border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto animate-fade-in">
+            <div className="absolute z-[100] w-full mt-2 bg-[#0A0A0C] light:bg-white border border-[#27272A] light:border-slate-200 rounded-lg shadow-2xl max-h-60 overflow-y-auto animate-fade-in">
               {leads.map(lead => (
                 <div 
                   key={lead.id}
