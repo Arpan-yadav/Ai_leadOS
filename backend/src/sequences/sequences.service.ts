@@ -125,7 +125,7 @@ export class SequencesService {
   async findAll(tenantId?: string, isSuperAdmin?: boolean) {
     return this.prisma.sequence.findMany({
       where: {
-        ...( (!isSuperAdmin && tenantId) && { tenantId } )
+        ...(tenantId ? { tenantId } : {})
       },
       orderBy: { createdAt: 'desc' },
       include: {
