@@ -158,29 +158,41 @@ export async function seedDefaultWorkflows(userId: string, prisma: PrismaClient)
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) continue;
 
-    await prisma.workflow.create({
-      data: {
-        name: pair.name,
-        description: pair.description,
-        hasAINodes: true,
-        status: 'ACTIVE',
-        definition: pair.workflowDefinition,
-        createdById: userId,
-        tenantId: user.tenantId,
-      }
+    const existingWorkflow = await prisma.workflow.findFirst({
+      where: { tenantId: user.tenantId, name: pair.name }
+    });
+    
+    if (!existingWorkflow) {
+      await prisma.workflow.create({
+        data: {
+          name: pair.name,
+          description: pair.description,
+          hasAINodes: true,
+          status: 'ACTIVE',
+          definition: pair.workflowDefinition,
+          createdById: userId,
+          tenantId: user.tenantId,
+        }
+      });
+    }
+
+    const existingSequence = await prisma.sequence.findFirst({
+      where: { tenantId: user.tenantId, name: pair.name }
     });
 
-    await prisma.sequence.create({
-      data: {
-        name: pair.name,
-        description: pair.description,
-        status: 'ACTIVE',
-        steps: pair.sequenceSteps,
-        enrollment: { autoEnroll: false },
-        exitRules: { reply: true, meeting: true },
-        createdById: userId,
-        tenantId: user.tenantId,
-      }
-    });
+    if (!existingSequence) {
+      await prisma.sequence.create({
+        data: {
+          name: pair.name,
+          description: pair.description,
+          status: 'ACTIVE',
+          steps: pair.sequenceSteps,
+          enrollment: { autoEnroll: false },
+          exitRules: { reply: true, meeting: true },
+          createdById: userId,
+          tenantId: user.tenantId,
+        }
+      });
+    }
   }
 }
