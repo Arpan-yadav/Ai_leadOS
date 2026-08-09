@@ -70,9 +70,9 @@ const LeadsPage = () => {
   const assignedToIdParam = searchParams.get('assignedToId')
 
   useEffect(() => {
-    const fetchLeads = async () => {
+    const fetchLeads = async (showLoading = true) => {
       try {
-        setLoading(true)
+        if (showLoading) setLoading(true)
         const token = getToken()
         const params = new URLSearchParams({ page: page.toString(), limit: '10' })
         if (search) params.append('search', search)
@@ -94,10 +94,18 @@ const LeadsPage = () => {
       } catch (error) {
         console.error('Error fetching leads:', error)
       } finally {
-        setLoading(false)
+        if (showLoading) setLoading(false)
       }
     }
-    fetchLeads()
+    
+    fetchLeads(true)
+    
+    // Auto-refresh in the background every 5 seconds for real-time updates
+    const intervalId = setInterval(() => {
+      fetchLeads(false)
+    }, 5000)
+    
+    return () => clearInterval(intervalId)
   }, [page, search, channel, refresh, assignedToIdParam])
 
   const filteredLeads = leads
