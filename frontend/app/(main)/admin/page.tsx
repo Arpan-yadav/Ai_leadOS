@@ -520,9 +520,9 @@ export default function AdminPage() {
                     </table>
                   </div>
                 </div>
-                <div className="glass-card overflow-hidden">
+                <div className="glass-card overflow-hidden flex flex-col h-full">
                   <div className="px-6 py-4 border-b border-[#27272A]"><h3 className="text-sm font-bold text-white">Recent Leads</h3></div>
-                  <div className="max-h-64 overflow-y-auto">
+                  <div className="flex-1 overflow-y-auto">
                     <table className="w-full">
                       <tbody className="divide-y divide-[#27272A]">
                         {activeTenantDetails.leads.map((l: any) => (
