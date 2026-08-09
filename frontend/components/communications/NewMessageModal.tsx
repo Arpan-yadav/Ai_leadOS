@@ -144,8 +144,13 @@ export default function NewMessageModal({ onClose, onSent, lead: preselectedLead
 
       const data = await res.json()
       if (data.message) {
-        setForm(prev => ({ ...prev, message: data.message }))
-        toast.success(history ? '✨ Follow-up generated with conversation context!' : '✨ AI Draft Generated!')
+        setForm(prev => ({
+          ...prev,
+          message: data.message,
+          // Auto-fill subject if AI returned one AND subject is currently empty or default
+          subject: data.subject ? data.subject : prev.subject
+        }))
+        toast.success(history ? '✨ Follow-up + subject generated with AI context!' : '✨ AI Draft Generated — subject & message ready!')
       }
     } catch {
       toast.error('Failed to generate message')

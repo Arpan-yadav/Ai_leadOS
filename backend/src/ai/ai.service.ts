@@ -501,7 +501,7 @@ Return only the email subject line and body. No other conversational text or mar
   }
 
   /**
-   * Generate highly personalized outreach message using Gemini
+   * Generate highly personalized outreach message + subject using Gemini
    */
   async generatePersonalizedMessage(
     leadName: string,
@@ -510,7 +510,7 @@ Return only the email subject line and body. No other conversational text or mar
     aiInsightSummary?: string,
     conversationHistory?: string,
     tenantId?: string,
-  ): Promise<{ message: string }> {
+  ): Promise<{ message: string; subject: string }> {
     const prompt = `
 You are an elite B2B Sales Development Representative (SDR) known for writing hyper-personalized, high-converting outreach messages.
 Your task is to write a highly unique and personalized message for a prospect.
@@ -523,20 +523,23 @@ ${conversationHistory ? `\nPrevious Conversation History:\n${conversationHistory
 
 Instructions:
 1. Use the AI Business Intelligence to prove deep understanding of their specific situation.
-2. If there is conversation history, continue the thread naturally — acknowledge their last message and propose a clear next step.
+2. If there is conversation history, continue the thread naturally - acknowledge their last message and propose a clear next step.
 3. If it's a cold message, simulate research on "${company}" to craft a hyper-specific opening line.
 4. Propose a clear value hypothesis tied to their exact pain points.
-5. Keep it under 4 sentences. Conversational, not salesy.
+5. Keep the message under 4 sentences. Conversational, not salesy.
+6. Write a compelling, curiosity-driven email subject line (6-9 words max, no clickbait).
 
-Return exactly this JSON (no markdown):
+Return exactly this JSON (no markdown, no code block):
 {
+  "subject": "<email subject line>",
   "message": "<the generated message>"
 }`.trim();
 
-    const result = await this.generateJSON<{ message: string }>(prompt, tenantId);
+    const result = await this.generateJSON<{ message: string; subject: string }>(prompt, tenantId);
     if (result) return result;
 
     return {
+      subject: `Quick idea for ${company}`,
       message: `Hi ${leadName},\n\nI was researching ${company} and noticed some impressive growth. I thought it would be a great time to connect and explore how our platform could help your team scale even faster.\n\nWould you be open to a brief chat next week?`
     };
   }
