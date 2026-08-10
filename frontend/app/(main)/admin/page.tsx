@@ -147,9 +147,21 @@ export default function AdminPage() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ newPassword: newPwd }),
       });
-      if (res.ok) { toast.success(`Password reset for ${resetPwd.name}`); setResetPwd(null); setNewPwd(''); }
-      else toast.error('Failed to reset password');
-    } catch { toast.error('Network error'); } finally { setSaving(false); }
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        toast.success(`✅ Password reset for ${resetPwd.name}`);
+        setResetPwd(null);
+        setNewPwd('');
+        setShowPwd(false);
+      } else {
+        const errMsg = data?.message || data?.error || `Server error ${res.status}`;
+        toast.error(`Reset failed: ${Array.isArray(errMsg) ? errMsg.join(', ') : errMsg}`);
+      }
+    } catch (e: any) {
+      toast.error(`Network error: ${e?.message || 'unknown'}`);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const submitCreateRole = async () => {
