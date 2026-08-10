@@ -8,7 +8,7 @@ const NEW_PASSWORD = 'TestAudit@123';
 
 // Your SuperAdmin credentials
 const SA_EMAIL = 'yadavarpan03@gmail.com';
-const SA_PASSWORD = '@Apy18748';
+const SA_PASSWORD = process.env.SA_PASSWORD || 'YOUR_PASSWORD_HERE'; // set via env var
 
 const TARGET_EMAILS = [
   'arshjot18514@stu.upes.ac.in',
