@@ -197,7 +197,7 @@ export default function AIIntelligencePage() {
             <div className="glass-card p-6 flex flex-col items-center justify-center relative overflow-hidden group border-[#00f0ff]/30">
               <div className="absolute inset-0 bg-[#00f0ff]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <h3 className="text-[10px] font-mono font-bold text-[#b9cacb] light:text-slate-500 uppercase tracking-wider mb-2">AI Fitness Score</h3>
-              <div className="text-5xl font-display font-black text-white light:text-slate-800 tracking-tighter mb-2 drop-shadow-[0_0_10px_rgba(0,240,255,0.3)] group-hover:text-[#00f0ff] light:text-blue-600 transition-colors">
+              <div className="text-5xl font-display font-black text-white light:text-blue-600 tracking-tighter mb-2 drop-shadow-[0_0_10px_rgba(0,240,255,0.3)] group-hover:text-[#00f0ff] transition-colors">
                 {insight.qualityScore}
                 <span className="text-2xl text-[#52525B]">/100</span>
               </div>
